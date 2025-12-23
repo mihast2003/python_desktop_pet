@@ -11,9 +11,9 @@ STATES = {
 
         "transitions": [
             {
-                "on": ["CLICK"],
-                "to": "BLINK",
-                "chance": 0.5
+                "on": ["CLICK_HELD"],
+                "to": "DRAGGING",
+                "chance": 1
             },
             {
                 "on": ["CLICK"],
@@ -48,5 +48,21 @@ STATES = {
         ],
         "exit_when": ["MOVEMENT_FINISHED"],
         "exit_to": "IDLE"
-    }      
+    },  
+
+    "DRAGGING": {
+        "animation": "roll",
+        "behaviour": "DRAGGING",
+        
+        "exit_when": ["LETGO"],
+        "exit_to": "FALLING"
+    },
+
+    "FALLING": {
+        "animation": "roll",
+        "behaviour": "FALLING",
+        
+        "exit_when": ["MOVEMENT_FINISHED"],
+        "exit_to": "IDLE"
+    },    
 }

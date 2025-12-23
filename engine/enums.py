@@ -6,13 +6,17 @@ from enum import Enum, auto
 class Flag(Enum):
     STATE_RANDOM_TIMER_EXPIRED = auto()
     MOVEMENT_FINISHED = auto()
+    CLICK_HELD = auto()
 
 
 class Pulse(Enum):
     ANIMATION_END = auto()
     CLICK = auto()
+    LETGO = auto()
 
 class BehaviourStates(Enum):
     STATIONARY = auto()
     WANDERING = auto()
     MOVING_RANDOM = auto()
+    DRAGGING = auto()
+    FALLING = auto()
