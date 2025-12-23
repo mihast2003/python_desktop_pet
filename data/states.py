@@ -7,6 +7,7 @@ STATES = {
     "IDLE": {
         "animation": "idle",
         "fps": 6,
+        "behaviour": "STATIONARY",
 
         "transitions": [
             {
@@ -24,6 +25,7 @@ STATES = {
     "BLINK": {
         "animation": "blink",
 
+
         "transitions": [
             {
                 "on": ["ANIMATION_END"],
@@ -35,6 +37,7 @@ STATES = {
 
     "ROLL": {
         "animation": "roll",
+        "behaviour": "MOVING_RANDOM",
         
         "transitions": [
             {

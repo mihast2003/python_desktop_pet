@@ -9,7 +9,7 @@ from PySide6.QtCore import Qt, QTimer
 from data.states import STATES
 from data.animations import ANIMATIONS
 from engine.state_machine import StateMachine
-from engine.events import Flag, Pulse
+from engine.enums import Flag, Pulse, BehaviourStates
 
 
 FPS = 60 #fps of logic processes
@@ -204,7 +204,10 @@ class Pet(QWidget): # main logic
 
         self.animator.set(frames=frames, fps=fps, loop=loop, holds=holds) #sets animation in animator
 
-        if state == "ROLL": #specific case for roll, its here for now, will have to find a different solution later
+        self.behaviour = BehaviourStates.__members__.get(cfg.get("behaviour", "STATIONARY"))
+        print(self.behaviour)
+
+        if self.behaviour is BehaviourStates.MOVING_RANDOM:
             screen = QApplication.primaryScreen().geometry()
             target_x = random.randint(0, screen.width() - self.width())
             self.mover.set_position(self.x(), self.y())

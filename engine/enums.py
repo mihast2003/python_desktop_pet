@@ -11,3 +11,8 @@ class Flag(Enum):
 class Pulse(Enum):
     ANIMATION_END = auto()
     CLICK = auto()
+
+class BehaviourStates(Enum):
+    STATIONARY = auto()
+    WANDERING = auto()
+    MOVING_RANDOM = auto()

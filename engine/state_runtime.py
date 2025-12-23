@@ -2,7 +2,7 @@
 # handles Events
 
 import random
-from engine.events import Flag, Pulse
+from engine.enums import Flag, Pulse
 
 class StateRuntime:
     def __init__(self, state_name, config):
