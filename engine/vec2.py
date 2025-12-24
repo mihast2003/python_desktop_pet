@@ -1,0 +1,40 @@
+import math
+
+#vector class for vector stuff
+class Vec2:
+    __slots__ = ("x", "y")
+
+    def __init__(self, x=0.0, y=0.0):
+        self.x = float(x)
+        self.y = float(y)
+
+    def copy(self):
+        return Vec2(self.x, self.y)
+
+    # math
+    def __add__(self, other):
+        return Vec2(self.x + other.x, self.y + other.y)
+
+    def __sub__(self, other):
+        return Vec2(self.x - other.x, self.y - other.y)
+
+    def __mul__(self, scalar: float):
+        return Vec2(self.x * scalar, self.y * scalar)
+
+    __rmul__ = __mul__
+
+    # utilities
+    def length(self):
+        return math.hypot(self.x, self.y)
+
+    def normalized(self):
+        l = self.length()
+        if l == 0:
+            return Vec2()
+        return Vec2(self.x / l, self.y / l)
+
+    def distance_to(self, other):
+        return (self - other).length()
+
+    def lerp(self, target, t: float):
+        return self + (target - self) * t

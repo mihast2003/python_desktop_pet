@@ -1,7 +1,7 @@
 # Main script with pet behavior: physics, drawing sprites, retrieving data
 
 
-import sys, os, random, time
+import sys, os, random, time, math
 from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtGui import QPainter, QPixmap
 from PySide6.QtCore import Qt, QTimer, QPointF
@@ -9,7 +9,8 @@ from PySide6.QtCore import Qt, QTimer, QPointF
 from data.states import STATES
 from data.animations import ANIMATIONS
 from engine.state_machine import StateMachine
-from engine.enums import Flag, Pulse, BehaviourStates
+from engine.enums import Flag, Pulse, BehaviourStates, MovementType
+from engine.vec2 import Vec2
 from enum import Enum, auto
 
 FPS = 60 #fps of logic processes
@@ -75,101 +76,158 @@ class ClickDetector:
             self.sm.pulse(Pulse.CLICK)
             print("CLICK")
 
-class MovementType(Enum):
-    LINEAR = auto()
-    ACCELERATING = auto()
-    LERP = auto()
 
-
-class Mover: # contains movement functions
-    # Handles smooth movement with acceleration
+class Mover:
     def __init__(self):
-        self.x = 0.0
-        self.y = 0.0
-        self.velocity_x = 0.0
-        self.velocity_y = 0.0
+        self.pos = Vec2()
+        self.vel = Vec2()
+        self.target = Vec2()
 
-        self.target_x = 0.0
-        self.target_y = 0.0
+        self.drag_offset = Vec2()
 
         self.acceleration = 1200.0
         self.max_speed = 700.0
-        self.slow_radius = 100.0
-        self.snap_distance = 25.0
+        self.slow_radius = 120.0
+        self.snap_distance = 8.0
 
         self.movement_type = None
-
         self.active = False
 
-    def set_position(self, x, y): # instantly sets position of sprite to x, y (sprite origin is left top corner)
-        self.x = float(x)
-        self.y = float(y)
+        # jump specific
+        self.jump_velocity = -900.0
+        self.gravity = 2500.0
+        self.grounded_y = None
 
-    def move_to(self, x, y, movement_type): # sets a coordinate target for movement
-        self.target_x = float(x)
-        self.target_y = float(y)
-        self.velocity_x = 0.0
-        self.velocity_y = 0.0
-        self.active = True
+    def set_position(self, x, y):
+        self.pos = Vec2(x, y)
+
+    def move_to(self, x, y, movement_type: MovementType):
+        self.target = Vec2(x, y)
+        self.vel = Vec2()
         self.movement_type = movement_type
-        print("i am at ", self.x, self.y)
-        print("now going to ", x, y)
+        self.active = True
 
-    def update(self, delta): #updates moving logic(helper function)
+        if movement_type == MovementType.JUMP:
+            self.grounded_y = self.pos.y
+            self.vel.y = self.jump_velocity
+
+    def update(self, dt):
         if not self.active:
-            return False  # not moving
+            return False
 
-        abs_distance = abs(self.target_x - self.x) + abs(self.target_y - self.y)
-        difference_x = self.target_x - self.x
-        difference_y = self.target_y - self.y
+        match self.movement_type:
 
-        # print(self.movement_type)
+            case MovementType.DRAG:
+                return False
 
-        if abs_distance <= self.snap_distance:
-            self.x = self.target_x
-            self.y = self.target_y
-            self.velocity_x = 0.0
-            self.velocity_y = 0.0
-            self.active = False
-            self.movement_type = None
-            return True  # arrived
-        
-        direction = 1 if difference_x > 0 else -1
-        verticality = 1 if difference_y > 0 else -1
-
-        desired_max = self.max_speed
-
-        match self.movement_type:    # process different type of movement
             case MovementType.LINEAR:
-                self.velocity_x = 100
-                self.velocity_y = 100
+                return self._update_linear(dt)
 
             case MovementType.ACCELERATING:
-                self.velocity_x += direction * self.acceleration * delta
-                self.velocity_x = max(-desired_max, min(self.velocity_x, desired_max))
-
-                self.velocity_x += verticality * self.acceleration * delta
-                self.velocity_y = max(-desired_max, min(self.velocity_y, desired_max))
+                return self._update_accelerating(dt)
 
             case MovementType.LERP:
-                if abs_distance < self.slow_radius:
-                    desired_max *= abs_distance / self.slow_radius
-                    print("slowing down to ", desired_max)
+                return self._update_lerp(dt)
 
-                self.velocity_x += direction * self.acceleration * delta
-                self.velocity_x = max(-desired_max, min(self.velocity_x, desired_max))
+            case MovementType.JUMP:
+                return self._update_jump(dt)
 
-                self.velocity_x += verticality * self.acceleration * delta
-                self.velocity_y = max(-desired_max, min(self.velocity_y, desired_max))
+    # ---------------- movement types ---------------- #
 
-                print("velocity is ", self.velocity_x)
+    def _update_linear(self, dt):
+        direction = (self.target - self.pos).normalized()
+        self.vel = direction * self.max_speed
+        self.pos += self.vel * dt
 
-        #print(self.velocity_x)
-
-        self.x += self.velocity_x * delta
-        #self.y += self.velocity_y * delta
+        if self.pos.distance_to(self.target) <= self.snap_distance:
+            self.pos = self.target.copy()
+            self.active = False
+            return True
 
         return False
+
+    def _update_accelerating(self, dt):
+        direction = (self.target - self.pos).normalized()
+        self.vel += direction * self.acceleration * dt
+
+        if self.vel.length() > self.max_speed:
+            self.vel = self.vel.normalized() * self.max_speed
+
+        self.pos += self.vel * dt
+
+        if self.pos.distance_to(self.target) <= self.snap_distance:
+            self.pos = self.target.copy()
+            self.vel = Vec2()
+            self.active = False
+            return True
+
+        return False
+
+    def _update_lerp(self, dt):
+        to_target = self.target - self.pos
+        dist = to_target.length()
+
+        if dist <= self.snap_distance:
+            self.pos = self.target.copy()
+            self.vel = Vec2()
+            self.active = False
+            return True
+
+        direction = to_target.normalized()
+
+        # --- desired speed (ease OUT) ---
+        desired_speed = self.max_speed
+        if dist < self.slow_radius:
+            desired_speed *= dist / self.slow_radius
+
+        desired_velocity = direction * desired_speed
+
+        # --- accelerate toward desired velocity (ease IN) ---
+        steering = desired_velocity - self.vel
+        max_change = self.acceleration * dt
+
+        if steering.length() > max_change:
+            steering = steering.normalized() * max_change
+
+        self.vel += steering
+        self.pos += self.vel * dt
+
+        return False
+
+    def _update_jump(self, dt):
+        # x moves toward target
+        direction_x = 1 if self.target.x > self.pos.x else -1
+        self.vel.x = direction_x * self.max_speed
+
+        # gravity
+        self.vel.y += self.gravity * dt
+
+        self.pos += self.vel * dt
+
+        # landing
+        if self.pos.y >= self.grounded_y:
+            self.pos.y = self.grounded_y
+            self.vel = Vec2()
+            self.active = False
+            return True
+
+        return False
+    
+    def begin_drag(self, mouse_pos: Vec2):
+        self.movement_type = MovementType.DRAG
+        self.active = True
+        self.drag_offset = mouse_pos - self.pos
+        self.vel = Vec2()
+
+    def update_drag_target(self, mouse_pos: Vec2):
+        if self.movement_type == MovementType.DRAG:
+            self.pos = mouse_pos - self.drag_offset
+
+    def end_drag(self):
+        if self.movement_type == MovementType.DRAG:
+            self.active = False
+            self.movement_type = None
+
 
 # ANIMATION STUFF
 def load_frames(folder):  # function for loading frames, recieves a string path to a folder, returns a list of png files( converted to PixMap ) in name order
@@ -324,16 +382,15 @@ class Pet(QWidget): # main logic
                 target_x = random.randint(0, screen.width() - self.width())
                 self.mover.set_position(self.x(), self.y())
                 self.state_machine.remove_flag(Flag.MOVEMENT_FINISHED)
-                self.mover.move_to(target_x, self.y(), MovementType.LINEAR)
+                self.mover.move_to(target_x, self.y(), MovementType.LERP)
             case BehaviourStates.DRAGGING:
-                pos = self.click_detector.press_pos
-                self.mover.set_position(pos.x(), pos.y())
+                self.mover.movement_type = MovementType.DRAG
             case BehaviourStates.FALLING:
                 self.mover.move_to(self.x(), self.taskbar_top - self.height() + 1, MovementType.ACCELERATING)
             
-    def pointQFtocoords(self, x, y):
-
-        return
+    def _mouse_vec(self, event):   #helper function for converting Qt points to Vec2
+        p = event.globalPosition()
+        return Vec2(p.x(), p.y())
 
     def on_state_exit(self, state): #just does nothing when the state is done
         pass
@@ -342,7 +399,7 @@ class Pet(QWidget): # main logic
         dt = 1 / 60
 
         arrived = self.mover.update(dt)
-        self.move(int(self.mover.x), int(self.mover.y))
+        self.move(int(self.mover.pos.x), int(self.mover.pos.y))
 
         if arrived:
             self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
@@ -358,14 +415,21 @@ class Pet(QWidget): # main logic
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.click_detector.press(event.position())
+            if self.mover.movement_type == MovementType.DRAG:
+                print("mouse press event drag")
+                self.mover.begin_drag(self._mouse_vec(event))
+                self.state_machine.pulse(Pulse.DRAGGING_STARTED)
 
     def mouseMoveEvent(self, event):
-        print(event)
         self.click_detector.move(event.position())
+        if self.mover.movement_type == MovementType.DRAG:
+            self.mover.update_drag_target(self._mouse_vec(event))
 
     def mouseReleaseEvent(self, event):
         self.click_detector.release(event.position())
-
+        if self.mover.movement_type == MovementType.DRAG:
+            self.mover.end_drag()
+            self.state_machine.pulse(Pulse.DRAGGING_ENDED)
 
     def paintEvent(self, e): #draws the frame reveived from Animator 
         p = QPainter(self)

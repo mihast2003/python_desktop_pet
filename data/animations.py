@@ -22,6 +22,16 @@ ANIMATIONS = {
         "folder": "animations/roll",
         "fps": 12,
         "loop": True,
-    }
+    },
+
+    "look_around": {
+        "folder": "animations/look_around",
+        "fps": 8,
+        "loop": True,
+        "holds": {
+            3: 10,
+            8: 10,
+        }
+    },
 
 }

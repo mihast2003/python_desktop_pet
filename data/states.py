@@ -35,6 +35,18 @@ STATES = {
 
     },
 
+    "LOOKING_AROUND": {
+        "animation": "look_around",
+        "transitions": [
+            {
+                "on": ["CLICK"],
+                "to": "ROLL",
+            },
+        ],
+        "exit_when": ["ANIMATION_END"],
+        "exit_to": "IDLE"
+    },
+
     "ROLL": {
         "animation": "roll",
         "behaviour": "MOVING_RANDOM",
