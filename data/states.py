@@ -11,9 +11,24 @@ STATES = {
 
         "transitions": [
             {
-                "on": ["CLICK"],
+                "on": ["CLICK_HELD"],
+                "to": "DRAGGING",
+                "chance": 1,
+            },
+            {
+                "on": ["ANIMATION_END"],
                 "to": "BLINK",
-                "chance": 0.5
+                "chance": 0.08,
+            },
+            {
+                "on": ["ANIMATION_END"],
+                "to": "LOOKING_AROUND",
+                "chance": 0.02,
+            },
+            {
+                "on": ["ANIMATION_END"],
+                "to": "ROLL",
+                "chance": 0.01,
             },
             {
                 "on": ["CLICK"],
@@ -35,6 +50,18 @@ STATES = {
 
     },
 
+    "LOOKING_AROUND": {
+        "animation": "look_around",
+        "transitions": [
+            {
+                "on": ["CLICK"],
+                "to": "ROLL",
+            },
+        ],
+        "exit_when": ["ANIMATION_END"],
+        "exit_to": "IDLE"
+    },
+
     "ROLL": {
         "animation": "roll",
         "behaviour": "MOVING_RANDOM",
@@ -48,5 +75,22 @@ STATES = {
         ],
         "exit_when": ["MOVEMENT_FINISHED"],
         "exit_to": "IDLE"
-    }      
+    },  
+
+    "DRAGGING": {
+        "animation": "held_by_the_nose",
+        "fps": 5,
+        "behaviour": "DRAGGING",
+        
+        "exit_when": ["DRAGGING_ENDED"],
+        "exit_to": "FALLING"
+    },
+
+    "FALLING": {
+        "animation": "roll",
+        "behaviour": "FALLING",
+        
+        "exit_when": ["MOVEMENT_FINISHED"],
+        "exit_to": "IDLE"
+    },    
 }
