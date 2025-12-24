@@ -13,7 +13,22 @@ STATES = {
             {
                 "on": ["CLICK_HELD"],
                 "to": "DRAGGING",
-                "chance": 1
+                "chance": 1,
+            },
+            {
+                "on": ["ANIMATION_END"],
+                "to": "BLINK",
+                "chance": 0.08,
+            },
+            {
+                "on": ["ANIMATION_END"],
+                "to": "LOOKING_AROUND",
+                "chance": 0.02,
+            },
+            {
+                "on": ["ANIMATION_END"],
+                "to": "ROLL",
+                "chance": 0.01,
             },
             {
                 "on": ["CLICK"],
@@ -66,7 +81,7 @@ STATES = {
         "animation": "roll",
         "behaviour": "DRAGGING",
         
-        "exit_when": ["LETGO"],
+        "exit_when": ["DRAGGING_ENDED"],
         "exit_to": "FALLING"
     },
 

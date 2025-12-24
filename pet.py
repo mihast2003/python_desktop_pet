@@ -83,7 +83,7 @@ class Mover:
         self.vel = Vec2()
         self.target = Vec2()
 
-        self.drag_offset = Vec2()
+        self.drag_offset = Vec2(pet.width() / 2, pet.width() / 6)
 
         self.acceleration = 1200.0
         self.max_speed = 700.0
@@ -106,6 +106,7 @@ class Mover:
         self.vel = Vec2()
         self.movement_type = movement_type
         self.active = True
+        pet.state_machine.remove_flag(Flag.MOVEMENT_FINISHED)
 
         if movement_type == MovementType.JUMP:
             self.grounded_y = self.pos.y
@@ -214,19 +215,23 @@ class Mover:
         return False
     
     def begin_drag(self, mouse_pos: Vec2):
-        self.movement_type = MovementType.DRAG
         self.active = True
-        self.drag_offset = mouse_pos - self.pos
         self.vel = Vec2()
+        pet.state_machine.pulse(Pulse.DRAGGING_STARTED)
 
     def update_drag_target(self, mouse_pos: Vec2):
         if self.movement_type == MovementType.DRAG:
             self.pos = mouse_pos - self.drag_offset
 
+            screen = QApplication.primaryScreen().availableGeometry()
+            if mouse_pos.x > screen.width() - pet.width()/2 or mouse_pos.x <= pet.width()/2 or mouse_pos.y >= screen.bottom() - pet.height():
+                self.end_drag()
+
     def end_drag(self):
         if self.movement_type == MovementType.DRAG:
             self.active = False
             self.movement_type = None
+            pet.state_machine.pulse(Pulse.DRAGGING_ENDED)
 
 
 # ANIMATION STUFF
@@ -374,17 +379,19 @@ class Pet(QWidget): # main logic
         self.animator.set(frames=frames, fps=fps, loop=loop, holds=holds) #sets animation in animator
 
         self.behaviour = BehaviourStates.__members__.get(cfg.get("behaviour", "STATIONARY"))
-        print(self.behaviour)
+        # print(self.behaviour)
 
         match self.behaviour:
             case BehaviourStates.MOVING_RANDOM:
                 screen = QApplication.primaryScreen().geometry()
                 target_x = random.randint(0, screen.width() - self.width())
                 self.mover.set_position(self.x(), self.y())
-                self.state_machine.remove_flag(Flag.MOVEMENT_FINISHED)
                 self.mover.move_to(target_x, self.y(), MovementType.LERP)
             case BehaviourStates.DRAGGING:
                 self.mover.movement_type = MovementType.DRAG
+                pos = Vec2(self.click_detector.press_pos.x(), self.click_detector.press_pos.y())
+                self.mover.begin_drag(pos)
+                self.state_machine.pulse(Pulse.DRAGGING_STARTED)
             case BehaviourStates.FALLING:
                 self.mover.move_to(self.x(), self.taskbar_top - self.height() + 1, MovementType.ACCELERATING)
             
@@ -418,7 +425,7 @@ class Pet(QWidget): # main logic
             if self.mover.movement_type == MovementType.DRAG:
                 print("mouse press event drag")
                 self.mover.begin_drag(self._mouse_vec(event))
-                self.state_machine.pulse(Pulse.DRAGGING_STARTED)
+
 
     def mouseMoveEvent(self, event):
         self.click_detector.move(event.position())
@@ -428,8 +435,7 @@ class Pet(QWidget): # main logic
     def mouseReleaseEvent(self, event):
         self.click_detector.release(event.position())
         if self.mover.movement_type == MovementType.DRAG:
-            self.mover.end_drag()
-            self.state_machine.pulse(Pulse.DRAGGING_ENDED)
+            self.mover.end_drag()      
 
     def paintEvent(self, e): #draws the frame reveived from Animator 
         p = QPainter(self)

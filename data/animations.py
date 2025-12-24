@@ -13,7 +13,6 @@ ANIMATIONS = {
         "fps": 8,
         "loop": True,
         "holds": {
-            1: 2,
             2: 2,
         }
     },
