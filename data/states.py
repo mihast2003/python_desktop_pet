@@ -11,27 +11,27 @@ STATES = {
 
         "transitions": [
             {
-                "on": ["CLICK_HELD"],
+                "when": [ {"flag": "CLICK_HELD"}, ],  
                 "to": "DRAGGING",
                 "chance": 1,
             },
             {
-                "on": ["ANIMATION_END"],
+                "when": [ {"pulse": "ANIMATION_END"}, ],
                 "to": "BLINK",
                 "chance": 0.08,
             },
             {
-                "on": ["ANIMATION_END"],
+                "when": [ {"pulse": "ANIMATION_END"}, ],
                 "to": "LOOKING_AROUND",
                 "chance": 0.02,
             },
             {
-                "on": ["ANIMATION_END"],
+                "when": [ {"pulse": "ANIMATION_END"}, ],
                 "to": "ROLL",
                 "chance": 0.01,
             },
             {
-                "on": ["CLICK"],
+                "when": [ {"pulse": "CLICK"}, ],
                 "to": "ROLL",
             },
         ],

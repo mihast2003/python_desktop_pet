@@ -5,9 +5,10 @@ import random
 from engine.enums import Flag, Pulse
 
 class StateRuntime:
-    def __init__(self, state_name, config):
+    def __init__(self, state_name, config, variables):
         self.name = state_name
         self.config = config
+        self.variables = variables
 
         self.flags = set()
         self.pulses = set()
@@ -43,17 +44,36 @@ class StateRuntime:
 
         return Flag.__members__.get(event) in self.flags or Pulse.__members__.get(event) in self.pulses
     
+    def _check_condition(self, cond):
+        if "flag" in cond:
+            return cond["flag"] in self.flags
+
+        if "pulse" in cond:
+            return cond["pulse"] in self.pulses
+
+        if "var" in cond:
+            val = self.variables.get(cond["var"])
+            match cond["op"]:
+                case "<": return val < cond["value"]
+                case ">": return val > cond["value"]
+                case "==": return val == cond["value"]
+                case "<=": return val <= cond["value"]
+                case ">=": return val >= cond["value"]
+
+        return False
+
+
     def handle_events(self):
         transitions = self.config.get("transitions", [])
 
         # print("handling events: Flags: ", self.flags, " Pulses: ", self.pulses)
 
         for t in transitions:  # handling all "transitions" in configs
-            required_events = t["on"]
+            conditions = t["when"]
 
             chance = t.get("chance", 1)
             
-            if all(self.has_event(event) for event in required_events) and random.random() <= chance:  # all() returns true if all iterable conditions inside are true
+            if all(self._check_condition(c) for c in conditions) and random.random() <= chance:  # all() returns true if all iterable conditions inside are true
                 print(t["to"])
                 return t["to"]   # return the destination state
             

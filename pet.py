@@ -11,7 +11,9 @@ from data.animations import ANIMATIONS
 from engine.state_machine import StateMachine
 from engine.enums import Flag, Pulse, BehaviourStates, MovementType
 from engine.vec2 import Vec2
-from enum import Enum, auto
+
+from data.variables import VARIABLES
+from engine.variable_manager import VariableManager
 
 FPS = 60 #fps of logic processes
 PET_SIZE_X, PET_SIZE_Y = 100, 80
@@ -327,7 +329,7 @@ class Pet(QWidget): # main logic
 
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)   # QT stuff idk idc
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.resize(PET_SIZE_X, PET_SIZE_Y)
+        self.resize(PET_SIZE_X, PET_SIZE_Y) 
 
         # get all animations in a dictionary
 
@@ -354,6 +356,7 @@ class Pet(QWidget): # main logic
                   
         #instancing Animator, Mover
         self.animator = Animator()
+        self.variables = VariableManager(VARIABLES)
         self.mover = Mover()
         self.mover.drag_offset = Vec2(self.width() / 2 - 5, 0)
         
@@ -419,7 +422,9 @@ class Pet(QWidget): # main logic
 
         if self.animator.update(dt):
             self.state_machine.pulse(Pulse.ANIMATION_END)
-            
+        
+
+        self.variables.update(dt)
         self.state_machine.update()
         self.click_detector.update()
         self.update()
