@@ -7,7 +7,7 @@ class StateMachine:
     def __init__(self, pet, configs, initial):
         self.pet = pet
         self.configs = configs
-        self.state = StateRuntime(state_name=initial, config=configs[initial])   # ← created ONCE
+        self.state = StateRuntime(state_name=initial, config=configs[initial], variables=self.pet.variables)   # ← created ONCE
         self.change(initial)
 
     def raise_flag(self, flag: Flag):
@@ -26,6 +26,7 @@ class StateMachine:
         # print("state_machine next state is: ", next_state)
 
         if next_state:
+            self.state._apply_on_enter()  # signal to CurrentRuntime to apply changes in variables 
             self.change(next_state)
 
         self.state.clear_pulses()  # IMPORTANT

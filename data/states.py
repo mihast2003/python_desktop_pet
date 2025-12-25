@@ -1,7 +1,22 @@
 # data/states
 # config, main data structure, dictates states, their animation, transitions between states
 # after "animation" can write overrides for "fps" or "loop"
-# tansitions is a list of dictionaries of lists. transitions[{"on": ["CLICK"]}, {"to": ["ROLL"]}]
+
+# tansitions is a list of dictionaries of lists.
+# "transitions": [
+#             {
+#                 "when": [ 
+#                       {"flag":"THIS_FLAG"}, 
+#                       {"var":"sitting_still_timer", "op":">", "value":10},
+#                 ],  
+#                 "to": "DRAGGING",
+#                 "chance": 1,
+#             },
+# BUT
+# "when": ["THIS_FLAG", "THAT_PULSE" ],  
+# ALSO WORKS
+# 
+#
 
 STATES = {
     "IDLE": {
@@ -11,27 +26,30 @@ STATES = {
 
         "transitions": [
             {
-                "on": ["CLICK_HELD"],
+                "when": [ {"flag":"CLICK_HELD"}, ],  
                 "to": "DRAGGING",
                 "chance": 1,
             },
             {
-                "on": ["ANIMATION_END"],
+                "when": ["ANIMATION_END", ],
                 "to": "BLINK",
-                "chance": 0.08,
+                "chance": 0.06,
             },
             {
-                "on": ["ANIMATION_END"],
+                "when": [ {"pulse":"ANIMATION_END"}, ],
                 "to": "LOOKING_AROUND",
                 "chance": 0.02,
             },
             {
-                "on": ["ANIMATION_END"],
+                "when": [ 
+                    {"pulse":"ANIMATION_END"}, 
+                    {"var":"sitting_still_timer", "op":">", "value":100},
+                ],
                 "to": "ROLL",
-                "chance": 0.01,
+                "chance": 0.05,
             },
             {
-                "on": ["CLICK"],
+                "when": [ {"pulse":"CLICK"}, ],
                 "to": "ROLL",
             },
         ],
@@ -43,7 +61,7 @@ STATES = {
 
         "transitions": [
             {
-                "on": ["ANIMATION_END"],
+                "when": [ {"pulse":"ANIMATION_END"}, ],
                 "to": "IDLE"
             },
         ],
@@ -54,7 +72,7 @@ STATES = {
         "animation": "look_around",
         "transitions": [
             {
-                "on": ["CLICK"],
+                "when": [ {"pulse":"CLICK"}, ],
                 "to": "ROLL",
             },
         ],
@@ -65,10 +83,14 @@ STATES = {
     "ROLL": {
         "animation": "roll",
         "behaviour": "MOVING_RANDOM",
+
+        "on_enter": [
+            {"var": "sitting_still_timer", "op": "=", "value": 0},
+        ],
         
         "transitions": [
             {
-                "on": ["MOVEMENT_FINISHED"],
+                "when": [{"flag":"MOVEMENT_FINISHED"},],
                 "to": "BLINK",
                 "chance": 0.1,
             },
