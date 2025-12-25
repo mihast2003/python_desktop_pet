@@ -8,6 +8,8 @@ from PySide6.QtCore import Qt, QTimer, QPointF
 
 from data.states import STATES
 from data.animations import ANIMATIONS
+from data.render_config import RENDER_CONFIG
+
 from engine.state_machine import StateMachine
 from engine.enums import Flag, Pulse, BehaviourStates, MovementType
 from engine.vec2 import Vec2
@@ -246,24 +248,14 @@ class Mover:
 def load_frames(folder):  # function for loading frames, recieves a string path to a folder, returns a list of png files( converted to PixMap ) in name order
     frames = []
 
-    screen = QApplication.primaryScreen()
-    dpr = screen.devicePixelRatio()
-
     for file in sorted(os.listdir(folder)):
         files = sorted(                # get the png files
         f for f in os.listdir(folder)
         if f.lower().endswith(".png")
         )
 
-        frames = []
-
         for i, filename in enumerate(files):
-            pix = QPixmap(os.path.join(folder, filename)).scaled(
-                int(PET_SIZE_X * dpr), int(PET_SIZE_Y * dpr),      # scaled for DPI
-                Qt.KeepAspectRatio,
-                Qt.SmoothTransformation
-            )
-            pix.setDevicePixelRatio(dpr)  # helps with pixelisation
+            pix = QPixmap(os.path.join(folder, filename))
 
             frames.append(pix)
 
@@ -329,7 +321,7 @@ class Pet(QWidget): # main logic
 
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)   # QT stuff idk idc
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.resize(PET_SIZE_X, PET_SIZE_Y) 
+        # resize window to match FIRST frame (scaled)
 
         # get all animations in a dictionary
 
@@ -363,6 +355,10 @@ class Pet(QWidget): # main logic
         screen = QApplication.primaryScreen() # Screen detection
         self.taskbar_top = screen.availableGeometry().bottom() # Taskbar position detection
         self.mover.set_position(self.x(), self.taskbar_top - self.height() + 1) # set initial position
+
+        self.dpi_scale = self.devicePixelRatioF()
+        self.pixel_ratio = RENDER_CONFIG["pixel_ratio"]
+        # self.update_window_size()
 
         self.state_machine = StateMachine(pet=self, configs=STATES, initial="IDLE") # set initial state
 
@@ -404,13 +400,13 @@ class Pet(QWidget): # main logic
             case BehaviourStates.FALLING:
                 self.mover.move_to(self.x(), self.taskbar_top - self.height() + 1, MovementType.ACCELERATING)
             
-    def _mouse_vec(self, event):   #helper function for converting Qt points to Vec2
-        p = event.globalPosition()
-        return Vec2(p.x(), p.y())
-
     def on_state_exit(self, state): #just does nothing when the state is done
         pass
 
+    def _mouse_vec(self, event):   #helper function for converting Qt points to Vec2
+        p = event.globalPosition()
+        return Vec2(p.x(), p.y())
+    
     def update_logic(self):
         dt = 1 / 60
 
@@ -429,6 +425,16 @@ class Pet(QWidget): # main logic
         self.click_detector.update()
         self.update()
 
+    def update_window_size(self):
+            frame = self.animator.frame()
+            if not frame:
+                return
+
+            scale = self.pixel_ratio * self.pixel_ratio()
+            w = int(frame.width() * scale)
+            h = int(frame.height() * scale)
+            self.resize(w, h)
+
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -445,9 +451,21 @@ class Pet(QWidget): # main logic
         if self.mover.movement_type == MovementType.DRAG:
             self.mover.end_drag()      
 
+
     def paintEvent(self, e): #draws the frame reveived from Animator 
         p = QPainter(self)
-        p.drawPixmap(0, 0, self.animator.frame())
+        p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+
+        frame = self.animator.frame()
+        if not frame:
+            return
+
+        scale = self.pixel_ratio * self.dpi_scale
+
+        p.save()
+        p.scale(scale, scale)
+        p.drawPixmap(0, 0, frame)
+        p.restore()
 
 
 if __name__ == "__main__": # QT stuff, idk idc
