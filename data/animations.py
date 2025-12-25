@@ -1,6 +1,8 @@
 # animation data config, holds the animation folder path, default fps and loop(can be overriden in states.py)
 # "holds" specifies how long should certain frames last
 
+# When adding animations dont forget to add them to repository <----
+
 ANIMATIONS = {
     "idle": {
         "folder": "animations/idle",
@@ -34,7 +36,7 @@ ANIMATIONS = {
     },
 
     "held_by_the_nose": {
-        "folder": "animations/held_by_the_nose",
+        "folder": "animations/held",
         "fps": 12,
         "loop": True,
 
