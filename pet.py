@@ -484,6 +484,7 @@ class Pet(QWidget): # main logic
         
         p.save()
         p.translate(anchor_x, anchor_y)
+    
 
         p.setPen(QPen(Qt.green, 6))
         p.drawEllipse(QPointF(0, 0), 2, 2)
