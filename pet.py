@@ -359,22 +359,24 @@ class Pet(QWidget): # main logic
         self.variables = VariableManager(VARIABLES)
         self.mover = Mover()
 
+
         self.hitbox_width = 0
         self.hitbox_height = 0
         
+        self.anchor_x = 500
+        self.anchor_y = 500
         screen = QApplication.primaryScreen() # Screen detection
         self.taskbar_top = screen.availableGeometry().bottom() # Taskbar position detection
-        self.mover.set_position(100, self.taskbar_top - 800 + 1) # set initial position
+        self.mover.set_position(100, self.taskbar_top + 1) # set initial position
 
         self.dpi_scale = self.devicePixelRatioF()
         self.pixel_ratio = RENDER_CONFIG["pixel_ratio"]
-        self.mover.drag_offset = Vec2(self.hitbox_width * RENDER_CONFIG["drag_offset_x"], self.hitbox_height * RENDER_CONFIG["drag_offset_x"])
 
         self.state_machine = StateMachine(pet=self, configs=STATES, initial="IDLE") # set initial state
 
         self.click_detector = ClickDetector(state_machine=self.state_machine) #initialising ClickDetector
 
-        self.update_hitbox_size() # initial hitbox update
+        self.update_hitbox_size_and_drag_offset() # initial hitbox update
 
         # Timer for updating logic
         self.timer = QTimer()
@@ -407,14 +409,14 @@ class Pet(QWidget): # main logic
             case BehaviourStates.MOVING_RANDOM:
                 screen = QApplication.primaryScreen().geometry()
                 target_x = random.randint(0, screen.width() - round(self.hitbox_width))
-                self.mover.set_position(self.x(), self.y())
-                self.mover.move_to(target_x, self.y(), MovementType.LERP)
+                self.mover.set_position(self.anchor_x, self.anchor_y)
+                self.mover.move_to(target_x, self.anchor_y, MovementType.LERP)
             case BehaviourStates.DRAGGING:
                 pos = Vec2(self.click_detector.press_pos.x(), self.click_detector.press_pos.y())
                 self.mover.begin_drag(pos)
                 self.state_machine.pulse(Pulse.DRAGGING_STARTED)
             case BehaviourStates.FALLING:
-                self.mover.move_to(self.x(), self.taskbar_top - self.height() + 1, MovementType.ACCELERATING)
+                self.mover.move_to(self.anchor_x, self.taskbar_top + 1, MovementType.ACCELERATING)
             
     def on_state_exit(self, state): #just does nothing when the state is done
         pass
@@ -427,7 +429,15 @@ class Pet(QWidget): # main logic
         dt = 1 / 60
 
         arrived = self.mover.update(dt)
-        self.move(int(self.mover.pos.x), int(self.mover.pos.y))
+        # copy anchor from mover (single source of truth)
+        self.anchor_x = self.mover.pos.x
+        self.anchor_y = self.mover.pos.y
+
+        # derive window position
+        self.move(
+            int(self.anchor_x - self.width() / 2),
+            int(self.anchor_y - self.height())
+        )
 
         if arrived:
             self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
@@ -447,23 +457,19 @@ class Pet(QWidget): # main logic
         old_h = self.height()
 
         # world-space anchor (bottom-middle)
-        global_anchor_x = old_pos.x() + old_w // 2
-        global_anchor_y = old_pos.y() + old_h
-
-        print("ANCHOR:", global_anchor_x, global_anchor_y)
-        print("WINDOW:", self.pos(), self.size())
-
+        self.anchor_x = old_pos.x() + old_w // 2
+        self.anchor_y = old_pos.y() + old_h
 
         # move window so anchor stays fixed
         self.move(
-            global_anchor_x - new_w // 2,
-            global_anchor_y - new_h
+            self.anchor_x - new_w // 2,
+            self.anchor_y - new_h
         )
-        print("moving in x by ", global_anchor_x - new_w // 2)
+
         # resize
         self.resize(new_w, new_h)
 
-    def update_hitbox_size(self):
+    def update_hitbox_size_and_drag_offset(self):
             frame = self.animator.frame()
             if not frame:
                 return
@@ -475,6 +481,8 @@ class Pet(QWidget): # main logic
 
             # print(self.hitbox_height)
             # print(self.hitbox_width)
+
+            self.mover.drag_offset = Vec2(self.hitbox_width * RENDER_CONFIG["drag_offset_x"], self.hitbox_height * RENDER_CONFIG["drag_offset_y"])
 
 
     def mousePressEvent(self, event):
@@ -497,7 +505,7 @@ class Pet(QWidget): # main logic
         p = QPainter(self)
         p.setRenderHint(QPainter.SmoothPixmapTransform, True)
 
-        p.fillRect(self.rect(), QColor(80, 80, 80))  # dark gray
+        # p.fillRect(self.rect(), QColor(80, 80, 80))  # dark gray
 
         frame = self.animator.frame()
         if not frame:
@@ -528,7 +536,7 @@ class Pet(QWidget): # main logic
         p.drawLine(offset_x, offset_y, anchor_x, anchor_y)
 
         p.scale(scale, scale)
-        # p.drawPixmap(-offset_x, -offset_y, frame)
+        p.drawPixmap(-offset_x, -offset_y, frame)
 
         p.restore()
 

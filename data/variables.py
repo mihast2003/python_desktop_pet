@@ -18,5 +18,9 @@ VARIABLES = {
     "energy": {
         "value": 100.0,
         "rate": -0.2
+    },
+    "worrying_meter": {
+        "value": 0,
+        "rate": 2,
     }
 }

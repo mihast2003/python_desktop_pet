@@ -59,16 +59,6 @@ class StateRuntime:
 
 
     #unified check
-    def has_event(self, event):
-
-        # print("checking if ", event, " is in Flags: ", self.flags, " or Pulses: ", self.pulses)
-        
-        # if Flag.__members__.get(event) in self.flags or Pulse.__members__.get(event) in self.pulses:
-        #     print("yes it has")
-        # else: print("fuck no")
-
-        return Flag.__members__.get(event) in self.flags or Pulse.__members__.get(event) in self.pulses
-
     def _check_condition(self, cond):
         if "flag" in cond:
             return Flag.__members__.get(cond["flag"]) in self.flags
@@ -87,8 +77,6 @@ class StateRuntime:
 
         return Flag.__members__.get(cond) in self.flags or Pulse.__members__.get(cond) in self.pulses   # THIS IS WEIRD I WANNA TRY A BACKUP SYNTAX
 
-        return False
-
 
     def handle_events(self):
         transitions = self.config.get("transitions", [])
@@ -105,7 +93,7 @@ class StateRuntime:
                 return t["to"]   # return the destination state
             
         exit_conditions = self.config.get("exit_when")
-        if exit_conditions and all(self.has_event(event) for event in exit_conditions):
+        if exit_conditions and all(self._check_condition(c) for c in exit_conditions):
             print("exiting state")
             return self.config["exit_to"]
 
