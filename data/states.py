@@ -82,7 +82,7 @@ STATES = {
 
     "ROLL": {
         "animation": "roll",
-        "behaviour": "MOVING_RANDOM",
+        "behaviour": "STATIONARY", # HEYYYYYYYYYYYYYYYYYYYY ROOLLL IS STATIONARYY
 
         "on_enter": [
             {"var": "sitting_still_timer", "op": "=", "value": 0},
