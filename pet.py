@@ -248,16 +248,16 @@ class Mover:
 def load_frames(folder):  # function for loading frames, recieves a string path to a folder, returns a list of png files( converted to PixMap ) in name order
     frames = []
 
-    for file in sorted(os.listdir(folder)):
-        files = sorted(                # get the png files
-        f for f in os.listdir(folder)
-        if f.lower().endswith(".png")
-        )
+    
+    files = sorted(                # get the png files
+    f for f in os.listdir(folder)
+    if f.lower().endswith(".png")
+    )
 
-        for i, filename in enumerate(files):
-            pix = QPixmap(os.path.join(folder, filename))
+    for i, filename in enumerate(files):
+        pix = QPixmap(os.path.join(folder, filename))
 
-            frames.append(pix)
+        frames.append(pix)
 
     return frames
 
@@ -272,7 +272,7 @@ def scan_animation_bounds(frames):
     return max_w, max_h
 
 class Animator:  # contains different animation functions
-    def __init__(self):
+    def __init__(self,):
         self.frames = []
         self.index = 0
         self.timer = 0
@@ -280,16 +280,17 @@ class Animator:  # contains different animation functions
         self.ticks_left = 0
         self.done = False
 
-    def set(self, frames, fps, loop, holds=None): #sets the animatios. receives a list of PixMap (frames), int (fps) and a bool(loop)
+    def set(self, frames, fps, loop, times_to_loop, holds=None): #sets the animatios. receives a list of PixMap (frames), int (fps) and a bool(loop)
         self.frames = frames
         self.fps = fps
         self.loop = loop
+        self.times_to_loop = times_to_loop
         self.index = 0
         self.timer = 0
         self.holds = holds or {}
         self.ticks_left = self.hold_for(0)
         self.done = False
-
+        
     def update(self, dt): #iterates over the list of frames with the speed of fps, loops if loop==True
         if self.done or not self.frames:
             return False
@@ -305,17 +306,18 @@ class Animator:  # contains different animation functions
                 self.index += 1
 
                 if self.index >= len(self.frames):
-                    if self.loop:
+                    if self.loop or self.times_to_loop >= 2 :
                         self.index = 0
+                        self.times_to_loop -= 1
                     else:
                         self.index = len(self.frames) - 1
+                        pet.state_machine.raise_flag(Flag.ANIMATION_FINISHED)
                         self.done = True
 
-                    return True # if the index of the frame is more than we have frames, the animation is considered finished(for ease of connecting animations together), else - not
+                    pet.state_machine.pulse(Pulse.ANIMATION_END)  # if the index of the frame is more than we have frames, the animation is considered finished(for ease of connecting animations together), else - not
 
                 self.ticks_left = self.hold_for(self.index)
 
-            else: return False
 
     def hold_for(self, index):
         return self.holds.get(index + 1, 1)
@@ -334,13 +336,13 @@ class Pet(QWidget): # main logic
         # get all animations in a dictionary
         self.animations = {}
         base = os.path.dirname(os.path.abspath(__file__))
-        for name, cfg in ANIMATIONS.items():
+        for name in list(ANIMATIONS):
+            cfg = ANIMATIONS[name]
             folder = os.path.join(base, cfg["folder"])
 
             frames = []
-            
+
             frames = load_frames(folder)
-            print("loaded animation: ", name)
 
             if not frames:
                 raise RuntimeError(f"No frames found for animation '{name}'")
@@ -351,18 +353,18 @@ class Pet(QWidget): # main logic
                 "loop": cfg["loop"],
                 "holds": cfg.get("holds", {}),
                 "bounds": scan_animation_bounds(frames),
+                "times_to_loop": cfg.get("times_to_loop", 1)
             }
+            print(f"[ANIM LOAD] {name}: {len(frames)} frames")
 
                   
-        #instancing Animator, Mover
-        self.animator = Animator()
         self.variables = VariableManager(VARIABLES)
-        self.mover = Mover()
-
+        self.animator = Animator()
 
         self.hitbox_width = 0
         self.hitbox_height = 0
         
+        self.mover = Mover()
         self.anchor_x = 500
         self.anchor_y = 500
         screen = QApplication.primaryScreen() # Screen detection
@@ -377,6 +379,7 @@ class Pet(QWidget): # main logic
         self.click_detector = ClickDetector(state_machine=self.state_machine) #initialising ClickDetector
 
         self.update_hitbox_size_and_drag_offset() # initial hitbox update
+
 
         # Timer for updating logic
         self.timer = QTimer()
@@ -394,10 +397,11 @@ class Pet(QWidget): # main logic
         frames = self.animations[anim_name]["frames"]
         fps = cfg.get("fps", anim_cfg.get("fps", 6)) # safestate, will default to the latter
         loop = cfg.get("loop", anim_cfg.get("loop", True)) # safestate, will default to the latter
+        times_to_loop = cfg.get("times_to_loop", anim_cfg.get("times_to_loop", 1))
         holds = cfg.get("holds", anim_cfg.get("holds", {}))  # safestate, will default to empty directory
         bounds_w, bounds_h = self.animations[anim_name]["bounds"]
 
-        self.animator.set(frames=frames, fps=fps, loop=loop, holds=holds) #sets animation in animator
+        self.animator.set(frames=frames, fps=fps, loop=loop, times_to_loop=times_to_loop, holds=holds) #sets animation in animator
 
         scale = self.pixel_ratio * self.dpi_scale
         self.resize_keep_anchor(int(bounds_w * scale), int(bounds_h * scale))
@@ -429,6 +433,9 @@ class Pet(QWidget): # main logic
         dt = 1 / 60
 
         arrived = self.mover.update(dt)
+        if arrived:
+            self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
+
         # copy anchor from mover (single source of truth)
         self.anchor_x = self.mover.pos.x
         self.anchor_y = self.mover.pos.y
@@ -438,14 +445,8 @@ class Pet(QWidget): # main logic
             int(self.anchor_x - self.width() / 2),
             int(self.anchor_y - self.height())
         )
-
-        if arrived:
-            self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
-
-        if self.animator.update(dt):
-            self.state_machine.pulse(Pulse.ANIMATION_END)
-        
-
+  
+        self.animator.update(dt)
         self.variables.update(dt)
         self.state_machine.update()
         self.click_detector.update()

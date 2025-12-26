@@ -27,6 +27,7 @@ class StateMachine:
 
         if next_state:
             self.state._apply_on_enter()  # signal to CurrentRuntime to apply changes in variables 
+            self.remove_flag(Flag.ANIMATION_FINISHED)
             self.change(next_state)
 
         self.state.clear_pulses()  # IMPORTANT

@@ -133,7 +133,6 @@ STATES = {
             {
                 "when": ["ANIMATION_FINISHED",],
                 "to": "IDLE",
-                "chance": 0.5,
             }
         ],
     }, 

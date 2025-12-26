@@ -8,6 +8,7 @@ class Flag(Enum):
     MOVEMENT_FINISHED = auto()
     CLICK_HELD = auto()
     IS_DRAGGING = auto()
+    ANIMATION_FINISHED = auto()
 
 
 class Pulse(Enum):
