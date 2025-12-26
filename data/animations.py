@@ -42,4 +42,11 @@ ANIMATIONS = {
 
     },
 
+    "grow": {
+        "folder": "animations/grow",
+        "fps": 8,
+        "loop": True,
+
+    },
+
 }

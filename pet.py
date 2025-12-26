@@ -475,8 +475,8 @@ class Pet(QWidget): # main logic
         scale = self.pixel_ratio * self.dpi_scale
 
         # draw sprite so its bottom-middle is at (self.x, self.y)
-        anchor_x = self.width() / 2
-        anchor_y = self.height()
+        anchor_x = frame.width() * scale / 2
+        anchor_y = frame.height() * scale
 
         p.setPen(QPen(Qt.red, 6))
         p.drawLine(0, 0, self.width(), self.height())
@@ -484,7 +484,6 @@ class Pet(QWidget): # main logic
         
         p.save()
         p.translate(anchor_x, anchor_y)
-    
 
         p.setPen(QPen(Qt.green, 6))
         p.drawEllipse(QPointF(0, 0), 2, 2)

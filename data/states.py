@@ -20,7 +20,7 @@
 
 STATES = {
     "IDLE": {
-        "animation": "idle",
+        "animation": "grow",
         "fps": 6,
         "behaviour": "STATIONARY",
 
