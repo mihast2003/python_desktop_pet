@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtGui import QPainter, QPixmap, QPen, QColor
 from PySide6.QtCore import Qt, QTimer, QPointF
 
-from data.states import STATES
+from data.states import STATES, INITIAL_STATE
 from data.animations import ANIMATIONS
 from data.render_config import RENDER_CONFIG
 
@@ -371,11 +371,13 @@ class Pet(QWidget): # main logic
         self.taskbar_top = screen.availableGeometry().bottom() # Taskbar position detection
         self.mover.set_position(100, self.taskbar_top + 1) # set initial position
 
-        self.dpi_scale = self.devicePixelRatioF()
-        self.pixel_ratio = RENDER_CONFIG["pixel_ratio"]
 
-        self.state_machine = StateMachine(pet=self, configs=STATES, initial="IDLE") # set initial state
+        h = screen.availableGeometry().height()
+        initial_state = INITIAL_STATE.get("default", next(iter(INITIAL_STATE))) #either get the "default" from the INITIAL STATE, or the first item in the STATES dictinary
+        
+        self.update_dpi_and_scale(h=h, initial_state=initial_state)
 
+        self.state_machine = StateMachine(pet=self, configs=STATES, initial=initial_state) # set initial state
         self.click_detector = ClickDetector(state_machine=self.state_machine) #initialising ClickDetector
 
         self.update_hitbox_size_and_drag_offset() # initial hitbox update
@@ -403,8 +405,8 @@ class Pet(QWidget): # main logic
 
         self.animator.set(frames=frames, fps=fps, loop=loop, times_to_loop=times_to_loop, holds=holds) #sets animation in animator
 
-        scale = self.pixel_ratio * self.dpi_scale
-        self.resize_keep_anchor(int(bounds_w * scale), int(bounds_h * scale))
+        
+        self.resize_keep_anchor(int(bounds_w * self.scale), int(bounds_h * self.scale))
 
         self.behaviour = BehaviourStates.__members__.get(cfg.get("behaviour", "STATIONARY"))
         # print(self.behaviour)
@@ -469,16 +471,29 @@ class Pet(QWidget): # main logic
 
         # resize
         self.resize(new_w, new_h)
+    
+    def update_dpi_and_scale(self, h, initial_state):
+        percentage = RENDER_CONFIG["pet_size_on_screen"] / 100
+        
+        self.dpi_scale = self.devicePixelRatioF()
+        first_frame = self.animations[STATES[initial_state]["animation"]]["frames"][0]
+        self.pixel_ratio = (h * percentage) / first_frame.height() / self.dpi_scale
+        print("screen height", h)
+        print("dirst frame h:", first_frame.height())
+        print("pixel ratio", self.pixel_ratio)
+
+        self.scale = self.pixel_ratio * self.dpi_scale
+
+        print("screen dpi", self.dpi_scale)
+        print("new scale", self.scale)
 
     def update_hitbox_size_and_drag_offset(self):
             frame = self.animator.frame()
             if not frame:
                 return
-            
-            scale = self.pixel_ratio * self.devicePixelRatioF()
-            
-            self.hitbox_width = frame.width() * scale
-            self.hitbox_height = frame.height() * scale
+                      
+            self.hitbox_width = frame.width() * self.scale
+            self.hitbox_height = frame.height() * self.scale
 
             # print(self.hitbox_height)
             # print(self.hitbox_width)
@@ -512,8 +527,6 @@ class Pet(QWidget): # main logic
         if not frame:
             return
 
-        scale = self.pixel_ratio * self.dpi_scale
-
         # draw sprite so its bottom-middle is at (self.x, self.y)
         anchor_x = self.width() / 2
         anchor_y = self.height()
@@ -536,7 +549,7 @@ class Pet(QWidget): # main logic
         # p.drawLine(self.width(), 0, 0, self.height())
         # p.drawLine(offset_x, offset_y, anchor_x, anchor_y)
 
-        p.scale(scale, scale)
+        p.scale(self.scale, self.scale)
         p.drawPixmap(-offset_x, -offset_y, frame)
 
         p.restore()

@@ -17,6 +17,7 @@
 # ALSO WORKS
 # 
 #
+INITIAL_STATE = {"default": "IDLE"} #MUST HAVE
 
 STATES = {
     "IDLE": {
