@@ -32,7 +32,7 @@ class StateMachine:
 
         result = self.state.handle_events()  # sends event to state_runtime.py expecting two strings (next state and animation name)
         
-        if not result: return # safe check
+        if result == None: return # safe check
 
         next_state, transition_anim, anim_cfg = result
 

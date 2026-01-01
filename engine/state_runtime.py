@@ -87,7 +87,6 @@ class StateRuntime:
             conditions = t["when"]
 
             chance = t.get("chance", 1)
-
             
             if all(self._check_condition(c) for c in conditions) and random.random() <= chance:  # all() returns true if all iterable conditions inside are true
                 print("chance of this was: ", chance)
