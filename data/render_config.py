@@ -1,7 +1,7 @@
 
 RENDER_CONFIG = {
 
-    "pet_size_on_screen": 8.5,  #initial pet's sprite size on the screen (in percent)
+    "pixel_ratio": 0.2,  #png image pixel/screen pixel ratio
 
     "drag_offset_x": 0,
     "drag_offset_y": -1.4,
