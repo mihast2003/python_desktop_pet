@@ -39,7 +39,6 @@ ANIMATIONS = {
         "folder": "animations/held_by_the_nose",
         "fps": 12,
         "loop": True,
-
     },
 
     "grow": {
@@ -49,4 +48,10 @@ ANIMATIONS = {
         "times_to_loop": 3,
     },
 
+    "standing_up": {
+        "folder": "animations/standing_up",
+        "fps": 12,
+        "loop": False,
+        "times_to_loop": 1,
+    },
 }

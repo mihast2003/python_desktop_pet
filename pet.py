@@ -430,7 +430,7 @@ class Pet(QWidget): # main logic
     def on_state_exit(self, state): #just does nothing when the state is done
         pass
 
-    def play_animation(self, anim_name, cfg, isTransitionAnimation = None):
+    def play_animation(self, anim_name, cfg, isTransitionAnimation = False):
         anim_name = anim_name
 
         if anim_name not in ANIMATIONS:
@@ -447,7 +447,11 @@ class Pet(QWidget): # main logic
 
         self.resize_keep_anchor(int(bounds_w * self.scale), int(bounds_h * self.scale))
 
-        if isTransitionAnimation: loop = False  #if receiving a transition animation, looping is disabled
+        if isTransitionAnimation: 
+            loop = False  #if receiving a transition animation, looping is disabled
+            # print("transition animation playing")
+
+        # print("starting animation", anim_name, " Frame count:", len(frames), " loop:", loop, " times to loop:", times_to_loop, " holds:", holds)
         self.animator.set(frames=frames, fps=fps, loop=loop, times_to_loop=times_to_loop, holds=holds) #sets animation in animator
 
     def _mouse_vec(self, event):   #helper function for converting Qt points to Vec2
