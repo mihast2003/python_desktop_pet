@@ -6,6 +6,8 @@ from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtGui import QPainter, QPixmap, QPen, QColor
 from PySide6.QtCore import Qt, QTimer, QPointF
 
+from enum import Enum, auto
+
 from data.states import STATES, INITIAL_STATE
 from data.animations import ANIMATIONS
 from data.render_config import RENDER_CONFIG
@@ -19,6 +21,10 @@ from engine.variable_manager import VariableManager
 
 FPS = 60 #fps of logic processes
 PET_SIZE_X, PET_SIZE_Y = 100, 80
+
+class Facing(Enum):
+    LEFT = auto()
+    RIGHT = auto()
 
 # helper function to detect clicks or holds on pet sprite
 class ClickDetector:
@@ -112,6 +118,11 @@ class Mover:
         self.movement_type = movement_type
         self.active = True
         pet.state_machine.remove_flag(Flag.MOVEMENT_FINISHED)
+
+        if x < self.pos.x:
+            pet.facing = Facing.LEFT
+        elif x > self.pos.x:
+            pet.facing = Facing.RIGHT
 
         if movement_type == MovementType.JUMP:
             self.grounded_y = self.pos.y
@@ -371,6 +382,8 @@ class Pet(QWidget): # main logic
         self.taskbar_top = screen.availableGeometry().bottom() # Taskbar position detection
         self.mover.set_position(100, self.taskbar_top + 1) # set initial position
 
+        cfg_facing = RENDER_CONFIG.get("default_facing")
+        self.facing = Facing.__members__.get(cfg_facing, Facing.RIGHT)  # defining dacing direction
 
         h = screen.availableGeometry().height()
         initial_state = INITIAL_STATE.get("default", next(iter(INITIAL_STATE))) #either get the "default" from the INITIAL STATE, or the first item in the STATES dictinary
@@ -535,6 +548,13 @@ class Pet(QWidget): # main logic
         offset_y = frame.height()
 
         p.save()
+
+        sx = self.scale
+        if self.facing == Facing.LEFT:
+            sx *= -1
+
+        # p.scale(sx, self.scale)
+
         p.translate(anchor_x, anchor_y)
 
         #draws pets hitbox, pretty neat
@@ -549,7 +569,7 @@ class Pet(QWidget): # main logic
         # p.drawLine(self.width(), 0, 0, self.height())
         # p.drawLine(offset_x, offset_y, anchor_x, anchor_y)
 
-        p.scale(self.scale, self.scale)
+        p.scale(sx, self.scale)
         p.drawPixmap(-offset_x, -offset_y, frame)
 
         p.restore()
