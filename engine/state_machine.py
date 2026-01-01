@@ -9,6 +9,7 @@ class StateMachine:
         self.configs = configs
         self.state = StateRuntime(state_name=initial, config=configs[initial], variables=self.pet.variables)   # ← created ONCE
         self.change(initial)
+        self.in_transition = False
 
     def raise_flag(self, flag: Flag):
         self.state.raise_flag(flag)
@@ -19,17 +20,31 @@ class StateMachine:
     def pulse(self, pulse: Pulse):
         self.state.pulse(pulse)
 
+        if self.in_transition and pulse == Pulse.ANIMATION_END:  # logic for ending transition animation
+            self.in_transition = False
+            self.change(self.pending_state)
+            self.pending_state = None
+
+
     def update(self):    # state logic runs here
 
-        next_state = self.state.handle_events()  # sends event to state_runtime.py expecting a state in return
+        result = self.state.handle_events()  # sends event to state_runtime.py expecting two strings (next state and animation name)
         
+        if not result: return # safe check
+
+        # print("state machine. result:", result)
+        next_state, transition_anim = result
+
         # print("state_machine next state is: ", next_state)
 
-        if next_state:
+
+        if transition_anim:
+            self.start_transition(next_state, transition_anim)
+        else:
             self.state._apply_on_enter()  # signal to CurrentRuntime to apply changes in variables 
             self.remove_flag(Flag.ANIMATION_FINISHED)
             self.change(next_state)
-
+        
         self.state.clear_pulses()  # IMPORTANT
 
 
@@ -39,3 +54,9 @@ class StateMachine:
 
         self.state.config = self.configs[next_state]
         self.pet.on_state_enter(next_state)
+
+    def start_transition(self, next_state, anim):
+        self.in_transition = True
+        self.pending_state = next_state
+
+        self.pet.play_animation(anim, cfg=None ,isTransitionAnimation=True)  #cfg = None because later might add ability to change configs for transition animations

@@ -120,6 +120,16 @@ STATES = {
         "animation": "roll",
         "behaviour": "FALLING",
         
+        "transitions": [
+            {
+                "when": ["MOVEMENT_FINISHED",],
+                "to": "IDLE",
+                "transition_anim": "standing_up",
+                "transition_anim_cfg": {
+                    "fps": 12
+                },
+            }
+        ],
         "exit_when": ["MOVEMENT_FINISHED"],
         "exit_to": "IDLE"
     },    

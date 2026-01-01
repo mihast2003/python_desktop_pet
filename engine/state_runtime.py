@@ -90,11 +90,14 @@ class StateRuntime:
             
             if all(self._check_condition(c) for c in conditions) and random.random() <= chance:  # all() returns true if all iterable conditions inside are true
                 print(t["to"])
-                return t["to"]   # return the destination state
+                return (
+                    t["to"],  # return the destination state
+                    t.get("transition_anim", None)  # may be None
+                )
             
         exit_conditions = self.config.get("exit_when")
         if exit_conditions and all(self._check_condition(c) for c in exit_conditions):
             print("exiting state")
-            return self.config["exit_to"]
+            return(self.config["exit_to"], self.config.get("exit_animation", None) )
 
         return None

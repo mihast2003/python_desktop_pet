@@ -7,6 +7,7 @@ from PySide6.QtGui import QPainter, QPixmap, QPen, QColor
 from PySide6.QtCore import Qt, QTimer, QPointF
 
 from enum import Enum, auto
+import warnings
 
 from data.states import STATES, INITIAL_STATE
 from data.animations import ANIMATIONS
@@ -406,20 +407,9 @@ class Pet(QWidget): # main logic
         print("STATE:", state)
 
         cfg = STATES[state]      # gets the config for the state from states.py
-        anim_name = cfg["animation"]
-        anim_cfg = ANIMATIONS[anim_name]
+        anim_name = cfg.get("animation")
 
-        frames = self.animations[anim_name]["frames"]
-        fps = cfg.get("fps", anim_cfg.get("fps", 6)) # safestate, will default to the latter
-        loop = cfg.get("loop", anim_cfg.get("loop", True)) # safestate, will default to the latter
-        times_to_loop = cfg.get("times_to_loop", anim_cfg.get("times_to_loop", 1))
-        holds = cfg.get("holds", anim_cfg.get("holds", {}))  # safestate, will default to empty directory
-        bounds_w, bounds_h = self.animations[anim_name]["bounds"]
-
-        self.animator.set(frames=frames, fps=fps, loop=loop, times_to_loop=times_to_loop, holds=holds) #sets animation in animator
-
-        
-        self.resize_keep_anchor(int(bounds_w * self.scale), int(bounds_h * self.scale))
+        self.play_animation(anim_name=anim_name, cfg=cfg)
 
         self.behaviour = BehaviourStates.__members__.get(cfg.get("behaviour", "STATIONARY"))
         # print(self.behaviour)
@@ -436,9 +426,29 @@ class Pet(QWidget): # main logic
                 self.state_machine.pulse(Pulse.DRAGGING_STARTED)
             case BehaviourStates.FALLING:
                 self.mover.move_to(self.anchor_x, self.taskbar_top + 1, MovementType.ACCELERATING)
-            
+       
     def on_state_exit(self, state): #just does nothing when the state is done
         pass
+
+    def play_animation(self, anim_name, cfg, isTransitionAnimation = None):
+        anim_name = anim_name
+
+        if anim_name not in ANIMATIONS:
+            raise Exception("ANIMATION", anim_name, "NOT FOUND")  #no idea what this does will add user notification that error occured
+
+        anim_cfg = ANIMATIONS[anim_name]
+
+        frames = self.animations[anim_name]["frames"]
+        fps = cfg.get("fps", anim_cfg.get("fps", 6)) # safestate, will default to the latter
+        loop = cfg.get("loop", anim_cfg.get("loop", True)) # safestate, will default to the latter
+        times_to_loop = cfg.get("times_to_loop", anim_cfg.get("times_to_loop", 1))
+        holds = cfg.get("holds", anim_cfg.get("holds", {}))  # safestate, will default to empty directory
+        bounds_w, bounds_h = self.animations[anim_name]["bounds"]
+
+        self.resize_keep_anchor(int(bounds_w * self.scale), int(bounds_h * self.scale))
+
+        if isTransitionAnimation: loop = False  #if receiving a transition animation, looping is disabled
+        self.animator.set(frames=frames, fps=fps, loop=loop, times_to_loop=times_to_loop, holds=holds) #sets animation in animator
 
     def _mouse_vec(self, event):   #helper function for converting Qt points to Vec2
         p = event.globalPosition()
