@@ -32,6 +32,8 @@ class StateMachine:
 
         result = self.state.handle_events()  # sends event to state_runtime.py expecting two strings (next state and animation name)
         
+        self.state.clear_pulses()  # IMPORTANT
+
         if result == None: return # safe check
 
         next_state, transition_anim, anim_cfg = result
@@ -39,7 +41,6 @@ class StateMachine:
         # print("state machine. result:", result)
 
         # print("state_machine next state is: ", next_state)
-
 
         if transition_anim:
             self.start_transition(next_state, transition_anim, anim_cfg)
@@ -50,7 +51,6 @@ class StateMachine:
             # print("changing right away")
             self.change(next_state)
         
-        self.state.clear_pulses()  # IMPORTANT
 
 
     def change(self, next_state): #changes the state, updates state_runtime, calls on_state_enter in pet.py
