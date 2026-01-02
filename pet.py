@@ -66,7 +66,7 @@ class ClickDetector:
             self.sm.raise_flag(Flag.DRAGGING)
             print("HOLDIIING")
 
-        if  self.moved:
+        if self.moved:
             self.sm.raise_flag(Flag.DRAGGING)
 
     def release(self):
@@ -92,6 +92,7 @@ class ClickDetector:
 
         if duration <= self.click_time:
             self.sm.pulse(Pulse.CLICK)
+            pet.variables.add("times_clicked_this_state", 1)
             print("CLICK")
 
 
@@ -268,7 +269,6 @@ class Mover:
 def load_frames(folder):  # function for loading frames, recieves a string path to a folder, returns a list of png files( converted to PixMap ) in name order
     frames = []
 
-    
     files = sorted(                # get the png files
     f for f in os.listdir(folder)
     if f.lower().endswith(".png")
@@ -302,7 +302,7 @@ class Animator:  # contains different animation functions
 
     def set(self, frames, fps, loop, times_to_loop, holds=None): #sets the animatios. receives a list of PixMap (frames), int (fps) and a bool(loop)
         self.frames = frames
-        self.fps = fps
+        self.fps = fps if fps > 0 else 0.001
         self.loop = loop
         self.times_to_loop = times_to_loop
         self.index = 0
@@ -415,6 +415,8 @@ class Pet(QWidget): # main logic
 
     def on_state_enter(self, state): #called in state_machine when entering a new state
         print("STATE:", state)
+        
+        self.variables.set("times_clicked_this_state", 0)
 
         cfg = STATES[state]      # gets the config for the state from states.py
         anim_name = cfg.get("animation")
@@ -431,15 +433,18 @@ class Pet(QWidget): # main logic
                 self.mover.set_position(self.anchor_x, self.anchor_y)
                 self.mover.move_to(target_x, self.anchor_y, MovementType.LERP)
             case BehaviourStates.DRAGGING:
-                pos = Vec2(self.click_detector.press_pos.x(), self.click_detector.press_pos.y())
                 self.mover.movement_type = MovementType.DRAG
+
+                if not self.click_detector.press_pos: #safe check
+                    self.mover.end_drag()
+                    return
+                
+                pos = Vec2(self.click_detector.press_pos.x(), self.click_detector.press_pos.y())
                 self.mover.begin_drag(pos)
-                self.state_machine.pulse(Pulse.DRAGGING_STARTED)
             case BehaviourStates.FALLING:
                 self.mover.move_to(self.anchor_x, self.taskbar_top + 1, MovementType.ACCELERATING)
        
     def on_state_exit(self, state): #just does nothing when the state is done
-        # self.state_machine.remove_flag(Flag.DRAGGING)
         pass
 
     def play_animation(self, anim_name, cfg, isTransitionAnimation = False):
@@ -455,8 +460,8 @@ class Pet(QWidget): # main logic
         loop = cfg.get("loop", anim_cfg.get("loop", True)) # safestate, will default to the latter
         times_to_loop = cfg.get("times_to_loop", anim_cfg.get("times_to_loop", 1))
         holds = cfg.get("holds", anim_cfg.get("holds", {}))  # safestate, will default to empty directory
-        bounds_w, bounds_h = self.animations[anim_name]["bounds"]
 
+        bounds_w, bounds_h = self.animations[anim_name]["bounds"]
         self.resize_keep_anchor(int(bounds_w * self.scale), int(bounds_h * self.scale))
 
         if isTransitionAnimation: 

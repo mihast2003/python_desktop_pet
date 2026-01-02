@@ -3,6 +3,8 @@
 #rate of 1 is one second
 
 VARIABLES = {
+    "times_clicked_this_state": {},   # CANT CHANGE OR REMOVE because its supported in code
+    
     "sleep_timer": {
         "value": 0.0,
         "rate": 1.0
@@ -10,14 +12,6 @@ VARIABLES = {
     "sitting_still_timer": {
         "value": 0.0,
         "rate": 1.0
-    },
-    "hunger": {
-        "value": 5.0,
-        "rate": 0.05
-    },
-    "energy": {
-        "value": 100.0,
-        "rate": -0.2
     },
     "worrying_meter": {
         "value": 0,

@@ -50,7 +50,7 @@ class StateMachine:
 
 
     def change(self, next_state): #changes the state, updates state_runtime, calls on_state_enter in pet.py
-        if self.state:
+        if self.state.name != next_state:
             self.pet.on_state_exit(self.state)
         
         self.remove_flag(Flag.ANIMATION_FINISHED)

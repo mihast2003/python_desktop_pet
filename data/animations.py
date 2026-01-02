@@ -54,4 +54,13 @@ ANIMATIONS = {
         "loop": False,
         "times_to_loop": 1,
     },
+
+    "trollface": {
+        "folder": "animations/trollface",
+        "fps": 60,
+        "loop": False,
+        "holds": {
+            1: 10,
+        }
+    },
 }

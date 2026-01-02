@@ -25,9 +25,13 @@ STATES = {
         "fps": 6,
         "behaviour": "STATIONARY",
 
+        "on_enter": [
+            {"var": "times_clicked", "op": "=", "value": 0},
+        ],
+
         "transitions": [
             {
-                "when": [ {"flag":"DRAGGING"}, ],  
+                "when": [  "DRAGGING_STARTED" ],  
                 "to": "DRAGGING",
                 "chance": 1,
             },
@@ -48,6 +52,14 @@ STATES = {
                 ],
                 "to": "ROLL",
                 "chance": 0.05,
+            },
+            {
+                "when": [ 
+                    {"pulse":"ANIMATION_END"},
+                    {"var":"sitting_still_timer", "op":">", "value":100},
+                ],
+                "to": "TROLLING",
+                "chance": 0.005,
             },
             {
                 "when": [ 
@@ -148,4 +160,25 @@ STATES = {
             }
         ],
     }, 
+
+    "TROLLING": {
+        "animation": "idle",
+        "fps": 0,
+        "behaviour": "STATIONARY",
+
+        "transitions":[
+            {
+                "when": [ 
+                    "CLICK", 
+                    {"var": "times_clicked_this_state", "op": ">=", "value": 3}
+                    ],
+                "to": "IDLE",
+                "transition_anim": "trollface",
+                "transition_anim_cfg": {
+                    "fps": 10,
+                }
+            }
+        ],
+    }, 
+    
 }

@@ -15,7 +15,11 @@ class StateRuntime:
 
     # flags
     def raise_flag(self, flag: Flag):
+        if flag == Flag.DRAGGING and not flag in self.flags:  # special check for sending a pulse dragging started when dragging flag is raised
+            self.pulse(Pulse.DRAGGING_STARTED)
+
         self.flags.add(flag)
+
 
     def remove_flag(self, flag: Flag):
         self.flags.discard(flag)
@@ -81,7 +85,7 @@ class StateRuntime:
     def handle_events(self):
         transitions = self.config.get("transitions", [])
 
-        # print("handling events: Flags: ", self.flags, " Pulses: ", self.pulses)
+        print("handling events: Flags: ", self.flags, " Pulses: ", self.pulses)
 
         for t in transitions:  # handling all "transitions" in configs
             conditions = t["when"]
@@ -93,8 +97,8 @@ class StateRuntime:
                 # print("state_runtime detected transition to:", t["to"])
                 return (
                     t["to"],  # return the destination state
-                    t.get("transition_anim"),  # may be None
-                    t.get("transition_anim_cfg")
+                    t.get("transition_anim", None),  # may be None
+                    t.get("transition_anim_cfg", {})
                 )
             
         exit_conditions = self.config.get("exit_when")
