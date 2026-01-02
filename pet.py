@@ -63,6 +63,7 @@ class ClickDetector:
         if elapsed >= self.long_press_time and not self.moved:
             self.hold_triggered = True
             self.sm.raise_flag(Flag.CLICK_HELD)
+            self.sm.raise_flag(Flag.DRAGGING)
             print("HOLDIIING")
 
         if elapsed >= self.long_press_time or self.moved:
@@ -75,12 +76,13 @@ class ClickDetector:
 
         duration = time.monotonic() - self.press_time
 
+        self.sm.remove_flag(Flag.DRAGGING)
+
         self.press_time = None
         self.press_pos = None
 
         if self.hold_triggered:
             self.sm.remove_flag(Flag.CLICK_HELD)
-            self.sm.remove_flag(Flag.DRAGGING)
             self.sm.pulse(Pulse.LETGO)
             print("stopped holding")
             return
@@ -236,10 +238,10 @@ class Mover:
         return False
     
     def begin_drag(self, mouse_pos: Vec2):
+        self.movement_type = MovementType.DRAG
         self.pos = mouse_pos - self.drag_offset # initial snapping to cursor movement
         print ("SNAP")
         self.active = True
-        self.movement_type = MovementType.DRAG
         self.vel = Vec2()
 
     def update_drag_target(self, mouse_pos: Vec2):
@@ -428,6 +430,7 @@ class Pet(QWidget): # main logic
                 self.mover.move_to(target_x, self.anchor_y, MovementType.LERP)
             case BehaviourStates.DRAGGING:
                 pos = Vec2(self.click_detector.press_pos.x(), self.click_detector.press_pos.y())
+                self.mover.movement_type = MovementType.DRAG
                 self.mover.begin_drag(pos)
                 self.state_machine.pulse(Pulse.DRAGGING_STARTED)
             case BehaviourStates.FALLING:
@@ -467,6 +470,12 @@ class Pet(QWidget): # main logic
     def update_logic(self):
         dt = 1 / 60
 
+        self.variables.update(dt)
+        self.state_machine.update()
+        self.update()
+        self.click_detector.update()
+        self.animator.update(dt)
+
         arrived = self.mover.update(dt)
         if arrived:
             self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
@@ -481,11 +490,6 @@ class Pet(QWidget): # main logic
             int(self.anchor_y - self.height())
         )
   
-        self.click_detector.update()
-        self.state_machine.update()
-        self.variables.update(dt)
-        self.animator.update(dt)
-        self.update()
 
     def resize_keep_anchor(self, new_w, new_h):
         old_pos = self.pos()
@@ -549,6 +553,12 @@ class Pet(QWidget): # main logic
         self.click_detector.release()
         if self.mover.movement_type == MovementType.DRAG:
             self.mover.end_drag()      
+
+    def focusOutEvent(self, event):
+        self.mover.end_drag()  
+
+    def leaveEvent(self, event):
+        self.mover.end_drag()  
 
 
     def paintEvent(self, e): #draws the frame reveived from Animator 
