@@ -66,17 +66,17 @@ class ClickDetector:
             self.sm.raise_flag(Flag.DRAGGING)
             print("HOLDIIING")
 
-        if elapsed >= self.long_press_time or self.moved:
+        if  self.moved:
             self.sm.raise_flag(Flag.DRAGGING)
 
-
     def release(self):
+        self.sm.remove_flag(Flag.DRAGGING)
+
         if self.press_time is None:
             return
 
         duration = time.monotonic() - self.press_time
 
-        self.sm.remove_flag(Flag.DRAGGING)
 
         self.press_time = None
         self.press_pos = None
@@ -439,6 +439,7 @@ class Pet(QWidget): # main logic
                 self.mover.move_to(self.anchor_x, self.taskbar_top + 1, MovementType.ACCELERATING)
        
     def on_state_exit(self, state): #just does nothing when the state is done
+        # self.state_machine.remove_flag(Flag.DRAGGING)
         pass
 
     def play_animation(self, anim_name, cfg, isTransitionAnimation = False):
@@ -476,14 +477,14 @@ class Pet(QWidget): # main logic
             self.mover.update_drag_target(self.last_mouse_pos)
 
         self.variables.update(dt)
-        self.state_machine.update()
         self.click_detector.update()
+        self.state_machine.update()
         self.animator.update(dt)
         self.update()
     
-
         arrived = self.mover.update(dt)
         if arrived:
+            pet.click_detector.release()
             self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
 
         # copy anchor from mover (single source of truth)

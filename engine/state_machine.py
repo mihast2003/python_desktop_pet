@@ -31,15 +31,12 @@ class StateMachine:
         if self.in_transition: return
 
         result = self.state.handle_events()  # sends event to state_runtime.py expecting two strings (next state and animation name)
-        
         self.state.clear_pulses()  # IMPORTANT
-
         if result == None: return # safe check
-
+        
         next_state, transition_anim, anim_cfg = result
 
         # print("state machine. result:", result)
-
         # print("state_machine next state is: ", next_state)
 
         if transition_anim:
@@ -47,7 +44,6 @@ class StateMachine:
             # print("transition animation detected")
         else:
             self.state._apply_on_enter()  # signal to CurrentRuntime to apply changes in variables 
-            self.remove_flag(Flag.ANIMATION_FINISHED)
             # print("changing right away")
             self.change(next_state)
         
@@ -56,7 +52,9 @@ class StateMachine:
     def change(self, next_state): #changes the state, updates state_runtime, calls on_state_enter in pet.py
         if self.state:
             self.pet.on_state_exit(self.state)
-
+        
+        self.remove_flag(Flag.ANIMATION_FINISHED)
+        self.remove_flag(Flag.MOVEMENT_FINISHED)
         self.state.config = self.configs[next_state]
         self.pet.on_state_enter(next_state)
 
