@@ -20,7 +20,7 @@ from engine.vec2 import Vec2
 from data.variables import VARIABLES
 from engine.variable_manager import VariableManager
 
-FPS = 4 #fps of logic processes
+FPS = 60 #fps of logic processes
 PET_SIZE_X, PET_SIZE_Y = 100, 80
 
 class Facing(Enum):
@@ -472,14 +472,15 @@ class Pet(QWidget): # main logic
     def update_logic(self):
         dt = 1 / 60
 
+        if self.mover.movement_type == MovementType.DRAG:
+            self.mover.update_drag_target(self.last_mouse_pos)
+
         self.variables.update(dt)
         self.state_machine.update()
         self.click_detector.update()
         self.animator.update(dt)
         self.update()
     
-        if self.mover.movement_type == MovementType.DRAG:
-            self.mover.update_drag_target(self.last_mouse_pos)
 
         arrived = self.mover.update(dt)
         if arrived:
@@ -546,6 +547,7 @@ class Pet(QWidget): # main logic
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.click_detector.press(event.globalPosition())
+            self.last_mouse_pos = self._mouse_vec(event)
 
 
     def mouseMoveEvent(self, event):
