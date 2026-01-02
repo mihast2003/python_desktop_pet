@@ -20,7 +20,7 @@ from engine.vec2 import Vec2
 from data.variables import VARIABLES
 from engine.variable_manager import VariableManager
 
-FPS = 60 #fps of logic processes
+FPS = 4 #fps of logic processes
 PET_SIZE_X, PET_SIZE_Y = 100, 80
 
 class Facing(Enum):
@@ -39,7 +39,7 @@ class ClickDetector:
 
         self.click_time = 0.1
         self.long_press_time = 0.1
-        self.move_tolerance = 6
+        self.move_tolerance = 1   # CHANGE
 
     def press(self, pos: QPointF):
         self.press_time = time.monotonic()
@@ -60,10 +60,13 @@ class ClickDetector:
 
         elapsed = time.monotonic() - self.press_time
 
-        if elapsed >= self.long_press_time and not self.moved or self.moved:
+        if elapsed >= self.long_press_time and not self.moved:
             self.hold_triggered = True
             self.sm.raise_flag(Flag.CLICK_HELD)
             print("HOLDIIING")
+
+        if elapsed >= self.long_press_time or self.moved:
+            self.sm.raise_flag(Flag.DRAGGING)
 
 
     def release(self):
@@ -77,6 +80,7 @@ class ClickDetector:
 
         if self.hold_triggered:
             self.sm.remove_flag(Flag.CLICK_HELD)
+            self.sm.remove_flag(Flag.DRAGGING)
             self.sm.pulse(Pulse.LETGO)
             print("stopped holding")
             return
@@ -232,20 +236,22 @@ class Mover:
         return False
     
     def begin_drag(self, mouse_pos: Vec2):
+        self.pos = mouse_pos - self.drag_offset # initial snapping to cursor movement
+        print ("SNAP")
         self.active = True
         self.movement_type = MovementType.DRAG
         self.vel = Vec2()
-        pet.state_machine.pulse(Pulse.DRAGGING_STARTED)
-        self.pos = mouse_pos - self.drag_offset # initial snapping to cursor movement
 
     def update_drag_target(self, mouse_pos: Vec2):
-        if self.movement_type == MovementType.DRAG:
-            screen = QApplication.primaryScreen().availableGeometry()
-            if mouse_pos.x > screen.width() - pet.hitbox_width/2 or mouse_pos.x <= pet.hitbox_width/2 or mouse_pos.y >= screen.bottom() - (pet.hitbox_height / 2):
-                self.end_drag()
-                return
-            
-            self.pos = mouse_pos - self.drag_offset
+        # if not self.movement_type == MovementType.DRAG:
+        #     return
+
+        screen = QApplication.primaryScreen().availableGeometry()
+        if mouse_pos.x > screen.width() - pet.hitbox_width/2 or mouse_pos.x <= pet.hitbox_width/2 or mouse_pos.y >= screen.bottom() - (pet.hitbox_height / 2):
+            self.end_drag()
+            return
+        
+        self.pos = mouse_pos - self.drag_offset
             
 
     def end_drag(self):
@@ -475,10 +481,10 @@ class Pet(QWidget): # main logic
             int(self.anchor_y - self.height())
         )
   
-        self.animator.update(dt)
-        self.variables.update(dt)
-        self.state_machine.update()
         self.click_detector.update()
+        self.state_machine.update()
+        self.variables.update(dt)
+        self.animator.update(dt)
         self.update()
 
     def resize_keep_anchor(self, new_w, new_h):
@@ -535,6 +541,7 @@ class Pet(QWidget): # main logic
 
     def mouseMoveEvent(self, event):
         self.click_detector.move(event.globalPosition())
+
         if self.mover.movement_type == MovementType.DRAG:
             self.mover.update_drag_target(self._mouse_vec(event))
 

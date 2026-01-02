@@ -27,7 +27,7 @@ STATES = {
 
         "transitions": [
             {
-                "when": [ {"flag":"CLICK_HELD"}, ],  
+                "when": [ {"flag":"DRAGGING"}, ],  
                 "to": "DRAGGING",
                 "chance": 1,
             },

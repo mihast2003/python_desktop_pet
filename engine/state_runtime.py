@@ -89,8 +89,8 @@ class StateRuntime:
 
             
             if all(self._check_condition(c) for c in conditions) and random.random() <= chance:  # all() returns true if all iterable conditions inside are true
-                print("chance of this was: ", chance)
-                print("state_runtime detected transition to:", t["to"])
+                # print("chance of this was: ", chance)
+                # print("state_runtime detected transition to:", t["to"])
                 return (
                     t["to"],  # return the destination state
                     t.get("transition_anim"),  # may be None
