@@ -245,11 +245,11 @@ class Mover:
         self.vel = Vec2()
 
     def update_drag_target(self, mouse_pos: Vec2):
-        # if not self.movement_type == MovementType.DRAG:
-        #     return
+        if not self.movement_type == MovementType.DRAG:
+            return
 
         screen = QApplication.primaryScreen().availableGeometry()
-        if mouse_pos.x > screen.width() - pet.hitbox_width/2 or mouse_pos.x <= pet.hitbox_width/2 or mouse_pos.y >= screen.bottom() - (pet.hitbox_height / 2):
+        if mouse_pos.x > screen.width() - pet.hitbox_width/2 or mouse_pos.x <= pet.hitbox_width/2 or mouse_pos.y >= screen.bottom():
             self.end_drag()
             return
         
@@ -402,6 +402,8 @@ class Pet(QWidget): # main logic
         self.state_machine = StateMachine(pet=self, configs=STATES, initial=initial_state) # set initial state
         self.click_detector = ClickDetector(state_machine=self.state_machine) #initialising ClickDetector
 
+        self.last_mouse_pos = Vec2()
+
         self.update_hitbox_size_and_drag_offset() # initial hitbox update
 
 
@@ -472,9 +474,12 @@ class Pet(QWidget): # main logic
 
         self.variables.update(dt)
         self.state_machine.update()
-        self.update()
         self.click_detector.update()
         self.animator.update(dt)
+        self.update()
+    
+        if self.mover.movement_type == MovementType.DRAG:
+            self.mover.update_drag_target(self.last_mouse_pos)
 
         arrived = self.mover.update(dt)
         if arrived:
@@ -546,8 +551,8 @@ class Pet(QWidget): # main logic
     def mouseMoveEvent(self, event):
         self.click_detector.move(event.globalPosition())
 
-        if self.mover.movement_type == MovementType.DRAG:
-            self.mover.update_drag_target(self._mouse_vec(event))
+        self.last_mouse_pos = self._mouse_vec(event)
+
 
     def mouseReleaseEvent(self, event):
         self.click_detector.release()
