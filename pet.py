@@ -250,7 +250,7 @@ class Mover:
             return
 
         screen = QApplication.primaryScreen().availableGeometry()
-        if mouse_pos.x > screen.width() - pet.hitbox_width/2 or mouse_pos.x <= pet.hitbox_width/2 or mouse_pos.y >= screen.bottom():
+        if mouse_pos.x >= screen.width() - pet.hitbox_width/2 or mouse_pos.x <= pet.hitbox_width/2 or mouse_pos.y >= screen.bottom():
             self.end_drag()
             return
         
@@ -422,6 +422,7 @@ class Pet(QWidget): # main logic
         print("STATE:", state)
         
         self.variables.set("times_clicked_this_state", 0)
+        self.variables.set("time_spent_in_this_state", 0)
 
         cfg = STATES[state]      # gets the config for the state from states.py
         anim_name = cfg.get("animation")
@@ -433,11 +434,22 @@ class Pet(QWidget): # main logic
         # print(self.behaviour)
 
         match self.behaviour:
-            case BehaviourStates.MOVING_RANDOM:
-                screen = QApplication.primaryScreen().geometry()
-                target_x = random.randint(0, screen.width() - round(self.hitbox_width))
+            case BehaviourStates.MOVE_RANDOM_X:
+                screen = QApplication.primaryScreen().availableGeometry()
+                target_x = random.randint(round(self.hitbox_width/2), screen.width() - round(self.hitbox_width/2))
                 self.mover.set_position(self.anchor_x, self.anchor_y)
                 self.mover.move_to(target_x, self.anchor_y, MovementType.LERP)
+            case BehaviourStates.MOVE_RANDOM_Y:
+                screen = QApplication.primaryScreen().availableGeometry()
+                target_y = random.randint(round(self.hitbox_height), screen.height())
+                self.mover.set_position(self.anchor_x, self.anchor_y)
+                self.mover.move_to(self.anchor_x, target_y, MovementType.LERP)
+            case BehaviourStates.MOVE_RANDOM_XY:
+                screen = QApplication.primaryScreen().availableGeometry()
+                target_x = random.randint(round(self.hitbox_width/2), screen.width() - round(self.hitbox_width/2))
+                target_y = random.randint(round(self.hitbox_height), screen.height())
+                self.mover.set_position(self.anchor_x, self.anchor_y)
+                self.mover.move_to(target_x, target_y, MovementType.LERP)
             case BehaviourStates.DRAGGING:
                 self.mover.movement_type = MovementType.DRAG
 

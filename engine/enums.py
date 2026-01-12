@@ -20,8 +20,10 @@ class Pulse(Enum):
 
 class BehaviourStates(Enum):
     STATIONARY = auto()
-    WANDERING = auto()
-    MOVING_RANDOM = auto()
+    WANDER = auto()
+    MOVE_RANDOM_X = auto()
+    MOVE_RANDOM_Y = auto()
+    MOVE_RANDOM_XY = auto()
     DRAGGING = auto()
     FALLING = auto()
 
