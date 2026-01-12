@@ -13,7 +13,7 @@ ANIMATIONS = {
     "blink": {
         "folder": "animations/blink",
         "fps": 8,
-        "loop": True,
+        "loop": False,
         "holds": {
             2: 2,
         }

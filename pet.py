@@ -334,9 +334,11 @@ class Animator:  # contains different animation functions
                     else:
                         self.index = len(self.frames) - 1
                         pet.state_machine.raise_flag(Flag.ANIMATION_FINISHED)
+                        print("Animator: Flag.ANIMATION_FINISHED ")
                         self.done = True
 
                     pet.state_machine.pulse(Pulse.ANIMATION_END)  # if the index of the frame is more than we have frames, the animation is considered finished(for ease of connecting animations together), else - not
+                    print("Animator: Pulse.ANIMATION_END ")
 
                 self.ticks_left = self.hold_for(self.index)
 
@@ -459,7 +461,8 @@ class Pet(QWidget): # main logic
 
         frames = self.animations[anim_name]["frames"]
         fps = cfg.get("fps", anim_cfg.get("fps", 6)) # safestate, will default to the latter
-        loop = cfg.get("loop", anim_cfg.get("loop", True)) # safestate, will default to the latter
+        loop_option = RENDER_CONFIG.get("default_loop_option", False)
+        loop = cfg.get("loop", anim_cfg.get("loop", loop_option)) # safestate, will default to the latter
         times_to_loop = cfg.get("times_to_loop", anim_cfg.get("times_to_loop", 1))
         holds = cfg.get("holds", anim_cfg.get("holds", {}))  # safestate, will default to empty directory
 

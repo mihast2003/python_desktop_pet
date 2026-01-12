@@ -79,7 +79,7 @@ class StateRuntime:
                 case "<=": return val <= cond["value"]
                 case ">=": return val >= cond["value"]
 
-        return Flag.__members__.get(cond) in self.flags or Pulse.__members__.get(cond) in self.pulses   # THIS IS WEIRD I WANNA TRY A BACKUP SYNTAX
+        return Flag.__members__.get(cond) in self.flags or Pulse.__members__.get(cond) in self.pulses   # THIS makes it so instead of Flag.FLAG_NAME you can just FLAG_NAME
 
 
     def handle_events(self):

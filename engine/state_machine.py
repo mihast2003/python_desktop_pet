@@ -15,7 +15,6 @@ class StateMachine:
         self.pending_state = None
         self.pending_transition_anim = None
         self.pending_transition_cfg = None
-        self.freeze_simulation = False
 
     def raise_flag(self, flag: Flag):
         self.state.raise_flag(flag)
@@ -27,31 +26,24 @@ class StateMachine:
         self.state.pulse(pulse)
 
         if self.in_transition and pulse == Pulse.ANIMATION_END:  # logic for ending transition animation
-            self.on_transition_animation_end()
-            
-
-    def on_transition_animation_end(self):
-        # self.state.clear_pulses()
-        # print("changing after animation finished")
-        self.apply_pending_changes()
-        self.in_transition = False
+            # print("changing after animation finished")
+            self.apply_pending_changes()
         
 
     def update(self, dt):    # state logic runs here
-        if self.freeze_simulation: return
+        # MOVEMENT AND ANIMATION UPDATE
+        arrived = self.pet.mover.update(dt)
+        self.pet.animator.update(dt)
+        
+        if arrived:
+            self.pet.click_detector.release()
+            self.raise_flag(Flag.MOVEMENT_FINISHED)
+
 
         # HANDLING EVENTS
         if not self.in_transition:
             result = self.state.handle_events()  # sends event to state_runtime.py expecting two strings (next state and animation name)
         else: result = None
-
-        # MOVEMENT AND ANIMATION UPDATE
-        arrived = self.pet.mover.update(dt)
-        self.pet.animator.update(dt)
-
-        if arrived:
-            self.pet.click_detector.release()
-            self.raise_flag(Flag.MOVEMENT_FINISHED)
 
 
         # TRANSITION LOGIC
@@ -76,29 +68,30 @@ class StateMachine:
         self.pending_transition_cfg = cfg
         self.in_transition = True
 
+        # 1return if no transition animation
+        if not self.pending_transition_anim:
+            return
+        
+        # print("state_machine: animation queued")
+        self.pet.play_animation(
+            self.pending_transition_anim,
+            cfg=self.pending_transition_cfg,
+            isTransitionAnimation=True
+        )
+
     def apply_pending_changes(self):
         if not self.pending_state:
             return
 
-        self.freeze_simulation = True
-
-        # 1. Play transition animation first (if any)
-        if self.pending_transition_anim:
-            self.pet.play_animation(
-                self.pending_transition_anim,
-                cfg=self.pending_transition_cfg,
-                isTransitionAnimation=True
-            )
-
         # 2. Change state
         self.change(self.pending_state)
+        # print("state_machine: pending changes applied")
 
         # 3. Cleanup
         self.pending_state = None
         self.pending_transition_anim = None
         self.pending_transition_cfg = None
         self.in_transition = False
-        self.freeze_simulation = False
   
     def change(self, next_state): #changes the state, updates state_runtime, calls on_state_enter in pet.py
         if self.state.name != next_state:
@@ -107,4 +100,5 @@ class StateMachine:
         self.remove_flag(Flag.ANIMATION_FINISHED)
         self.remove_flag(Flag.MOVEMENT_FINISHED)
         self.state.config = self.configs[next_state]
+        self.state._apply_on_enter()
         self.pet.on_state_enter(next_state)
