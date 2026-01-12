@@ -85,7 +85,7 @@ class StateRuntime:
     def handle_events(self):
         transitions = self.config.get("transitions", [])
 
-        print("handling events: Flags: ", self.flags, " Pulses: ", self.pulses)
+        # print("handling events: Flags: ", self.flags, " Pulses: ", self.pulses)
 
         for t in transitions:  # handling all "transitions" in configs
             conditions = t["when"]

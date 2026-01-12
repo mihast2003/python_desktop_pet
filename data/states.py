@@ -43,7 +43,7 @@ STATES = {
             {
                 "when": [ {"pulse":"ANIMATION_END"}, ],
                 "to": "LOOKING_AROUND",
-                "chance": 0.02,
+                "chance": 0.1,
             },
             {
                 "when": [ 
@@ -90,6 +90,7 @@ STATES = {
 
     "LOOKING_AROUND": {
         "animation": "look_around",
+        "loop": False,
         "transitions": [
             {
                 "when": [ {"pulse":"CLICK"}, ],
