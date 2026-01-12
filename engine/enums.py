@@ -26,6 +26,7 @@ class BehaviourStates(Enum):
     MOVE_RANDOM_XY = auto()
     DRAGGING = auto()
     FALLING = auto()
+    JUMP = auto()
 
 class MovementType(Enum):
     LINEAR = auto()

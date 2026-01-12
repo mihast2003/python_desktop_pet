@@ -113,9 +113,18 @@ class Mover:
         self.active = False
 
         # jump specific
-        self.jump_velocity = -900.0
+        self.jump_velocity = 1000
         self.gravity = 2500.0
         self.grounded_y = None
+
+    def set_settings(self, acceleration, max_speed, slow_radius, snap_distance, jump_velocity, gravity):
+        self.acceleration = acceleration
+        self.max_speed = max_speed
+        self.slow_radius = slow_radius
+        self.snap_distance = snap_distance
+        # jump specific
+        self.jump_velocity = jump_velocity
+        self.gravity = gravity
 
     def set_position(self, x, y):
         self.pos = Vec2(x, y)
@@ -132,9 +141,11 @@ class Mover:
         elif x > self.pos.x:
             pet.facing = Facing.RIGHT
 
+        # print(pet.facing)
+
         if movement_type == MovementType.JUMP:
             self.grounded_y = self.pos.y
-            self.vel.y = self.jump_velocity
+            self.vel.y = -self.jump_velocity
 
     def update(self, dt):
         if not self.active:
@@ -221,8 +232,10 @@ class Mover:
 
     def _update_jump(self, dt):
         # x moves toward target
-        direction_x = 1 if self.target.x > self.pos.x else -1
-        self.vel.x = direction_x * self.max_speed
+        # direction_x = 1 if self.target.x > self.pos.x else -1
+        # self.vel.x = direction_x * self.max_speed # normal option, where it just shoots at the max speed at that direction
+
+        self.vel.x = self.target.x - self.pos.x  # moves to whatever x you need with whatever speed is required
 
         # gravity
         self.vel.y += self.gravity * dt
@@ -234,6 +247,7 @@ class Mover:
             self.pos.y = self.grounded_y
             self.vel = Vec2()
             self.active = False
+            print("landed after jumping")
             return True
 
         return False
@@ -430,6 +444,14 @@ class Pet(QWidget): # main logic
         self.play_animation(anim_name=anim_name, cfg=cfg)
         self.update() # I think it helps with glitching, so it repaints right after a new animation is set
 
+        acceleration = cfg.get("acceleration", self.mover.acceleration)
+        max_speed = cfg.get("max_speed", self.mover.max_speed)
+        slow_radius = cfg.get("slow_radius", self.mover.slow_radius)
+        snap_distance = cfg.get("snap_distance", self.mover.snap_distance)
+        jump_velocity = cfg.get("jump_velocity", self.mover.jump_velocity)
+        gravity = cfg.get("gravity", self.mover.gravity)
+        self.mover.set_settings(acceleration=acceleration, max_speed=max_speed, slow_radius=slow_radius, snap_distance=snap_distance, jump_velocity=jump_velocity,gravity=gravity)
+
         self.behaviour = BehaviourStates.__members__.get(cfg.get("behaviour", "STATIONARY"))
         # print(self.behaviour)
 
@@ -461,6 +483,10 @@ class Pet(QWidget): # main logic
                 self.mover.begin_drag(pos)
             case BehaviourStates.FALLING:
                 self.mover.move_to(self.anchor_x, self.taskbar_top + 1, MovementType.ACCELERATING)
+            case BehaviourStates.JUMP:
+                screen = QApplication.primaryScreen().availableGeometry()
+                target_x = random.randint(round(self.hitbox_width/2), screen.width() - round(self.hitbox_width/2))
+                self.mover.move_to(target_x, self.anchor_y, MovementType.JUMP)
        
     def on_state_exit(self, state): #just does nothing when the state is done
         pass
