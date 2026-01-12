@@ -493,6 +493,13 @@ class Pet(QWidget): # main logic
         self.variables.update(dt)
     
         # --- STATE / SIMULATION PHASE ---
+        self.animator.update(dt)
+        arrived = self.mover.update(dt)
+        
+        if arrived:
+            self.click_detector.release()
+            self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
+
         self.state_machine.update(dt)
     
         # --- POSITION SYNC PHASE ---

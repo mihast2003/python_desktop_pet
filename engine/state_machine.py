@@ -31,15 +31,6 @@ class StateMachine:
         
 
     def update(self, dt):    # state logic runs here
-        # MOVEMENT AND ANIMATION UPDATE
-        self.pet.animator.update(dt)
-        arrived = self.pet.mover.update(dt)
-        
-        if arrived:
-            self.pet.click_detector.release()
-            self.raise_flag(Flag.MOVEMENT_FINISHED)
-
-
         # HANDLING EVENTS
         if not self.in_transition:
             result = self.state.handle_events()  # sends event to state_runtime.py expecting two strings (next state and animation name)
