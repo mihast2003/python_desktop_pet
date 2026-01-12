@@ -480,30 +480,30 @@ class Pet(QWidget): # main logic
     def update_logic(self):
         dt = 1 / 60
 
+        # --- INPUT PHASE ---
         if self.mover.movement_type == MovementType.DRAG:
             self.mover.update_drag_target(self.last_mouse_pos)
-
-        self.variables.update(dt)
-        self.click_detector.update()
-        self.state_machine.update()
-        self.animator.update(dt)
-        self.update()
     
-        arrived = self.mover.update(dt)
-        if arrived:
-            pet.click_detector.release()
-            self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
-
-        # copy anchor from mover (single source of truth)
+        self.click_detector.update()
+        self.variables.update(dt)
+    
+        # --- STATE / SIMULATION PHASE ---
+        self.state_machine.update(dt)
+    
+        # --- POSITION SYNC PHASE ---
         self.anchor_x = self.mover.pos.x
         self.anchor_y = self.mover.pos.y
+    
+        self.apply_window_position()
+    
+        self.update()  # repaint
+    
 
-        # derive window position
+    def apply_window_position(self):
         self.move(
             int(self.anchor_x - self.width() / 2),
             int(self.anchor_y - self.height())
         )
-  
 
     def resize_keep_anchor(self, new_w, new_h):
         old_pos = self.pos()
