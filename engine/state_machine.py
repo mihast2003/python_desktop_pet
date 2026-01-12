@@ -26,14 +26,14 @@ class StateMachine:
         self.state.pulse(pulse)
 
         if self.in_transition and pulse == Pulse.ANIMATION_END:  # logic for ending transition animation
-            # print("changing after animation finished")
+            print("changing after animation finished")
             self.apply_pending_changes()
         
 
     def update(self, dt):    # state logic runs here
         # MOVEMENT AND ANIMATION UPDATE
-        arrived = self.pet.mover.update(dt)
         self.pet.animator.update(dt)
+        arrived = self.pet.mover.update(dt)
         
         if arrived:
             self.pet.click_detector.release()
@@ -68,26 +68,28 @@ class StateMachine:
         self.pending_transition_cfg = cfg
         self.in_transition = True
 
-        # 1return if no transition animation
-        if not self.pending_transition_anim:
-            return
+        # if transition animation then play it
+        if self.pending_transition_anim:
+            # print("state_machine: animation queued")
+            self.pet.play_animation(
+                self.pending_transition_anim,
+                cfg=self.pending_transition_cfg,
+                isTransitionAnimation=True
+            )
         
-        # print("state_machine: animation queued")
-        self.pet.play_animation(
-            self.pending_transition_anim,
-            cfg=self.pending_transition_cfg,
-            isTransitionAnimation=True
-        )
+        
 
     def apply_pending_changes(self):
         if not self.pending_state:
             return
+        
+        self.state.clear_pulses() #just in case any pulses arent cleared too fast
 
-        # 2. Change state
+        # Change state
         self.change(self.pending_state)
         # print("state_machine: pending changes applied")
 
-        # 3. Cleanup
+        # Cleanup
         self.pending_state = None
         self.pending_transition_anim = None
         self.pending_transition_cfg = None

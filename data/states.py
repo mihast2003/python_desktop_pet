@@ -139,7 +139,8 @@ STATES = {
                 "to": "IDLE",
                 "transition_anim": "standing_up",
                 "transition_anim_cfg": {
-                    "fps": 12
+                    "fps": 12,
+                    "loop": False,
                 },
             }
         ],
