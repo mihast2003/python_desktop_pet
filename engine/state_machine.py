@@ -99,7 +99,7 @@ class StateMachine:
         if self.state.name != next_state:
             self.pet.on_state_exit(self.state)
         
-        self.remove_flag(Flag.ANIMATION_FINISHED)
+        self.remove_flag(Flag.ANIMATION_FINISHED) # later will add some way to automatically clear these
         self.remove_flag(Flag.MOVEMENT_FINISHED)
         self.state.config = self.configs[next_state]
         self.state._apply_on_enter()

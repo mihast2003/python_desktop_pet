@@ -427,6 +427,7 @@ class Pet(QWidget): # main logic
         anim_name = cfg.get("animation")
 
         self.play_animation(anim_name=anim_name, cfg=cfg)
+        self.update() # I think it helps with glitching, so it repaints right after a new animation is set
 
         self.behaviour = BehaviourStates.__members__.get(cfg.get("behaviour", "STATIONARY"))
         # print(self.behaviour)
