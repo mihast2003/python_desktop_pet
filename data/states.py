@@ -105,7 +105,7 @@ STATES = {
         "animation": "roll",
         "behaviour": "MOVE_RANDOM_X",
         "settings": {
-            "gravity": 
+            "gravity": 700,
         },
 
         "on_enter": [
