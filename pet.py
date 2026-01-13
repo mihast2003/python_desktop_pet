@@ -14,8 +14,10 @@ from data.animations import ANIMATIONS
 from data.render_config import RENDER_CONFIG
 
 from engine.state_machine import StateMachine
-from engine.enums import Flag, Pulse, BehaviourStates, MovementType
+from engine.enums import Flag, Pulse, MovementType
 from engine.vec2 import Vec2
+from engine.behaviour_resolver import BehaviourResolver
+
 
 from data.variables import VARIABLES
 from engine.variable_manager import VariableManager
@@ -134,18 +136,23 @@ class Mover:
         self.vel = Vec2()
         self.movement_type = movement_type
         self.active = True
-        pet.state_machine.remove_flag(Flag.MOVEMENT_FINISHED)
 
         if x < self.pos.x:
             pet.facing = Facing.LEFT
         elif x > self.pos.x:
             pet.facing = Facing.RIGHT
 
-        # print(pet.facing)
-
+        if movement_type == MovementType.INSTANT:
+            self.set_position(x, y)
+        
         if movement_type == MovementType.JUMP:
             self.grounded_y = self.pos.y
             self.vel.y = -self.jump_velocity
+
+
+        # print(pet.facing)
+
+
 
     def update(self, dt):
         if not self.active:
@@ -156,10 +163,13 @@ class Mover:
             case MovementType.DRAG:
                 return False
 
+            case MovementType.INSTANT:
+                return True
+
             case MovementType.LINEAR:
                 return self._update_linear(dt)
 
-            case MovementType.ACCELERATING:
+            case MovementType.ACCELERATE:
                 return self._update_accelerating(dt)
 
             case MovementType.LERP:
@@ -413,6 +423,8 @@ class Pet(QWidget): # main logic
         cfg_facing = RENDER_CONFIG.get("default_facing")
         self.facing = Facing.__members__.get(cfg_facing, Facing.RIGHT)  # defining dacing direction
 
+        self.behaviour_resolver = BehaviourResolver(self)
+
         h = screen.availableGeometry().height()
         initial_state = INITIAL_STATE.get("default", next(iter(INITIAL_STATE))) #either get the "default" from the INITIAL STATE, or the first item in the STATES dictinary
         
@@ -452,41 +464,28 @@ class Pet(QWidget): # main logic
         gravity = cfg.get("gravity", self.mover.gravity)
         self.mover.set_settings(acceleration=acceleration, max_speed=max_speed, slow_radius=slow_radius, snap_distance=snap_distance, jump_velocity=jump_velocity,gravity=gravity)
 
-        self.behaviour = BehaviourStates.__members__.get(cfg.get("behaviour", "STATIONARY"))
-        # print(self.behaviour)
+        behaviour_name = cfg.get("behaviour", "STATIONARY")
+        # print(behaviour_name)
 
-        match self.behaviour:
-            case BehaviourStates.MOVE_RANDOM_X:
-                screen = QApplication.primaryScreen().availableGeometry()
-                target_x = random.randint(round(self.hitbox_width/2), screen.width() - round(self.hitbox_width/2))
-                self.mover.set_position(self.anchor_x, self.anchor_y)
-                self.mover.move_to(target_x, self.anchor_y, MovementType.LERP)
-            case BehaviourStates.MOVE_RANDOM_Y:
-                screen = QApplication.primaryScreen().availableGeometry()
-                target_y = random.randint(round(self.hitbox_height), screen.height())
-                self.mover.set_position(self.anchor_x, self.anchor_y)
-                self.mover.move_to(self.anchor_x, target_y, MovementType.LERP)
-            case BehaviourStates.MOVE_RANDOM_XY:
-                screen = QApplication.primaryScreen().availableGeometry()
-                target_x = random.randint(round(self.hitbox_width/2), screen.width() - round(self.hitbox_width/2))
-                target_y = random.randint(round(self.hitbox_height), screen.height())
-                self.mover.set_position(self.anchor_x, self.anchor_y)
-                self.mover.move_to(target_x, target_y, MovementType.LERP)
-            case BehaviourStates.DRAGGING:
-                self.mover.movement_type = MovementType.DRAG
+        target_x, target_y, type = self.behaviour_resolver.resolve(behaviour_name)
 
-                if not self.click_detector.press_pos: #safe check
-                    self.mover.end_drag()
-                    return
-                
-                pos = Vec2(self.click_detector.press_pos.x(), self.click_detector.press_pos.y())
-                self.mover.begin_drag(pos)
-            case BehaviourStates.FALLING:
-                self.mover.move_to(self.anchor_x, self.taskbar_top + 1, MovementType.ACCELERATING)
-            case BehaviourStates.JUMP:
-                screen = QApplication.primaryScreen().availableGeometry()
-                target_x = random.randint(round(self.hitbox_width/2), screen.width() - round(self.hitbox_width/2))
-                self.mover.move_to(target_x, self.anchor_y, MovementType.JUMP)
+        if type == MovementType.STATIONARY: # hardcoded doing nothing for stationary
+            return
+
+        if type == MovementType.DRAG:  # hardcoded behaviour for drag
+            self.mover.movement_type = MovementType.DRAG
+
+            if not self.click_detector.press_pos: #safe check
+                self.mover.end_drag()
+                return
+            
+            pos = Vec2(self.click_detector.press_pos.x(), self.click_detector.press_pos.y())
+            self.mover.begin_drag(pos)
+            return
+
+        self.mover.set_position(self.anchor_x, self.anchor_y)
+        self.mover.move_to(target_x, target_y, type)
+
        
     def on_state_exit(self, state): #just does nothing when the state is done
         pass
@@ -533,12 +532,15 @@ class Pet(QWidget): # main logic
         # --- STATE / SIMULATION PHASE ---
         self.animator.update(dt)
         arrived = self.mover.update(dt)
+
         
         if arrived:
             self.click_detector.release()
             self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
 
         self.state_machine.update(dt)
+
+        # print("position is", self.mover.pos.x, self.mover.pos.y)
     
         # --- POSITION SYNC PHASE ---
         self.anchor_x = self.mover.pos.x

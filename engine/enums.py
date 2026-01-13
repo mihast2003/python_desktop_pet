@@ -18,19 +18,11 @@ class Pulse(Enum):
     DRAGGING_STARTED = auto()
     DRAGGING_ENDED = auto()
 
-class BehaviourStates(Enum):
-    STATIONARY = auto()
-    WANDER = auto()
-    MOVE_RANDOM_X = auto()
-    MOVE_RANDOM_Y = auto()
-    MOVE_RANDOM_XY = auto()
-    DRAGGING = auto()
-    FALLING = auto()
-    JUMP = auto()
-
 class MovementType(Enum):
     LINEAR = auto()
-    ACCELERATING = auto()
+    ACCELERATE = auto()
     LERP = auto()
     JUMP = auto()
     DRAG = auto() 
+    INSTANT = auto()
+    STATIONARY = auto()
