@@ -44,7 +44,10 @@ BEHAVIOURS = {
             "x": {"type": "current"},
             "y": {"type": "fixed", "to": "screen.bottom"}
         },
-        "movement": "ACCELERATE"
+        "movement": "ACCELERATE",
+        "settings": {
+            "gravity": 700,
+        },
     },
 
     "JUMP": {

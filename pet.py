@@ -349,7 +349,7 @@ class Animator:  # contains different animation functions
             if self.ticks_left <= 0:
                 self.index += 1
 
-                print(self.index)
+                # print(self.index)
 
                 if self.index >= len(self.frames):
                     print("Animator: Pulse.ANIMATION_END ")
@@ -454,20 +454,21 @@ class Pet(QWidget): # main logic
         anim_name = cfg.get("animation")
 
         self.play_animation(anim_name=anim_name, cfg=cfg)
-        self.update() # I think it helps with glitching, so it repaints right after a new animation is set
+        # self.update() # I think it helps with glitching, so it repaints right after a new animation is set
 
-        acceleration = cfg.get("acceleration", self.mover.acceleration)
-        max_speed = cfg.get("max_speed", self.mover.max_speed)
-        slow_radius = cfg.get("slow_radius", self.mover.slow_radius)
-        snap_distance = cfg.get("snap_distance", self.mover.snap_distance)
-        jump_velocity = cfg.get("jump_velocity", self.mover.jump_velocity)
-        gravity = cfg.get("gravity", self.mover.gravity)
+        movement_settings = cfg.get("settings", {})
+        acceleration = movement_settings.get("acceleration", self.mover.acceleration)
+        max_speed = movement_settings.get("max_speed", self.mover.max_speed)
+        slow_radius = movement_settings.get("slow_radius", self.mover.slow_radius)
+        snap_distance = movement_settings.get("snap_distance", self.mover.snap_distance)
+        jump_velocity = movement_settings.get("jump_velocity", self.mover.jump_velocity)
+        gravity = movement_settings.get("gravity", self.mover.gravity)
         self.mover.set_settings(acceleration=acceleration, max_speed=max_speed, slow_radius=slow_radius, snap_distance=snap_distance, jump_velocity=jump_velocity,gravity=gravity)
 
         behaviour_name = cfg.get("behaviour", "STATIONARY")
         # print(behaviour_name)
 
-        target_x, target_y, type = self.behaviour_resolver.resolve(behaviour_name)
+        target_x, target_y, type, settings = self.behaviour_resolver.resolve(behaviour_name)
 
         if type == MovementType.STATIONARY: # hardcoded doing nothing for stationary
             return
@@ -541,6 +542,7 @@ class Pet(QWidget): # main logic
         self.state_machine.update(dt)
 
         # print("position is", self.mover.pos.x, self.mover.pos.y)
+        # print("facing is", self.facing)
     
         # --- POSITION SYNC PHASE ---
         self.anchor_x = self.mover.pos.x

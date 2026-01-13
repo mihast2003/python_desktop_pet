@@ -23,6 +23,7 @@ STATES = {
     "IDLE": {
         "animation": "idle",
         "fps": 6,
+
         "behaviour": "STATIONARY",
 
         "on_enter": [
@@ -78,7 +79,6 @@ STATES = {
     "BLINK": {
         "animation": "blink",
 
-
         "transitions": [
             {
                 "when": [ {"pulse":"ANIMATION_END"}, ],
@@ -103,6 +103,28 @@ STATES = {
 
     "ROLL": {
         "animation": "roll",
+        "behaviour": "MOVE_RANDOM_X",
+        "settings": {
+            "gravity": 
+        },
+
+        "on_enter": [
+            {"var": "sitting_still_timer", "op": "=", "value": 0},
+        ],
+        
+        "transitions": [
+            {
+                "when": [{"flag":"MOVEMENT_FINISHED"},],
+                "to": "BLINK",
+                "chance": 0.1,
+            },
+        ],
+        "exit_when": ["MOVEMENT_FINISHED"],
+        "exit_to": "IDLE"
+    }, 
+
+    "ROLL": {
+        "animation": "roll",
         "behaviour": "JUMP",
 
         "on_enter": [
@@ -118,7 +140,7 @@ STATES = {
         ],
         "exit_when": ["MOVEMENT_FINISHED"],
         "exit_to": "IDLE"
-    },  
+    },
 
     "DRAGGING": {
         "animation": "held_by_the_nose",

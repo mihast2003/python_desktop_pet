@@ -15,15 +15,17 @@ class BehaviourResolver:
 
         movement = MovementType[cfg.get("movement", "STATIONARY")] # defaults to STATIONARY movement type
 
+        settings = cfg.get("settings", {})
+
         target_cfg = cfg.get("target")
         if not target_cfg:
-            return None, None, movement
+            return None, None, movement, settings
         
         x = self._resolve_axis("x", target_cfg["x"])
         y = self._resolve_axis("y", target_cfg["y"])
 
 
-        return x, y, movement
+        return x, y, movement, settings
     
     def _resolve_axis(self, axis, spec):
         if spec["type"] == "current":
