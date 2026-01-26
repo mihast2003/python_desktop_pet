@@ -17,6 +17,7 @@ from engine.state_machine import StateMachine
 from engine.enums import Flag, Pulse, MovementType
 from engine.vec2 import Vec2
 from engine.behaviour_resolver import BehaviourResolver
+from engine.particles import ParticleOverlayWidget
 
 
 from data.variables import VARIABLES
@@ -28,6 +29,7 @@ PET_SIZE_X, PET_SIZE_Y = 100, 80
 class Facing(Enum):
     LEFT = auto()
     RIGHT = auto()
+    FRONT = auto()
 
 # helper function to detect clicks or holds on pet sprite
 class ClickDetector:
@@ -148,7 +150,6 @@ class Mover:
         if movement_type == MovementType.JUMP:
             self.grounded_y = self.pos.y
             self.vel.y = -self.jump_velocity
-
 
         # print(pet.facing)
 
@@ -352,7 +353,7 @@ class Animator:  # contains different animation functions
                 # print(self.index)
 
                 if self.index >= len(self.frames):
-                    print("Animator: Pulse.ANIMATION_END ")
+                    # print("Animator: Pulse.ANIMATION_END ")
                     pet.state_machine.pulse(Pulse.ANIMATION_END)  # if the index of the frame is more than we have frames, the animation is considered finished(for ease of connecting animations together), else - not
 
                     if self.loop or self.times_to_loop >= 2 :
@@ -360,7 +361,7 @@ class Animator:  # contains different animation functions
                         self.times_to_loop -= 1
                     else:
                         self.index = len(self.frames) - 1
-                        print("Animator: Flag.ANIMATION_FINISHED ")
+                        # print("Animator: Flag.ANIMATION_FINISHED ")
                         pet.state_machine.raise_flag(Flag.ANIMATION_FINISHED)
                         self.done = True
 
@@ -409,6 +410,7 @@ class Pet(QWidget): # main logic
                   
         self.variables = VariableManager(VARIABLES)
         self.animator = Animator()
+        self.particles = ParticleOverlayWidget()
 
         self.hitbox_width = 0
         self.hitbox_height = 0
@@ -446,7 +448,15 @@ class Pet(QWidget): # main logic
 
     def on_state_enter(self, state): #called in state_machine when entering a new state
         print("STATE:", state)
-        
+
+        self.particles.emit(
+            pos=QPointF(self.anchor_x, self.anchor_y),
+            vel=QPointF(0, -100),
+            lifetime=2.0,
+            radius=10,
+            color=Qt.cyan
+        )   
+
         self.variables.set("times_clicked_this_state", 0)
         self.variables.set("time_spent_in_this_state", 0)
 
@@ -523,17 +533,19 @@ class Pet(QWidget): # main logic
     def update_logic(self):
         dt = 1 / 60
 
+        self.particles.update_logic(dt) #updating particles widget
+
         # --- INPUT PHASE ---
         if self.mover.movement_type == MovementType.DRAG:
             self.mover.update_drag_target(self.last_mouse_pos)
     
         self.click_detector.update()
         self.variables.update(dt)
+
     
         # --- STATE / SIMULATION PHASE ---
         self.animator.update(dt)
         arrived = self.mover.update(dt)
-
         
         if arrived:
             self.click_detector.release()
@@ -551,7 +563,7 @@ class Pet(QWidget): # main logic
         self.apply_window_position()
     
         self.update()  # repaint
-    
+        self.particles.draw()
 
     def apply_window_position(self):
         self.move(
@@ -608,6 +620,7 @@ class Pet(QWidget): # main logic
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
+            pet.particles.raise_()
             self.click_detector.press(event.globalPosition())
             self.last_mouse_pos = self._mouse_vec(event)
 
@@ -633,6 +646,7 @@ class Pet(QWidget): # main logic
     def paintEvent(self, e): #draws the frame reveived from Animator 
         p = QPainter(self)
         p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+
 
         # p.fillRect(self.rect(), QColor(80, 80, 80))  # dark gray
 
@@ -680,4 +694,5 @@ if __name__ == "__main__": # QT stuff, idk idc
     pet = Pet()
     # pet.move(300, 900)
     pet.show()
+    pet.particles.raise_()  # particles above
     sys.exit(app.exec())
