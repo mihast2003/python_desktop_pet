@@ -7,17 +7,17 @@ from PySide6.QtGui import QPainter, QPixmap, QPen, QColor
 from PySide6.QtCore import Qt, QTimer, QPointF
 
 from enum import Enum, auto
-import warnings
 
 from data.states import STATES, INITIAL_STATE
 from data.animations import ANIMATIONS
 from data.render_config import RENDER_CONFIG
 
+from engine.asset_loader import AssetLoader
 from engine.state_machine import StateMachine
 from engine.enums import Flag, Pulse, MovementType
 from engine.vec2 import Vec2
 from engine.behaviour_resolver import BehaviourResolver
-from engine.particles import ParticleOverlayWidget
+from engine.particles_engine import ParticleOverlayWidget
 
 
 from data.variables import VARIABLES
@@ -291,20 +291,20 @@ class Mover:
 
 
 # ANIMATION STUFF
-def load_frames(folder):  # function for loading frames, recieves a string path to a folder, returns a list of png files( converted to PixMap ) in name order
-    frames = []
+# def load_frames(folder):  # function for loading frames, recieves a string path to a folder, returns a list of png files( converted to PixMap ) in name order
+#     frames = []
 
-    files = sorted(                # get the png files
-    f for f in os.listdir(folder)
-    if f.lower().endswith(".png")
-    )
+#     files = sorted(                # get the png files
+#     f for f in os.listdir(folder)
+#     if f.lower().endswith(".png")
+#     )
 
-    for i, filename in enumerate(files):
-        pix = QPixmap(os.path.join(folder, filename))
+#     for i, filename in enumerate(files):
+#         pix = QPixmap(os.path.join(folder, filename))
 
-        frames.append(pix)
+#         frames.append(pix)
 
-    return frames
+#     return frames
 
 def scan_animation_bounds(frames):
     max_w = 0
@@ -383,16 +383,20 @@ class Pet(QWidget): # main logic
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)   # QT stuff idk idc
         self.setAttribute(Qt.WA_TranslucentBackground)
 
+        # instanciating AssetLoader
+        # self.loader = AssetLoader()
+
         # get all animations in a dictionary
         self.animations = {}
         base = os.path.dirname(os.path.abspath(__file__))
+
         for name in list(ANIMATIONS):
             cfg = ANIMATIONS[name]
             folder = os.path.join(base, cfg["folder"])
 
             frames = []
 
-            frames = load_frames(folder)
+            frames = AssetLoader.load_frames(folder=folder)
 
             if not frames:
                 raise RuntimeError(f"No frames found for animation '{name}'")

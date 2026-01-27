@@ -1,6 +1,10 @@
+import sys, os, random, time, math
 from PySide6.QtCore import Qt, QPointF
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import QWidget, QApplication
+
+from engine.asset_loader import AssetLoader
+from data.particles import PARTICLES
 
 import ctypes
 
@@ -39,7 +43,6 @@ class ParticleOverlayWidget(QWidget):
         screen = QApplication.primaryScreen().geometry()
         self.setGeometry(screen)
 
-        self.particles = []
 
         # Make window fully windows click-through
         hwnd = int(self.winId())
@@ -47,6 +50,37 @@ class ParticleOverlayWidget(QWidget):
         ctypes.windll.user32.SetWindowLongW(hwnd, -20, extended_style | 0x80000 | 0x20)
 
         self.show()
+
+        self.particles = []
+
+         # get all particle animations in a dictionary
+        self.animations = {}
+
+        current_folder = os.path.dirname(os.path.abspath(__file__))
+        base = os.path.dirname(current_folder)
+
+        print("base is ", base)
+        for name in list(PARTICLES):
+            cfg = PARTICLES[name]
+            folder = os.path.join(base, cfg["folder"])
+
+            frames = []
+
+            frames = AssetLoader.load_frames(folder=folder)
+
+            if not frames:
+                raise RuntimeError(f"No frames found for animation '{name}'")
+
+            self.animations[name] = {
+                "frames": frames,
+                "fps": cfg["fps"],
+                "loop": cfg["loop"],
+                "holds": cfg.get("holds", {}),
+                "times_to_loop": cfg.get("times_to_loop", 1)
+            }
+            print(f"[PARTICLES LOAD] {name}: {len(frames)} frames")
+
+
 
     def emit(self, pos, vel, lifetime=0.5, radius=3, color=Qt.white):
         self.particles.append(
