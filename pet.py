@@ -291,20 +291,6 @@ class Mover:
 
 
 # ANIMATION STUFF
-# def load_frames(folder):  # function for loading frames, recieves a string path to a folder, returns a list of png files( converted to PixMap ) in name order
-#     frames = []
-
-#     files = sorted(                # get the png files
-#     f for f in os.listdir(folder)
-#     if f.lower().endswith(".png")
-#     )
-
-#     for i, filename in enumerate(files):
-#         pix = QPixmap(os.path.join(folder, filename))
-
-#         frames.append(pix)
-
-#     return frames
 
 def scan_animation_bounds(frames):
     max_w = 0
@@ -456,9 +442,7 @@ class Pet(QWidget): # main logic
         self.particles.emit(
             pos=QPointF(self.anchor_x, self.anchor_y),
             vel=QPointF(0, -100),
-            lifetime=2.0,
-            radius=10,
-            color=Qt.cyan
+            name="dirt",
         )   
 
         self.variables.set("times_clicked_this_state", 0)
@@ -605,6 +589,8 @@ class Pet(QWidget): # main logic
 
         self.scale = self.pixel_ratio * self.dpi_scale
 
+        self.particles.update_dpi_and_scale(self.scale)
+
         print("screen dpi", self.dpi_scale)
         print("new scale", self.scale)
 
@@ -624,7 +610,7 @@ class Pet(QWidget): # main logic
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            pet.particles.raise_()
+            self.particles.raise_()
             self.click_detector.press(event.globalPosition())
             self.last_mouse_pos = self._mouse_vec(event)
 

@@ -3,10 +3,10 @@
 PARTICLES = {
     "dirt": {
         "folder": "particles/dirt",
-        "fps": 1,
-        "loop": True,
+        "fps": 3,
+        "loop": False,
         "holds": {
-            2: 2,
+            2: 1,
         },
 
         "duration": 0.5 ,

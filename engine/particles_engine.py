@@ -1,6 +1,6 @@
 import sys, os, random, time, math
 from PySide6.QtCore import Qt, QPointF
-from PySide6.QtGui import QColor, QPainter
+from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import QWidget, QApplication
 
 from engine.asset_loader import AssetLoader
@@ -13,20 +13,34 @@ import ctypes
 
 #data class
 class Particle:
-    def __init__(self, pos, vel, lifetime, radius, color):
+    def __init__(self, pos, vel, anim_name, animations):
         self.pos = QPointF(pos)
         self.vel = QPointF(vel)
-        self.lifetime = lifetime
+
+        self.anim = animations[anim_name]
+        self.frames = self.anim["frames"]
+        self.fps = self.anim["fps"]
+        self.loop = self.anim["loop"]
+
         self.age = 0.0
-        self.radius = radius
-        self.color = QColor(color)
+        self.lifetime = len(self.frames) / self.fps if not self.loop else float("inf")
 
     def update(self, dt):
         self.age += dt
         self.pos += self.vel * dt
 
     def alive(self):
-        return self.age < self.lifetime
+        return self.loop or self.age < self.lifetime
+
+    def current_frame(self):
+        frame_index = int(self.age * self.fps)
+
+        if self.loop:
+            frame_index %= len(self.frames)
+        else:
+            frame_index = min(frame_index, len(self.frames) - 1)
+
+        return self.frames[frame_index]
          
 
 #widget drawing particles, fullscreen transparent to clicks
@@ -46,13 +60,14 @@ class ParticleOverlayWidget(QWidget):
         screen = QApplication.primaryScreen().geometry()
         self.setGeometry(screen)
 
-
         # Make window fully windows click-through
         hwnd = int(self.winId())
         extended_style = ctypes.windll.user32.GetWindowLongW(hwnd, -20)
         ctypes.windll.user32.SetWindowLongW(hwnd, -20, extended_style | 0x80000 | 0x20)
 
         self.show()
+
+        self.scale = 1
 
         self.particles = []
 
@@ -83,12 +98,20 @@ class ParticleOverlayWidget(QWidget):
             print(f"[PARTICLES LOADED] {name}: {len(frames)} frames")
 
 
-    def emit(self, pos, vel, lifetime=0.5, radius=3, color=Qt.white):
-        if len(self.particles) >= RENDER_CONFIG.get("max_particle_count", 1000):   #dont emit new particles if particle count is more than max
-            return 
+    def update_dpi_and_scale(self, new_scale):
+        self.scale = new_scale
 
+    def emit(self, pos, vel, name="default"):
+        if len(self.particles) >= RENDER_CONFIG.get("max_particle_count", 1000):
+            return
+        
         self.particles.append(
-            Particle(pos, vel, lifetime, radius, color)
+            Particle(
+                pos=pos,
+                vel=vel,
+                anim_name=name,
+                animations=self.animations
+            )
         )
 
     #only triggers update_particle for now, maybe will add something later or remove
@@ -107,10 +130,45 @@ class ParticleOverlayWidget(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
 
         painter.save()
+
+        # painter.scale(self.scale, self.scale)
+
         for p in self.particles:
-            painter.setBrush(p.color)
-            painter.setPen(Qt.NoPen)
-            painter.drawEllipse(p.pos, p.radius, p.radius)
-        painter.restore()
+            frame = p.current_frame()
+            if not frame:
+                continue
+
+            # draw sprite so its bottom-middle is at (self.x, self.y)
+            anchor_x = self.width() / 2
+            anchor_y = self.height()
+
+            offset_x = frame.width() / 2
+            offset_y = frame.height()
+
+            painter.save()
+
+            painter.translate(anchor_x, anchor_y)
+            painter.scale(self.scale, self.scale)
+
+            painter.drawPixmap(-offset_x, -offset_y, frame)
+            print("drawing a particle at", p.pos.x(), p.pos.y())
+
+            painter.restore()
+
+        #     w = frame.width() / frame.devicePixelRatio()
+        #     h = frame.height() / frame.devicePixelRatio()
+
+        #     painter.drawPixmap(
+        #         p.pos.x() - w / 2,
+        #         p.pos.y() - h / 2,
+        #         frame
+        #     )
+
+        #     painter.setPen(QPen(Qt.red, 3))
+        #     painter.drawEllipse(p.pos.x() - w / 2, p.pos.y() - h / 2, 10, 10)
+            
+
+        # painter.restore()
