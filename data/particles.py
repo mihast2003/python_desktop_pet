@@ -5,6 +5,9 @@ PARTICLES = {
         "folder": "particles/dirt",
         "fps": 1,
         "loop": True,
+        "holds": {
+            2: 2,
+        },
 
         "duration": 0.5 ,
         "rate_over_time": 1 ,

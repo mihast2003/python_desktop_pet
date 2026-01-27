@@ -409,7 +409,7 @@ class Pet(QWidget): # main logic
                 "bounds": scan_animation_bounds(frames),
                 "times_to_loop": cfg.get("times_to_loop", 1)
             }
-            print(f"[ANIM LOAD] {name}: {len(frames)} frames")
+            print(f"[ANIMATION LOADED] {name}: {len(frames)} frames")
 
                   
         self.variables = VariableManager(VARIABLES)

@@ -4,7 +4,10 @@ from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import QWidget, QApplication
 
 from engine.asset_loader import AssetLoader
+
+from data.render_config import RENDER_CONFIG
 from data.particles import PARTICLES
+
 
 import ctypes
 
@@ -59,7 +62,6 @@ class ParticleOverlayWidget(QWidget):
         current_folder = os.path.dirname(os.path.abspath(__file__))
         base = os.path.dirname(current_folder)
 
-        print("base is ", base)
         for name in list(PARTICLES):
             cfg = PARTICLES[name]
             folder = os.path.join(base, cfg["folder"])
@@ -78,11 +80,13 @@ class ParticleOverlayWidget(QWidget):
                 "holds": cfg.get("holds", {}),
                 "times_to_loop": cfg.get("times_to_loop", 1)
             }
-            print(f"[PARTICLES LOAD] {name}: {len(frames)} frames")
-
+            print(f"[PARTICLES LOADED] {name}: {len(frames)} frames")
 
 
     def emit(self, pos, vel, lifetime=0.5, radius=3, color=Qt.white):
+        if len(self.particles) >= RENDER_CONFIG.get("max_particle_count", 1000):   #dont emit new particles if particle count is more than max
+            return 
+
         self.particles.append(
             Particle(pos, vel, lifetime, radius, color)
         )
