@@ -4,6 +4,7 @@ from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import QWidget, QApplication
 
 from engine.asset_loader import AssetLoader
+from engine.enums import EmitterShape
 
 from data.render_config import RENDER_CONFIG
 from data.particles import PARTICLES
@@ -21,6 +22,8 @@ class Particle:
         self.frames = self.anim["frames"]
         self.fps = self.anim["fps"]
         self.loop = self.anim["loop"]
+
+        self.shape = EmitterShape.DOT
 
         self.age = 0.0
         self.lifetime = len(self.frames) / self.fps if not self.loop else float("inf")
@@ -97,9 +100,13 @@ class ParticleOverlayWidget(QWidget):
             }
             print(f"[PARTICLES LOADED] {name}: {len(frames)} frames")
 
-
     def update_dpi_and_scale(self, new_scale):
         self.scale = new_scale
+
+
+    def start_emitting(particle):
+        particle = PARTICLES[particle]
+        return
 
     def emit(self, pos, vel, name="default"):
         if len(self.particles) >= RENDER_CONFIG.get("max_particle_count", 1000):
@@ -141,34 +148,26 @@ class ParticleOverlayWidget(QWidget):
             if not frame:
                 continue
 
-            # draw sprite so its bottom-middle is at (self.x, self.y)
-            anchor_x = self.width() / 2
-            anchor_y = self.height()
+            # draw sprite so its middle is at given possition
+            true_pos_x = p.pos.x() / self.scale
+            true_pos_y = p.pos.y() / self.scale
 
             offset_x = frame.width() / 2
-            offset_y = frame.height()
+            offset_y = frame.height() / 2
+
+            corner_x = true_pos_x - offset_x
+            corner_y = true_pos_y - offset_y
 
             painter.save()
 
-            painter.translate(anchor_x, anchor_y)
             painter.scale(self.scale, self.scale)
 
-            painter.drawPixmap(-offset_x, -offset_y, frame)
+            painter.drawPixmap(corner_x, corner_y, frame)
+
+            # painter.setPen(QPen(Qt.red, 3))
+            # painter.drawEllipse(true_pos_x, true_pos_y, 50, 50)
+
             print("drawing a particle at", p.pos.x(), p.pos.y())
 
             painter.restore()
 
-        #     w = frame.width() / frame.devicePixelRatio()
-        #     h = frame.height() / frame.devicePixelRatio()
-
-        #     painter.drawPixmap(
-        #         p.pos.x() - w / 2,
-        #         p.pos.y() - h / 2,
-        #         frame
-        #     )
-
-        #     painter.setPen(QPen(Qt.red, 3))
-        #     painter.drawEllipse(p.pos.x() - w / 2, p.pos.y() - h / 2, 10, 10)
-            
-
-        # painter.restore()

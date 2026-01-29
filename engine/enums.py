@@ -26,3 +26,9 @@ class MovementType(Enum):
     DRAG = auto() 
     INSTANT = auto()
     STATIONARY = auto()
+
+class EmitterShape(Enum):
+    DOT = auto()
+    CIRCLE = auto()
+    HITBOX = auto()
+    RECTANGLE = auto()

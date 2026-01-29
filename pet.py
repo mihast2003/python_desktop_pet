@@ -429,6 +429,7 @@ class Pet(QWidget): # main logic
 
         self.update_hitbox_size_and_drag_offset() # initial hitbox update
 
+        self.show()
 
         # Timer for updating logic
         self.timer = QTimer()
@@ -547,6 +548,8 @@ class Pet(QWidget): # main logic
         # --- POSITION SYNC PHASE ---
         self.anchor_x = self.mover.pos.x
         self.anchor_y = self.mover.pos.y
+
+        print("anchor position is", self.anchor_x, self.anchor_y)
     
         self.apply_window_position()
     
@@ -610,7 +613,7 @@ class Pet(QWidget): # main logic
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.particles.raise_()
+            self.particles.raise_() #might remove later if not needed
             self.click_detector.press(event.globalPosition())
             self.last_mouse_pos = self._mouse_vec(event)
 
