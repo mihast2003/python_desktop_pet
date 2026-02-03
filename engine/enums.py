@@ -27,6 +27,13 @@ class MovementType(Enum):
     INSTANT = auto()
     STATIONARY = auto()
 
+
+
+class EmitterType(Enum):
+    BURST = auto()
+    CONTINUOUS = auto()
+
+
 class EmitterShape(Enum):
     DOT = auto()
     CIRCLE = auto()

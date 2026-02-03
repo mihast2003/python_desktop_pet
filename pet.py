@@ -636,8 +636,8 @@ class Pet(QWidget): # main logic
 
 
     def paintEvent(self, e): #draws the frame reveived from Animator 
-        p = QPainter(self)
-        p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
 
 
         # p.fillRect(self.rect(), QColor(80, 80, 80))  # dark gray
@@ -653,7 +653,7 @@ class Pet(QWidget): # main logic
         offset_x = frame.width() / 2
         offset_y = frame.height()
 
-        p.save()
+        painter.save()
 
         sx = self.scale
         if self.facing == Facing.LEFT:
@@ -661,7 +661,7 @@ class Pet(QWidget): # main logic
 
         # p.scale(sx, self.scale)
 
-        p.translate(anchor_x, anchor_y)
+        painter.translate(anchor_x, anchor_y)
 
         #draws pets hitbox, pretty neat
         # p.setPen(QPen(Qt.red, 3))
@@ -675,10 +675,10 @@ class Pet(QWidget): # main logic
         # p.drawLine(self.width(), 0, 0, self.height())
         # p.drawLine(offset_x, offset_y, anchor_x, anchor_y)
 
-        p.scale(sx, self.scale)
-        p.drawPixmap(-offset_x, -offset_y, frame)
+        painter.scale(sx, self.scale)
+        painter.drawPixmap(-offset_x, -offset_y, frame)
 
-        p.restore()
+        painter.restore()
 
 
 if __name__ == "__main__": # QT stuff, idk idc
