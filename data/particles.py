@@ -9,11 +9,11 @@ PARTICLES = {
             2: 1,
         },
 
+        "emitter_shape": "DOT",
         "duration": 0.5 ,
         "rate_over_time": 1 ,
-        "start_speed": 1 ,
+        "start_vel": 1 ,
         "start_size": 1 ,
-        "shape": 1,
     },
 
     "sleep_zzz": {
@@ -21,10 +21,10 @@ PARTICLES = {
         "fps": 6,
         "loop": True,
 
+        "emitter_shape": "DOT",
         "duration": 0.5,
         "rate_over_time": 1,
-        "start_speed": 1,
+        "start_vel": 1,
         "start_size": 1,
-        "shape": 1,
     },
 }

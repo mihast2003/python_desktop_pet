@@ -266,7 +266,7 @@ class Mover:
     def begin_drag(self, mouse_pos: Vec2):
         self.movement_type = MovementType.DRAG
         self.pos = mouse_pos - self.drag_offset # initial snapping to cursor movement
-        print ("SNAP")
+        # print ("SNAP")
         self.active = True
         self.vel = Vec2()
 
@@ -376,6 +376,8 @@ class Pet(QWidget): # main logic
         self.animations = {}
         base = os.path.dirname(os.path.abspath(__file__))
 
+        print("----- LOADING ANIMATIONS -----")
+
         for name in list(ANIMATIONS):
             cfg = ANIMATIONS[name]
             folder = os.path.join(base, cfg["folder"])
@@ -400,7 +402,7 @@ class Pet(QWidget): # main logic
                   
         self.variables = VariableManager(VARIABLES)
         self.animator = Animator()
-        self.particles = ParticleOverlayWidget()
+        self.particles = ParticleOverlayWidget(pet=self)
 
         self.hitbox_width = 0
         self.hitbox_height = 0
@@ -429,6 +431,7 @@ class Pet(QWidget): # main logic
 
         self.update_hitbox_size_and_drag_offset() # initial hitbox update
 
+        print("----- LOADING SUCCESSFUL -----")
         self.show()
 
         # Timer for updating logic
@@ -440,11 +443,7 @@ class Pet(QWidget): # main logic
     def on_state_enter(self, state): #called in state_machine when entering a new state
         print("STATE:", state)
 
-        self.particles.emit(
-            pos=QPointF(self.anchor_x, self.anchor_y),
-            vel=QPointF(0, -100),
-            name="dirt",
-        )   
+        self.particles.start_emitting("dirt")   
 
         self.variables.set("times_clicked_this_state", 0)
         self.variables.set("time_spent_in_this_state", 0)
@@ -549,7 +548,7 @@ class Pet(QWidget): # main logic
         self.anchor_x = self.mover.pos.x
         self.anchor_y = self.mover.pos.y
 
-        print("anchor position is", self.anchor_x, self.anchor_y)
+        # print("anchor position is", self.anchor_x, self.anchor_y)
     
         self.apply_window_position()
     

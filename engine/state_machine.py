@@ -26,7 +26,7 @@ class StateMachine:
         self.state.pulse(pulse)
 
         if self.in_transition and pulse == Pulse.ANIMATION_END:  # logic for ending transition animation
-            print("changing after animation finished")
+            # print("changing after animation finished")
             self.apply_pending_changes()
         
 
