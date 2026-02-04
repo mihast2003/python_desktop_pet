@@ -27,7 +27,7 @@ class ParticleEmitter:
         self.emitter_shape = EmitterShape.__members__.get(shape, EmitterShape.DOT)
 
         offset = Vec2(cfg.get("emitter_offset", (0, 0)))
-        self.emitter_offset = Vec2(self.hitbox_width * offset.x, self.hitbox_height * offset.y)
+        self.emitter_offset = Vec2(self.hitbox_width * -offset.x, self.hitbox_height * offset.y)
 
         self.type = self.cfg.get("emitter_type", 1)
         self.lifetime = self.cfg.get("lifetime", 1)

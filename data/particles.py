@@ -12,7 +12,7 @@ PARTICLES = {
         "lifetime": 2, #lifetime of each particle
 
         "emitter_shape": "DOT",
-        "emitter_offset": (0, -3),
+        "emitter_offset": (1, 1),
         "duration": 0.5 , #duration of emission
         "rate_over_time": 4,
         "total_count": 20,
