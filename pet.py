@@ -130,8 +130,11 @@ class Mover:
         self.jump_velocity = jump_velocity
         self.gravity = gravity
 
-    def set_position(self, x, y):
-        self.pos = Vec2(x, y)
+    def set_position(self, x=0.0, y=None):
+        if y is None and isinstance(x, Vec2):
+            self.pos = x
+        else:
+            self.pos = Vec2(x, y)
 
     def move_to(self, x, y, movement_type: MovementType):
         self.target = Vec2(x, y)
@@ -408,8 +411,8 @@ class Pet(QWidget): # main logic
         self.hitbox_height = 0
         
         self.mover = Mover()
-        self.anchor_x = 500
-        self.anchor_y = 500
+        self.anchor = Vec2(500, 500)
+
         screen = QApplication.primaryScreen() # Screen detection
         self.taskbar_top = screen.availableGeometry().bottom() # Taskbar position detection
         self.mover.set_position(100, self.taskbar_top + 1) # set initial position
@@ -482,7 +485,8 @@ class Pet(QWidget): # main logic
             self.mover.begin_drag(pos)
             return
 
-        self.mover.set_position(self.anchor_x, self.anchor_y)
+        self.mover.set_position(self.anchor)
+        # self.mover.set_position(self.anchor.x, self.anchor.y)
         self.mover.move_to(target_x, target_y, type)
 
        
@@ -545,10 +549,10 @@ class Pet(QWidget): # main logic
         # print("facing is", self.facing)
     
         # --- POSITION SYNC PHASE ---
-        self.anchor_x = self.mover.pos.x
-        self.anchor_y = self.mover.pos.y
+        self.anchor.x = self.mover.pos.x
+        self.anchor.y = self.mover.pos.y
 
-        # print("anchor position is", self.anchor_x, self.anchor_y)
+        # print("anchor position is", self.anchor.x, self.anchor.y)
     
         self.apply_window_position()
     
@@ -557,8 +561,8 @@ class Pet(QWidget): # main logic
 
     def apply_window_position(self):
         self.move(
-            int(self.anchor_x - self.width() / 2),
-            int(self.anchor_y - self.height())
+            int(self.anchor.x - self.width() / 2),
+            int(self.anchor.y - self.height())
         )
 
     def resize_keep_anchor(self, new_w, new_h):
@@ -567,13 +571,13 @@ class Pet(QWidget): # main logic
         old_h = self.height()
 
         # world-space anchor (bottom-middle)
-        self.anchor_x = old_pos.x() + old_w // 2
-        self.anchor_y = old_pos.y() + old_h
+        self.anchor.x = old_pos.x() + old_w // 2
+        self.anchor.y = old_pos.y() + old_h
 
         # move window so anchor stays fixed
         self.move(
-            self.anchor_x - new_w // 2,
-            self.anchor_y - new_h
+            self.anchor.x - new_w // 2,
+            self.anchor.y - new_h
         )
 
         # resize
