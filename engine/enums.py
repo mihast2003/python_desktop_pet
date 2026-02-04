@@ -28,7 +28,6 @@ class MovementType(Enum):
     STATIONARY = auto()
 
 
-
 class EmitterType(Enum):
     BURST = auto()
     CONTINUOUS = auto()
@@ -36,6 +35,7 @@ class EmitterType(Enum):
 
 class EmitterShape(Enum):
     DOT = auto()
+    LINE = auto()
     CIRCLE = auto()
     HITBOX = auto()
     RECTANGLE = auto()
