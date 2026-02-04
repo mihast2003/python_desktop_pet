@@ -17,7 +17,7 @@ from engine.state_machine import StateMachine
 from engine.enums import Flag, Pulse, MovementType
 from engine.vec2 import Vec2
 from engine.behaviour_resolver import BehaviourResolver
-from engine.particles_engine import ParticleOverlayWidget
+from engine.particles.particles_engine import ParticleOverlayWidget
 
 
 from data.variables import VARIABLES

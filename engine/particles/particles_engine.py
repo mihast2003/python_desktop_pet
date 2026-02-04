@@ -7,121 +7,15 @@ from engine.asset_loader import AssetLoader
 from engine.enums import EmitterShape
 from engine.vec2 import Vec2
 
+from engine.particles.particle_emitter import ParticleEmitter
+
 from data.render_config import RENDER_CONFIG
 from data.particles import PARTICLES
 
 from collections import defaultdict
 
 import ctypes
-
-#data class
-class Particle:
-    def __init__(self, pos, vel, anim_name, animations):
-        self.pos = QPointF(pos)
-        self.vel = QPointF(vel)
-
-        self.name = anim_name
-        self.anim = animations
-        self.frames = self.anim["frames"]
-        self.fps = self.anim["fps"]
-        self.loop = self.anim["loop"]
-
-        self.shape = EmitterShape.DOT
-
-        self.age = 0.0
-        self.lifetime = len(self.frames) / self.fps if not self.loop else float("inf")
-
-    def update(self, dt):
-        self.age += dt
-        self.pos += self.vel * dt
-
-    def alive(self):
-        return self.loop or self.age < self.lifetime
-
-    def current_frame(self):
-        frame_index = int(self.age * self.fps)
-
-        if self.loop:
-            frame_index %= len(self.frames)
-        else:
-            frame_index = min(frame_index, len(self.frames) - 1)
-
-        return self.frames[frame_index]
          
-
-class ParticleEmitter:
-    def __init__(self, particleSystem, name, cfg, animations, shape):
-        self.name = name
-        self.cfg = cfg
-        self.animations = animations
-
-        self.particleSystem = particleSystem
-
-        self.time = 0.0
-        self.emitted = 0
-        self.elapsed = 0
-        self.done = False
-
-        self.type = self.cfg.get("emitter_type", 1)
-        self.lifetime = self.cfg.get("lifetime", 1)
-        self.emitter_shape = shape
-        self.rate = self.cfg.get("rate_over_time", 0)
-        self.count = self.cfg.get("total_count", 0)
-        self.duration = self.cfg.get("duration", 1)   
-        
-
-    def update(self, dt):
-        if self.done:
-            return
-        
-        to_emit = 0
-
-        # math to determine how many particles to emit
-        emit_interval = 1.0 / self.rate
-
-        self.time += dt
-        self.elapsed += dt
-
-        print("elapsed", self.elapsed)
-
-        # emitting those particles
-        while self.elapsed >= emit_interval:
-            print("should spawn", to_emit, " particles")
-            self.spawn_particle()
-            self.emitted += 1
-            self.elapsed -= emit_interval        
-
-
-        if self.emitted >= self.count and self.rate != 0 or self.time >= self.duration:
-            self.done = True
-
-    def spawn_particle(self):
-        # randomize vel, lifetime, etc
-        name = self.name
-        values = self.cfg.get("start_vel", (0, 0))
-        if len(values) != 2:
-            raise Exception("VELOCITY OF PARTICLE ", name, " IS NOT TWO VALUES")  #no idea what this does will add user notification that error occured 
-        vel = Vec2(values[0], values[1])
-
-        match self.emitter_shape:
-            case EmitterShape.DOT:
-                pos = Vec2(self.particleSystem.pet.anchor_x, self.particleSystem.pet.anchor_y)
-            case EmitterShape.CIRCLE:
-                return
-            case EmitterShape.HITBOX:
-                return
-            case EmitterShape.RECTANGLE:
-                return
-            
-        new_particle = Particle(
-                pos=QPointF(pos.x, pos.y),
-                vel=QPointF(vel.x, vel.y),
-                anim_name=name,
-                animations=self.animations
-            )
-        self.particleSystem.emit(new_particle)
-
-
 
 #widget drawing particles, fullscreen transparent to clicks
 class ParticleOverlayWidget(QWidget):
@@ -157,7 +51,7 @@ class ParticleOverlayWidget(QWidget):
         # get all particle animations in a dictionary
         self.animations = {}
 
-        current_folder = os.path.dirname(os.path.abspath(__file__))
+        current_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         base = os.path.dirname(current_folder)
 
         print("----- LOADING PARTICLES -----")
