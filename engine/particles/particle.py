@@ -4,12 +4,14 @@ from PySide6.QtCore import Qt, QPointF
 
 #data class
 class Particle:
-    def __init__(self, pos, vel, anim_name, animations):
+    def __init__(self, pos, vel, anim_name, animations, start_size):
         self.pos = QPointF(pos)
         self.vel = QPointF(vel)
 
         self.name = anim_name
         self.anim = animations
+        self.size = start_size
+
         self.frames = self.anim["frames"]
         self.fps = self.anim["fps"]
         self.loop = self.anim["loop"]

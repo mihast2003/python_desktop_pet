@@ -7,24 +7,34 @@ from engine.particles.particle import Particle
 from engine.enums import EmitterShape
 
 class ParticleEmitter:
-    def __init__(self, particleSystem, name, cfg, animations, shape):
+    def __init__(self, particleSystem, name, cfg, animations, hitbox):
+
+        self.particleSystem = particleSystem
+
         self.name = name
         self.cfg = cfg
         self.animations = animations
 
-        self.particleSystem = particleSystem
+        self.hitbox_width = hitbox.x
+        self.hitbox_height = hitbox.y
 
         self.time = 0.0
         self.emitted = 0
         self.elapsed = 0
         self.done = False
 
+        shape = cfg.get("emitter_shape")
+        self.emitter_shape = EmitterShape.__members__.get(shape, EmitterShape.DOT)
+
+        offset = Vec2(cfg.get("emitter_offset", (0, 0)))
+        self.emitter_offset = Vec2(self.hitbox_width * offset.x, self.hitbox_height * offset.y)
+
         self.type = self.cfg.get("emitter_type", 1)
         self.lifetime = self.cfg.get("lifetime", 1)
-        self.emitter_shape = shape
         self.rate = self.cfg.get("rate_over_time", 0)
-        self.count = self.cfg.get("total_count", 0)
-        self.duration = self.cfg.get("duration", 1)   
+        self.total_count = self.cfg.get("total_count", 0)
+        self.duration = self.cfg.get("duration", 1)  
+        self.start_size =  self.cfg.get("start_size", 1)
         
 
     def update(self, dt):
@@ -47,7 +57,7 @@ class ParticleEmitter:
             self.elapsed -= emit_interval        
 
 
-        if self.emitted >= self.count and self.rate != 0 or self.time >= self.duration:
+        if self.emitted >= self.total_count and self.rate != 0 or self.time >= self.duration:
             self.done = True
 
     def spawn_particle(self):
@@ -60,7 +70,7 @@ class ParticleEmitter:
 
         match self.emitter_shape:
             case EmitterShape.DOT:
-                pos = Vec2(self.particleSystem.pet.anchor_x, self.particleSystem.pet.anchor_y)
+                pos = self.particleSystem.pet.anchor - self.emitter_offset
             case EmitterShape.CIRCLE:
                 return
             case EmitterShape.HITBOX:
@@ -72,6 +82,8 @@ class ParticleEmitter:
                 pos=QPointF(pos.x, pos.y),
                 vel=QPointF(vel.x, vel.y),
                 anim_name=name,
-                animations=self.animations
+                animations=self.animations,
+                start_size=self.start_size
             )
+        
         self.particleSystem.emit(new_particle)

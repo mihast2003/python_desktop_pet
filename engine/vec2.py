@@ -4,7 +4,15 @@ import math
 class Vec2:
     __slots__ = ("x", "y")
 
-    def __init__(self, x=0.0, y=0.0):
+    def __init__(self, x=0.0, y=None):
+        
+        # print("trying to make a vector2 out of ", x, y)
+
+        if y is None:
+            if isinstance(x, (tuple, list)):
+                x, y = x
+            else: y = 0.0
+
         self.x = float(x)
         self.y = float(y)
 

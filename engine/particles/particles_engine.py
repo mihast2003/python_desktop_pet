@@ -51,7 +51,7 @@ class ParticleOverlayWidget(QWidget):
         # get all particle animations in a dictionary
         self.animations = {}
 
-        current_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        current_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # we go back three folders
         base = os.path.dirname(current_folder)
 
         print("----- LOADING PARTICLES -----")
@@ -87,13 +87,12 @@ class ParticleOverlayWidget(QWidget):
             print("No particle named ", name, " found")
             raise Exception("PARTICLE", name, "NOT FOUND")  #no idea what this does will add user notification that error occured
 
-        shape = cfg.get("emitter_shape")
-        emitter_shape = EmitterShape.__members__.get(shape, EmitterShape.DOT)
-    
         print("adding emitter", name)
 
+        hitbox = Vec2(self.pet.hitbox_width, self.pet.hitbox_height)
+
         self.emitters.append(
-            ParticleEmitter(particleSystem=self, name=name, cfg=cfg, animations=self.animations[name], shape=emitter_shape)
+            ParticleEmitter(particleSystem=self, name=name, cfg=cfg, animations=self.animations[name], hitbox=hitbox)
         )    
 
 
@@ -133,6 +132,9 @@ class ParticleOverlayWidget(QWidget):
             p.update(dt)
 
         self.particles = [p for p in self.particles if p.alive()]
+
+
+    # --- DRAWING ---
 
     def draw(self):
         self.update()  # triggers paintEvent
