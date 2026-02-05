@@ -452,6 +452,7 @@ class Pet(QWidget): # main logic
     def on_state_enter(self, state): #called in state_machine when entering a new state
         print("STATE:", state)
 
+        self.particles.raise_() #might remove later if not needed
         self.particles.start_emitting("dirt")   
 
         self.variables.set("times_clicked_this_state", 0)
@@ -622,7 +623,7 @@ class Pet(QWidget): # main logic
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.particles.raise_() #might remove later if not needed
+            # self.particles.raise_() #might remove later if not needed
             self.click_detector.press(event.globalPosition())
             self.last_mouse_pos = self._mouse_vec(event)
 

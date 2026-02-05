@@ -36,6 +36,12 @@ class ParticleEmitter:
         self.start_size =  self.cfg.get("start_size", 1)
         
 
+        self.emit_top = self.cfg.get("emit_top", True)
+        self.emit_bottom = self.cfg.get("emit_bottom", True)
+        self.emit_left = self.cfg.get("emit_left", True)
+        self.emit_right = self.cfg.get("emit_right", True)
+
+
     def update(self, dt):
         if self.done:
             return
@@ -78,7 +84,7 @@ class ParticleEmitter:
                 if not point1 and not point2:
                     print("NO POINTS TO FORM A LINE, CHECK CONFIG")
 
-                t = random.random()
+                t = random.uniform(0, 1)
                 x1, y1 = point1
                 x2, y2 = point2
 
@@ -104,9 +110,70 @@ class ParticleEmitter:
                 pos = Vec2(x, y)
             
             case EmitterShape.HITBOX:
-                return
+                center = self.particleSystem.pet.anchor - self.emitter_offset
+
+                rand_x = random.uniform(0, 1)
+                rand_y = random.uniform(0, 1)
+
+                border = Vec2(self.cfg.get("modify_border", (0,0))) # get proportions
+                expand = Vec2(self.hitbox.x * -border.x, self.hitbox.y * border.y) # convert to pixel distances
+
+                x = center.x + ((self.hitbox.x - expand.x) * rand_x) - (self.hitbox.x - expand.x)/2
+                y = center.y - ((self.hitbox.y + expand.y) * rand_y)
+
+                hollow: bool = self.cfg.get("hollow", False)
+                if hollow:
+                    pass
+                
+                pos = Vec2(x, y)
+
             case EmitterShape.RECTANGLE:
-                return
+
+                # weight = min(self.hitbox.x*2, self.hitbox.y) / max(self.hitbox.x*2, self.hitbox.y)
+                
+                corner1 = self.particleSystem.pet.anchor + Vec2(-self.hitbox.x/2, 0)
+                corner2 = self.particleSystem.pet.anchor + Vec2(-self.hitbox.x/2, -self.hitbox.y)
+                corner3 = self.particleSystem.pet.anchor + Vec2(+self.hitbox.x/2, -self.hitbox.y)
+                corner4 = self.particleSystem.pet.anchor + Vec2(+self.hitbox.x/2, 0)
+
+                sides_list = []
+
+                if self.emit_left:
+                    side_left = corner2 - corner1
+                    sides_list.append({"vec": side_left, "orig": corner1})
+                if self.emit_top:
+                    side_top = corner3 - corner2 
+                    sides_list.append({"vec": side_top, "orig": corner2})
+                if self.emit_right:
+                    side_right = corner4 - corner3
+                    sides_list.append({"vec": side_right, "orig": corner3})
+                if self.emit_bottom:
+                    side_bottom = corner1 - corner4
+                    sides_list.append({"vec": side_bottom, "orig": corner4})
+
+                line = random.choice(sides_list)
+                
+                r = random.uniform(0, 1)
+
+                point = line["orig"] + (line["vec"] * r)
+
+                circlage = self.cfg.get("round_square")
+
+                if circlage is None:
+                    pos = point
+                else:                 # math for circling a square doesnt work because its not a unit circle and not a circle at all
+                    xn = x / self.hitbox.x*2
+                    yn = y / self.hitbox.y
+
+                    xe = self.hitbox.x * xn * math.sqrt(1 - (yn**2) / 2)
+                    ye = self.hitbox.y * yn * math.sqrt(1 - (xn**2) / 2)
+
+                    xr = (1 - r) * x + r * xe
+                    yr = (1 - r) * y + r * ye
+
+                    pos = Vec2(xr, yr)
+
+
             
         # print("emitting a particle of type ", self.name, " at ", pos)
             

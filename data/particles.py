@@ -4,6 +4,11 @@ a bit of syntax:
 "emitter_shape": "DOT" requires:   "emitter_offset": (1, 1),
 "emitter_shape": "LINE" requires:  "point1": (-1, 1), "point2": (1, 1),
 "emitter_shape": "CIRCLE" requires:  "emitter_offset": (1, 1), "radius": 5, "hollow": True,
+"emitter_shape": "HITBOX" requires:  "emitter_offset": (0, 0), "modify_border": (1, 1), "hollow": True,
+"emit_top": True, "emit_bottom": True, "emit_left": True, "emit_right": True,
+
+"emitter_shape": "RECTANGLE" requires:  "emitter_offset": (0, 0), "size": (1, 1), "hollow": True,
+"emit_top": True, "emit_bottom": True, "emit_left": True, "emit_right": True,
 
 """
 
@@ -16,15 +21,18 @@ PARTICLES = {
             2: 1,
         },
 
-        "lifetime": 1, #lifetime of each particle
-
-        "emitter_shape": "CIRCLE",
-        "emitter_offset": (0, 0.5), 
-        "radius": 1, 
+        "emitter_shape": "RECTANGLE",
+        "round_square": 1,
+        "modify_border": (0.0, 0.0),
+        "emitter_offset": (0, 0), 
         "hollow": True,
+        "emit_bottom": True,
+
         "duration": 5 , #duration of emission
-        "rate_over_time": 3,
+        "rate_over_time": 50,
         "total_count": 200,
+
+        "lifetime": 1, #lifetime of each particle
         "start_vel": (0, 10),
         "start_size": 1,
     },
