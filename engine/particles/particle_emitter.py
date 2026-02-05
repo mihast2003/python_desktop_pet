@@ -30,7 +30,7 @@ class ParticleEmitter:
 
         self.type = self.cfg.get("emitter_type", 1)
         self.lifetime = self.cfg.get("lifetime", 1)
-        self.rate = self.cfg.get("rate_over_time", 0)
+        self.rate = self.cfg.get("rate_over_time", 1)
         self.total_count = self.cfg.get("total_count", 0)
         self.duration = self.cfg.get("duration", 1)  
         self.start_size =  self.cfg.get("start_size", 1)
@@ -67,6 +67,8 @@ class ParticleEmitter:
             raise Exception("VELOCITY OF PARTICLE ", name, " IS NOT TWO VALUES")  #no idea what this does will add user notification that error occured 
         vel = Vec2(values)
 
+        # print("shape", self.emitter_shape)
+
         match self.emitter_shape:
             case EmitterShape.DOT:
                 pos = self.particleSystem.pet.anchor - self.emitter_offset
@@ -98,9 +100,6 @@ class ParticleEmitter:
 
                 x = center.x + r * math.cos(theta)
                 y = center.y + r * math.sin(theta)
-
-                # x= center.x
-                # y= center.y
                 
                 pos = Vec2(x, y)
             
@@ -109,7 +108,7 @@ class ParticleEmitter:
             case EmitterShape.RECTANGLE:
                 return
             
-        print("emitting a particle of type ", self.name, " at ", pos)
+        # print("emitting a particle of type ", self.name, " at ", pos)
             
         new_particle = Particle(
                 pos=QPointF(pos.x, pos.y),

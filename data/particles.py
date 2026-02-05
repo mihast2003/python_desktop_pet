@@ -16,14 +16,14 @@ PARTICLES = {
             2: 1,
         },
 
-        "lifetime": 5, #lifetime of each particle
+        "lifetime": 1, #lifetime of each particle
 
         "emitter_shape": "CIRCLE",
         "emitter_offset": (0, 0.5), 
         "radius": 1, 
         "hollow": True,
-        "duration": 2 , #duration of emission
-        "rate_over_time": 50,
+        "duration": 5 , #duration of emission
+        "rate_over_time": 3,
         "total_count": 200,
         "start_vel": (0, 10),
         "start_size": 1,

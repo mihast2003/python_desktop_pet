@@ -39,14 +39,14 @@ class ParticleOverlayWidget(QWidget):
         extended_style = ctypes.windll.user32.GetWindowLongW(hwnd, -20)
         ctypes.windll.user32.SetWindowLongW(hwnd, -20, extended_style | 0x80000 | 0x20)
 
-        self.show()
-
         self.pet = pet
 
         self.scale = 1
 
         self.emitters = []
         self.particles = []
+
+        self.show()
 
         # get all particle animations in a dictionary
         self.animations = {}

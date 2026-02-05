@@ -409,13 +409,15 @@ class Pet(QWidget): # main logic
 
         self.hitbox_width = 0
         self.hitbox_height = 0
+
+        init_pos = Vec2(RENDER_CONFIG.get("initial_position", (100, 0)))
         
         self.mover = Mover()
-        self.anchor = Vec2(500, 500)
-
         screen = QApplication.primaryScreen() # Screen detection
         self.taskbar_top = screen.availableGeometry().bottom() # Taskbar position detection
-        self.mover.set_position(100, self.taskbar_top + 1) # set initial position
+        self.mover.set_position(init_pos.x, self.taskbar_top + init_pos.y + 1) # set initial position
+
+        self.anchor = Vec2(init_pos.x, self.taskbar_top + init_pos.y + 1)
 
         cfg_facing = RENDER_CONFIG.get("default_facing")
         self.facing = Facing.__members__.get(cfg_facing, Facing.RIGHT)  # defining dacing direction
@@ -427,15 +429,19 @@ class Pet(QWidget): # main logic
         
         self.update_dpi_and_scale(h=h, initial_state=initial_state)
 
+        anim_name = RENDER_CONFIG.get("hitbox_from_animation")
+        if anim_name not in self.animations:
+            cfg = STATES[initial_state]      # gets the config for the state from states.py
+            anim_name = cfg.get("animation")
+        frame = self.animations[anim_name]["frames"][0]
+        self.update_hitbox_size_and_drag_offset(frame=frame) # initial hitbox update
+
         self.state_machine = StateMachine(pet=self, configs=STATES, initial=initial_state) # set initial state
         self.click_detector = ClickDetector(state_machine=self.state_machine) #initialising ClickDetector
 
         self.last_mouse_pos = Vec2()
 
-        self.update_hitbox_size_and_drag_offset() # initial hitbox update
-
         print("----- LOADING SUCCESSFUL -----")
-        self.show()
 
         # Timer for updating logic
         self.timer = QTimer()
@@ -600,10 +606,10 @@ class Pet(QWidget): # main logic
         print("screen dpi", self.dpi_scale)
         print("new scale", self.scale)
 
-    def update_hitbox_size_and_drag_offset(self):
-            frame = self.animator.frame()
+    def update_hitbox_size_and_drag_offset(self, frame):
+            
             if not frame:
-                return
+                frame = self.animator.frame()
                       
             self.hitbox_width = frame.width() * self.scale
             self.hitbox_height = frame.height() * self.scale
