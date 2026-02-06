@@ -143,8 +143,15 @@ class ParticleOverlayWidget(QWidget):
             p.pos_y += p.vel_y * dt
             p.vel_x += p.acc_x * dt
             p.vel_y += p.acc_y * dt
+
+            # if self.loop:
+    #         return self.age < self.lifetime
+    #     else:
+    #         return not self.animation_finished
+
+                
         
-            if not p.alive() or p.pos_y >= self.pet.taskbar_top:
+            if not p.alive or (p.pos_y >= self.pet.taskbar_top):
                 p.alive_flag = False
                 self.free_particles.append(p)
         

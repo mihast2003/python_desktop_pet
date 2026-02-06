@@ -9,7 +9,7 @@ RENDER_CONFIG = {
     "default_loop_option": False,  # True or False, will animations loop or now unless stated otherwise
 
     "render_particles": True,
-    "max_particle_count": 1000,
+    "max_particle_count": 1000000,
 
     "drag_offset_x": 0,
     "drag_offset_y": -1.4,

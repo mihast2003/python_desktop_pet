@@ -32,13 +32,13 @@ class Particle:
         self.alive_flag = True
 
     def alive(self):
-        return self.alive_flag and self.age < self.lifetime
-
-    # def alive(self):
-    #     if self.loop:
-    #         return self.age < self.lifetime
-    #     else:
-    #         return not self.animation_finished
+        if not self.alive_flag:
+            return False
+        
+        if self.loop:
+            return self.age < self.lifetime
+        else:
+            return not self.animation_finished
 
     def current_frame(self):
         frame_index = int(self.age * self.fps)
