@@ -129,13 +129,13 @@ class ParticleEmitter:
 
             case EmitterShape.RECTANGLE:
 
-                # weight = min(self.hitbox.x*2, self.hitbox.y) / max(self.hitbox.x*2, self.hitbox.y)
+                border = Vec2(self.cfg.get("modify_border", (0,0))) # get proportions
+                expand = Vec2(self.hitbox.x * border.x, self.hitbox.y * border.y / 2) # convert to pixel distances
                 
-                corner1 = self.particleSystem.pet.anchor + Vec2(-self.hitbox.x/2, 0)
-                corner2 = self.particleSystem.pet.anchor + Vec2(-self.hitbox.x/2, -self.hitbox.y)
-                corner3 = self.particleSystem.pet.anchor + Vec2(+self.hitbox.x/2, -self.hitbox.y)
-                corner4 = self.particleSystem.pet.anchor + Vec2(+self.hitbox.x/2, 0)
-
+                corner1 = self.particleSystem.pet.anchor + Vec2(-self.hitbox.x/2 -expand.x, +expand.y)
+                corner2 = self.particleSystem.pet.anchor + Vec2(-self.hitbox.x/2 -expand.x, -self.hitbox.y -expand.y)
+                corner3 = self.particleSystem.pet.anchor + Vec2(+self.hitbox.x/2 +expand.x, -self.hitbox.y -expand.y)
+                corner4 = self.particleSystem.pet.anchor + Vec2(+self.hitbox.x/2 +expand.x, +expand.y)
 
                 rec_width: Vec2 = corner3 - corner2 
                 rec_height: Vec2 = corner2 - corner1
@@ -177,24 +177,36 @@ class ParticleEmitter:
                     x = px - cx
                     y = py - cy
 
-
                     a = width / 2
                     b = height / 2
 
-                    # scale factor along ray
-                    t = 1.0 / math.sqrt((x*x)/(a*a) + (y*y)/(b*b))
+                    # # scale factor along ray
+                    # t = 1.0 / math.sqrt((x*x)/(a*a) + (y*y)/(b*b))
 
-                    # if not hollow and t < 1:
-                        
+                    t_rect = min(
+                        (a / abs(x)) if x != 0 else float("inf"),
+                        (b / abs(y)) if y != 0 else float("inf")
+                    )
 
-                    # warped point
-                    xw = cx + t*x
-                    yw = cy + t*y
+                    t_ellipse = 1.0 / math.sqrt((x*x)/(a*a) + (y*y)/(b*b))
 
-                    x_interpolated = (1-circlage)*px + circlage*xw
-                    y_interpolated = (1-circlage)*py + circlage*yw
+                    t_interp = (1 - circlage) * t_rect + circlage * t_ellipse
 
-                    pos = Vec2(x_interpolated, y_interpolated)
+                    if not hollow and t_interp > 1:
+                        xw, yw = point.x, point.y
+                    else:
+                        # warped point
+                        xw = cx + x * t_interp
+                        yw = cy + y * t_interp
+
+                    
+
+                    pos = Vec2(xw, yw)
+
+                    # x_interpolated = (1-circlage)*px + circlage*xw
+                    # y_interpolated = (1-circlage)*py + circlage*yw
+
+                    # pos = Vec2(x_interpolated, y_interpolated)
 
 
             

@@ -22,10 +22,10 @@ PARTICLES = {
         },
 
         "emitter_shape": "RECTANGLE",
-        "round_square": 0.8,
-        "modify_border": (0.0, 0.0),
+        "round_square": 1,    # from 0 (rectangle) to 1 (ellipse)
+        "modify_border": (-0.3, -0.3),
         "emitter_offset": (0, 0), 
-        "hollow": True,
+        "hollow": False,
         "emit_bottom": True,
 
         "duration": 5 , #duration of emission
