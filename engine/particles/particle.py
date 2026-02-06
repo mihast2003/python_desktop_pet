@@ -5,15 +5,22 @@ from engine.vec2 import Vec2
 
 #data class
 class Particle:
-    __slots__ = ("pos_x", "pos_y", "vel_x", "vel_y", "acc_x", "acc_y", "name", "anim", "size", "frames", "fps", "loop", "animation_finished", "age", "lifetime")
-    def __init__(self, pos, vel, acceleration, anim_name, start_size, frames, fps, loop, lifetime):
+    __slots__ = ("pos_x", "pos_y", "vel_x", "vel_y", "acc_x", "acc_y", "name", "anim", "size", "frames", "fps", "loop", "animation_finished", "age", "lifetime", "alive_flag")
 
-        self.pos_x, self.pos_y = pos
-        self.vel_x, self.vel_y = vel
-        self.acc_x, self.acc_y = acceleration
+    def __init__(self):
+        self.alive_flag = False
+
+    def reset(self, pos_x, pos_y, vel_x, vel_y, acc_x, acc_y, anim_name, size, frames, fps, loop, lifetime):
+
+        self.pos_x = pos_x
+        self.pos_y = pos_y
+        self.vel_x = vel_x
+        self.vel_y = vel_y
+        self.acc_x = acc_x
+        self.acc_y = acc_y
 
         self.name = anim_name
-        self.size = start_size
+        self.size = size
 
         self.frames = frames
         self.fps = fps
@@ -22,16 +29,16 @@ class Particle:
 
         self.age = 0.0
         self.lifetime = lifetime
-    # def update(self, dt):
-    #     self.age += dt
-        # self.pos += self.vel * dt
-        # self.vel += self.acceleration * dt
+        self.alive_flag = True
 
     def alive(self):
-        if self.loop:
-            return self.age < self.lifetime
-        else:
-            return not self.animation_finished
+        return self.alive_flag and self.age < self.lifetime
+
+    # def alive(self):
+    #     if self.loop:
+    #         return self.age < self.lifetime
+    #     else:
+    #         return not self.animation_finished
 
     def current_frame(self):
         frame_index = int(self.age * self.fps)

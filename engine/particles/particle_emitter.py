@@ -85,10 +85,8 @@ class ParticleEmitter:
         name = self.name
 
         vel = (self.start_vel[0], -self.start_vel[1])
-        # vel[1] *= -1
-        # self.start_acc= Vec2(self.cfg.get("start_acceleration", (0, 0)))
+
         acceleration = (self.start_acc[0], -self.start_acc[1])
-        # acceleration[1] *= -1
 
         # print("shape", self.emitter_shape)
 
@@ -227,17 +225,36 @@ class ParticleEmitter:
 
         # print(acceleration[0], acceleration[1])
             
-        new_particle = Particle(
-                pos=pos,
-                vel=vel,  # vel.y is inverted because upside down
-                acceleration=acceleration,
-                anim_name=name,
-                frames=self.frames,
-                fps=self.fps,
-                loop=self.loop,
-                lifetime=self.lifetime,
-                start_size=self.start_size
-            )
+        # new_particle = Particle(
+        #         pos=pos,
+        #         vel=vel,  # vel.y is inverted because upside down
+        #         acceleration=acceleration,
+        #         anim_name=name,
+        #         frames=self.frames,
+        #         fps=self.fps,
+        #         loop=self.loop,
+        #         lifetime=self.lifetime,
+        #         start_size=self.start_size
+        #     )
         
         # print("emitting a particle of type ", self.name, " at ", pos)
-        self.particleSystem.emit(new_particle)
+        # self.particleSystem.emit(new_particle)
+
+        pos_x, pos_y = pos
+        vel_x, vel_y = vel
+        acc_x, acc_y = acceleration
+
+        self.particleSystem.emit(
+            name=self.name,
+            pos_x=pos_x,
+            pos_y=pos_y,
+            vel_x=vel_x,
+            vel_y=vel_y,
+            acc_x=acc_x,
+            acc_y=acc_y,
+            lifetime=self.lifetime,
+            frames=self.frames,
+            fps=self.fps,
+            loop=self.loop,
+            size=self.start_size
+        )

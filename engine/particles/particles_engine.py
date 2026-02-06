@@ -8,6 +8,7 @@ from engine.enums import EmitterShape
 from engine.vec2 import Vec2
 
 from engine.particles.particle_emitter import ParticleEmitter
+from engine.particles.particle import Particle
 
 from data.render_config import RENDER_CONFIG
 from data.particles import PARTICLES
@@ -44,7 +45,10 @@ class ParticleOverlayWidget(QWidget):
         self.scale = 1
 
         self.emitters = []
-        self.particles = []
+
+        MAX_PARTICLES = RENDER_CONFIG.get("max_particle_count", 1000)
+        self.active_particles = []
+        self.free_particles = [Particle() for _ in range(MAX_PARTICLES)]
 
         self.show()
 
@@ -96,12 +100,26 @@ class ParticleOverlayWidget(QWidget):
         )    
 
 
-    def emit(self, new_particle):
-        if len(self.particles) >= RENDER_CONFIG.get("max_particle_count", 100):
-            return
-        
-        self.particles.append(new_particle)
+    def emit(self, *, name, pos_x, pos_y, vel_x, vel_y, acc_x, acc_y, lifetime, frames, fps, loop, size):
+        if not self.free_particles:
+            return  # pool exhausted
 
+        p = self.free_particles.pop()
+        p.reset(
+            anim_name=name,
+            pos_x=pos_x,
+            pos_y=pos_y,
+            vel_x=vel_x,
+            vel_y=vel_y,
+            acc_x=acc_x,
+            acc_y=acc_y,
+            lifetime=lifetime,
+            frames=frames,
+            fps=fps,
+            loop=loop,
+            size=size
+        )
+        self.active_particles.append(p)
 
 
     #only triggers update_particle for now, maybe will add something later or remove
@@ -116,14 +134,25 @@ class ParticleOverlayWidget(QWidget):
 
         # --- PARTICLES ---
 
-        for p in self.particles:
+        i = 0
+        while i < len(self.active_particles):
+            p = self.active_particles[i]
+        
             p.age += dt
             p.pos_x += p.vel_x * dt
             p.pos_y += p.vel_y * dt
             p.vel_x += p.acc_x * dt
             p.vel_y += p.acc_y * dt
-
-        self.particles = [p for p in self.particles if p.pos_y < self.pet.taskbar_top and p.alive()]
+        
+            if not p.alive() or p.pos_y >= self.pet.taskbar_top:
+                p.alive_flag = False
+                self.free_particles.append(p)
+        
+                # swap-remove (O(1))
+                self.active_particles[i] = self.active_particles[-1]
+                self.active_particles.pop()
+            else:
+                i += 1
         
         # -- DEBUGGING TEXT --
         self.emitters_by_type = defaultdict(int)
@@ -132,8 +161,8 @@ class ParticleOverlayWidget(QWidget):
         for emitter in self.emitters:
             self.emitters_by_type[emitter.name] += 1
         
-        for p in self.particles:
-            self.particles_by_type[p.name] += 1        
+        for p in self.active_particles:
+            self.particles_by_type[p.name] += 1
 
 
     # --- DRAWING ---
@@ -149,7 +178,7 @@ class ParticleOverlayWidget(QWidget):
 
         # painter.scale(self.scale, self.scale)
 
-        for p in self.particles:
+        for p in self.active_particles:
             frame = p.current_frame()
             if not frame:
                 continue
