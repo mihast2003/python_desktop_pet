@@ -137,19 +137,26 @@ class ParticleOverlayWidget(QWidget):
         i = 0
         while i < len(self.active_particles):
             p = self.active_particles[i]
+
+            age, px, py, vx, vy, ax, ay = p.age, p.pos_x, p.pos_y, p.vel_x, p.vel_y, p.acc_x, p.acc_y
         
-            p.age += dt
-            p.pos_x += p.vel_x * dt
-            p.pos_y += p.vel_y * dt
-            p.vel_x += p.acc_x * dt
-            p.vel_y += p.acc_y * dt
+            # p.age += dt
+            # p.pos_x += p.vel_x * dt
+            # p.pos_y += p.vel_y * dt
+            # p.vel_x += p.acc_x * dt
+            # p.vel_y += p.acc_y * dt
 
-            # if self.loop:
-    #         return self.age < self.lifetime
-    #     else:
-    #         return not self.animation_finished
+            age += dt
 
-                
+            px += vx * dt
+            py += vy * dt
+            vx += ax * dt
+            vy += ay * dt
+            ax += ax * dt
+            ay += ay * dt
+
+
+            p.age, p.pos_x, p.pos_y, p.vel_x, p.vel_y, p.acc_x, p.acc_y = age, px, py, vx, vy, ax, ay         
         
             if not p.alive or (p.pos_y >= self.pet.taskbar_top):
                 p.alive_flag = False

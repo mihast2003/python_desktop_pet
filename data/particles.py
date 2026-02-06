@@ -34,7 +34,7 @@ PARTICLES = {
         "total_count": 100000,
 
         "lifetime": 10, #lifetime of each particle
-        "start_vel": (200, 350),
+        "start_vel": (100, 350),
         "start_acceleration": (0, -20),
         "start_size": 1,
     },
