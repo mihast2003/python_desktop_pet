@@ -14,6 +14,8 @@ from data.particles import PARTICLES
 
 from collections import defaultdict
 
+import cProfile
+
 import ctypes
          
 
@@ -45,6 +47,7 @@ class ParticleOverlayWidget(QWidget):
 
         self.emitters = []
         self.particles = []
+        self.profiler = cProfile.Profile()
 
         self.show()
 
@@ -106,11 +109,13 @@ class ParticleOverlayWidget(QWidget):
 
     #only triggers update_particle for now, maybe will add something later or remove
     def update_logic(self, dt):
+        self.profiler.enable()
 
         for emitter in self.emitters:
             emitter.update(dt) # updating all emitters
 
-        self.emitters = [e for e in self.emitters if not e.done] #pruning emitters
+
+        self.emitters = [e for e in self.emitters if e.emitted >= e.total_count or e.time >= e.duration] #pruning emitters
 
         self.update_particles(dt) # updating particles
 
@@ -124,14 +129,23 @@ class ParticleOverlayWidget(QWidget):
         for p in self.particles:
             self.particles_by_type[p.name] += 1
 
+        self.profiler.disable()
+        self.profiler.print_stats(sort='cumtime')
+
 
     # updates particle lifetime and deletes those who expired
     def update_particles(self, dt):
 
         for p in self.particles:
-            p.update(dt)
+            # p.update(dt)
+            p.age += dt
+            p.pos_x += p.vel_x * dt
+            p.pos_x += p.vel_y * dt
+            p.vel_x += p.acc_x * dt
+            p.vel_y += p.acc_y * dt
 
-        self.particles = [p for p in self.particles if p.pos.y < self.pet.taskbar_top]
+
+        self.particles = [p for p in self.particles if p.pos_y < self.pet.taskbar_top]
         self.particles = [p for p in self.particles if p.alive()]
 
 
@@ -154,8 +168,8 @@ class ParticleOverlayWidget(QWidget):
                 continue
 
             # draw sprite so its middle is at given possition
-            true_pos_x = p.pos.x / self.scale
-            true_pos_y = p.pos.y / self.scale
+            true_pos_x = p.pos_x / self.scale
+            true_pos_y = p.pos_y / self.scale
 
             offset_x = frame.width() / 2
             offset_y = frame.height() / 2
@@ -172,7 +186,7 @@ class ParticleOverlayWidget(QWidget):
             # painter.setPen(QPen(Qt.red, 3))
             # painter.drawEllipse(true_pos_x, true_pos_y, 50, 50)
 
-            # print("drawing a particle at", p.pos.x(), p.pos.y())
+            # print("drawing a particle at", p.pos_x(), p.pos_y())
 
             painter.restore()
 

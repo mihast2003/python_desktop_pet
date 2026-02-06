@@ -5,11 +5,15 @@ from engine.vec2 import Vec2
 
 #data class
 class Particle:
+    __slots__ = ("pos_x", "pos_y", "vel_x", "vel_y", "acc_x", "acc_y", "name", "anim", "size", "frames", "fps", "loop", "animation_finished", "age", "lifetime", "frame_index")
     def __init__(self, pos, vel, acceleration, anim_name, animations, start_size):
 
-        self.pos = pos
-        self.vel = vel
-        self.acceleration = acceleration
+        self.pos_x = pos.x
+        self.pos_y = pos.y
+        self.vel_x = vel.x
+        self.vel_y = vel.y
+        self.acc_x = acceleration.x
+        self.acc_y = acceleration.y
 
         self.name = anim_name
         self.anim = animations
@@ -23,10 +27,11 @@ class Particle:
         self.age = 0.0
         self.lifetime = len(self.frames) / self.fps if not self.loop else float("inf")
 
-    def update(self, dt):
-        self.age += dt
-        self.pos += self.vel * dt
-        self.vel += self.acceleration * dt
+    # updating position and velicity in particles engine should be faster
+    # def update(self, dt):
+    #     self.age += dt
+        # self.pos += self.vel * dt
+        # self.vel += self.acceleration * dt
 
     def alive(self):
         if self.loop:
