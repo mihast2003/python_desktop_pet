@@ -13,7 +13,7 @@ class ParticleEmitter:
 
         self.name = name
         self.cfg = cfg
-        self.animations = animations
+        self.anim = animations
 
         self.hitbox = hitbox
 
@@ -35,11 +35,20 @@ class ParticleEmitter:
         self.total_count = self.cfg.get("total_count", 0)
         self.duration = self.cfg.get("duration", 1)  
         self.start_size =  self.cfg.get("start_size", 1)
+
+        self.start_vel = self.cfg.get("start_vel", (0, 0))
+        self.start_acc = self.cfg.get("start_acceleration", (0, 0))
         
         self.emit_top = self.cfg.get("emit_top", True)
         self.emit_bottom = self.cfg.get("emit_bottom", True)
         self.emit_left = self.cfg.get("emit_left", True)
         self.emit_right = self.cfg.get("emit_right", True)
+
+        #for particles directly
+        self.frames = self.anim["frames"]
+        self.fps = self.anim["fps"]
+        self.loop = self.anim["loop"]
+        self.lifetime = len(self.frames) / self.fps if not self.loop else float("inf")
 
 
     def update(self, dt):
@@ -75,10 +84,11 @@ class ParticleEmitter:
         # randomize vel, lifetime, etc
         name = self.name
 
-        vel = Vec2(self.cfg.get("start_vel", (0, 0)))
-        vel.y *= -1
-        acceleration = Vec2(self.cfg.get("start_acceleration", (0, 0)))
-        acceleration.y *= -1
+        vel = (self.start_vel[0], -self.start_vel[1])
+        # vel[1] *= -1
+        # self.start_acc= Vec2(self.cfg.get("start_acceleration", (0, 0)))
+        acceleration = (self.start_acc[0], -self.start_acc[1])
+        # acceleration[1] *= -1
 
         # print("shape", self.emitter_shape)
 
@@ -215,13 +225,17 @@ class ParticleEmitter:
 
                     # pos = Vec2(x_interpolated, y_interpolated)
 
+        # print(acceleration[0], acceleration[1])
             
         new_particle = Particle(
                 pos=pos,
                 vel=vel,  # vel.y is inverted because upside down
                 acceleration=acceleration,
                 anim_name=name,
-                animations=self.animations,
+                frames=self.frames,
+                fps=self.fps,
+                loop=self.loop,
+                lifetime=self.lifetime,
                 start_size=self.start_size
             )
         

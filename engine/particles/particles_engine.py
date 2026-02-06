@@ -107,13 +107,24 @@ class ParticleOverlayWidget(QWidget):
     #only triggers update_particle for now, maybe will add something later or remove
     def update_logic(self, dt):
 
+        # --- EMITTERS ---
+
         for emitter in self.emitters:
             emitter.update(dt) # updating all emitters
 
         self.emitters = [e for e in self.emitters if not e.done] #pruning emitters
 
-        self.update_particles(dt) # updating particles
+        # --- PARTICLES ---
 
+        for p in self.particles:
+            p.age += dt
+            p.pos_x += p.vel_x * dt
+            p.pos_y += p.vel_y * dt
+            p.vel_x += p.acc_x * dt
+            p.vel_y += p.acc_y * dt
+
+        self.particles = [p for p in self.particles if p.pos_y < self.pet.taskbar_top and p.alive()]
+        
         # -- DEBUGGING TEXT --
         self.emitters_by_type = defaultdict(int)
         self.particles_by_type = defaultdict(int)
@@ -122,17 +133,7 @@ class ParticleOverlayWidget(QWidget):
             self.emitters_by_type[emitter.name] += 1
         
         for p in self.particles:
-            self.particles_by_type[p.name] += 1
-
-
-    # updates particle lifetime and deletes those who expired
-    def update_particles(self, dt):
-
-        for p in self.particles:
-            p.update(dt)
-
-        self.particles = [p for p in self.particles if p.pos.y < self.pet.taskbar_top]
-        self.particles = [p for p in self.particles if p.alive()]
+            self.particles_by_type[p.name] += 1        
 
 
     # --- DRAWING ---
@@ -154,8 +155,8 @@ class ParticleOverlayWidget(QWidget):
                 continue
 
             # draw sprite so its middle is at given possition
-            true_pos_x = p.pos.x / self.scale
-            true_pos_y = p.pos.y / self.scale
+            true_pos_x = p.pos_x / self.scale
+            true_pos_y = p.pos_y / self.scale
 
             offset_x = frame.width() / 2
             offset_y = frame.height() / 2
