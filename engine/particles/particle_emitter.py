@@ -132,10 +132,10 @@ class ParticleEmitter:
                 border = Vec2(self.cfg.get("modify_border", (0,0))) # get proportions
                 expand = Vec2(self.hitbox.x * border.x, self.hitbox.y * border.y / 2) # convert to pixel distances
                 
-                corner1 = self.particleSystem.pet.anchor + Vec2(-self.hitbox.x/2 -expand.x, +expand.y)
-                corner2 = self.particleSystem.pet.anchor + Vec2(-self.hitbox.x/2 -expand.x, -self.hitbox.y -expand.y)
-                corner3 = self.particleSystem.pet.anchor + Vec2(+self.hitbox.x/2 +expand.x, -self.hitbox.y -expand.y)
-                corner4 = self.particleSystem.pet.anchor + Vec2(+self.hitbox.x/2 +expand.x, +expand.y)
+                corner1 = self.particleSystem.pet.anchor + Vec2(-self.hitbox.x/2 -expand.x, +expand.y) - self.emitter_offset
+                corner2 = self.particleSystem.pet.anchor + Vec2(-self.hitbox.x/2 -expand.x, -self.hitbox.y -expand.y) - self.emitter_offset
+                corner3 = self.particleSystem.pet.anchor + Vec2(+self.hitbox.x/2 +expand.x, -self.hitbox.y -expand.y) - self.emitter_offset
+                corner4 = self.particleSystem.pet.anchor + Vec2(+self.hitbox.x/2 +expand.x, +expand.y) - self.emitter_offset
 
                 rec_width: Vec2 = corner3 - corner2 
                 rec_height: Vec2 = corner2 - corner1
@@ -168,8 +168,8 @@ class ParticleEmitter:
                 else:                # math for circling a square doesnt work because its not a unit circle and not a circle at all
                     px = point.x
                     py = point.y
-                    cx = self.particleSystem.pet.anchor.x
-                    cy = self.particleSystem.pet.anchor.y - rec_height.length()/2
+                    cx = self.particleSystem.pet.anchor.x  - self.emitter_offset.x 
+                    cy = self.particleSystem.pet.anchor.y - rec_height.length()/2  - self.emitter_offset.y
                     width = rec_width.length()
                     height = rec_height.length()
 
@@ -208,9 +208,6 @@ class ParticleEmitter:
 
                     # pos = Vec2(x_interpolated, y_interpolated)
 
-
-            
-        # print("emitting a particle of type ", self.name, " at ", pos)
             
         new_particle = Particle(
                 pos=QPointF(pos.x, pos.y),
@@ -220,4 +217,5 @@ class ParticleEmitter:
                 start_size=self.start_size
             )
         
+        # print("emitting a particle of type ", self.name, " at ", pos)
         self.particleSystem.emit(new_particle)
