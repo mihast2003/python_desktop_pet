@@ -1,5 +1,5 @@
 import sys, os, random, time, math
-from PySide6.QtCore import Qt, QPointF
+from PySide6.QtCore import Qt, QPointF, QRect
 from PySide6.QtGui import QColor, QPainter, QPen, QFont
 from PySide6.QtWidgets import QWidget, QApplication, QLabel
 
@@ -219,7 +219,12 @@ class ParticleOverlayWidget(QWidget):
                     f'{emitter_count} emitters of type "{type_name}" – {particle_count} particles'
                 )
 
+            lines.append(
+                f' \n {len(self.active_particles)} active particles, {len(self.free_particles)} free particles'
+            )
+
             debug_text = "\n".join(lines)
 
-            painter.drawText(10, 20, debug_text)
+            rect = QRect(10, 20, 300, 200)
+            painter.drawText(rect, Qt.AlignLeft | Qt.AlignTop, debug_text)
 
