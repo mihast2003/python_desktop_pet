@@ -19,6 +19,8 @@ from engine.vec2 import Vec2
 from engine.behaviour_resolver import BehaviourResolver
 from engine.particles.particles_engine import ParticleOverlayWidget
 
+import cProfile
+
 
 from data.variables import VARIABLES
 from engine.variable_manager import VariableManager
@@ -407,6 +409,8 @@ class Pet(QWidget): # main logic
         self.animator = Animator()
         self.particles = ParticleOverlayWidget(pet=self)
 
+        self.profiler = cProfile.Profile()
+
         self.hitbox_width = 0
         self.hitbox_height = 0
 
@@ -532,6 +536,9 @@ class Pet(QWidget): # main logic
     def update_logic(self):
         dt = 1 / 60
 
+        self.profiler.disable()  # start profiling
+        self.profiler.enable()  # start profiling
+
         self.particles.update_logic(dt) #updating particles widget
 
         # --- INPUT PHASE ---
@@ -565,6 +572,10 @@ class Pet(QWidget): # main logic
     
         self.update()  # repaint
         self.particles.draw()
+
+        self.profiler.disable()  # stop profiling
+        self.profiler.print_stats(sort='cumtime')  # print results
+        self.profiler.dump_stats("particle_profile.stats")
 
     def apply_window_position(self):
         self.move(
