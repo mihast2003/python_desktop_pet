@@ -84,7 +84,7 @@ class ParticleEmitter:
                 if not point1 and not point2:
                     print("NO POINTS TO FORM A LINE, CHECK CONFIG")
 
-                t = random.uniform(0, 1)
+                t = random.random()
                 x1, y1 = point1
                 x2, y2 = point2
 
@@ -102,7 +102,7 @@ class ParticleEmitter:
 
                 hollow: bool = self.cfg.get("hollow", False)
                 if not hollow:
-                    r *= math.sqrt(random.uniform(0, 1))
+                    r *= math.sqrt(random.random())
 
                 x = center.x + r * math.cos(theta)
                 y = center.y + r * math.sin(theta)
@@ -112,8 +112,8 @@ class ParticleEmitter:
             case EmitterShape.HITBOX:
                 center = self.particleSystem.pet.anchor - self.emitter_offset
 
-                rand_x = random.uniform(0, 1)
-                rand_y = random.uniform(0, 1)
+                rand_x = random.random()
+                rand_y = random.random()
 
                 border = Vec2(self.cfg.get("modify_border", (0,0))) # get proportions
                 expand = Vec2(self.hitbox.x * -border.x, self.hitbox.y * border.y) # convert to pixel distances
@@ -136,42 +136,65 @@ class ParticleEmitter:
                 corner3 = self.particleSystem.pet.anchor + Vec2(+self.hitbox.x/2, -self.hitbox.y)
                 corner4 = self.particleSystem.pet.anchor + Vec2(+self.hitbox.x/2, 0)
 
+
+                rec_width: Vec2 = corner3 - corner2 
+                rec_height: Vec2 = corner2 - corner1
+
                 sides_list = []
+                hollow: bool = self.cfg.get("hollow", False)
 
-                if self.emit_left:
-                    side_left = corner2 - corner1
-                    sides_list.append({"vec": side_left, "orig": corner1})
-                if self.emit_top:
-                    side_top = corner3 - corner2 
-                    sides_list.append({"vec": side_top, "orig": corner2})
-                if self.emit_right:
-                    side_right = corner4 - corner3
-                    sides_list.append({"vec": side_right, "orig": corner3})
-                if self.emit_bottom:
-                    side_bottom = corner1 - corner4
-                    sides_list.append({"vec": side_bottom, "orig": corner4})
+                if hollow:
+                    if self.emit_left:
+                        sides_list.append({"vec": rec_height, "orig": corner1})
+                    if self.emit_top:
+                        sides_list.append({"vec": rec_width, "orig": corner2})
+                    if self.emit_right:
+                        sides_list.append({"vec": rec_height, "orig": corner4})
+                    if self.emit_bottom:
+                        sides_list.append({"vec": rec_width, "orig": corner1})
 
-                line = random.choice(sides_list)
-                
-                r = random.uniform(0, 1)
+                    line = random.choice(sides_list)
+                    r = random.random()
+                    point = line["orig"] + (line["vec"] * r)
 
-                point = line["orig"] + (line["vec"] * r)
+                else:
+                    point = corner1 + (rec_width * random.random()) + (rec_height * random.random())
+
 
                 circlage = self.cfg.get("round_square")
 
                 if circlage is None:
                     pos = point
-                else:                 # math for circling a square doesnt work because its not a unit circle and not a circle at all
-                    xn = x / self.hitbox.x*2
-                    yn = y / self.hitbox.y
+                else:                # math for circling a square doesnt work because its not a unit circle and not a circle at all
+                    px = point.x
+                    py = point.y
+                    cx = self.particleSystem.pet.anchor.x
+                    cy = self.particleSystem.pet.anchor.y - rec_height.length()/2
+                    width = rec_width.length()
+                    height = rec_height.length()
 
-                    xe = self.hitbox.x * xn * math.sqrt(1 - (yn**2) / 2)
-                    ye = self.hitbox.y * yn * math.sqrt(1 - (xn**2) / 2)
+                    # vector to to center
+                    x = px - cx
+                    y = py - cy
 
-                    xr = (1 - r) * x + r * xe
-                    yr = (1 - r) * y + r * ye
 
-                    pos = Vec2(xr, yr)
+                    a = width / 2
+                    b = height / 2
+
+                    # scale factor along ray
+                    t = 1.0 / math.sqrt((x*x)/(a*a) + (y*y)/(b*b))
+
+                    # if not hollow and t < 1:
+                        
+
+                    # warped point
+                    xw = cx + t*x
+                    yw = cy + t*y
+
+                    x_interpolated = (1-circlage)*px + circlage*xw
+                    y_interpolated = (1-circlage)*py + circlage*yw
+
+                    pos = Vec2(x_interpolated, y_interpolated)
 
 
             
