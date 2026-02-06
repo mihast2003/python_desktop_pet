@@ -131,6 +131,7 @@ class ParticleOverlayWidget(QWidget):
         for p in self.particles:
             p.update(dt)
 
+        self.particles = [p for p in self.particles if p.pos.y < self.pet.taskbar_top]
         self.particles = [p for p in self.particles if p.alive()]
 
 
@@ -153,8 +154,8 @@ class ParticleOverlayWidget(QWidget):
                 continue
 
             # draw sprite so its middle is at given possition
-            true_pos_x = p.pos.x() / self.scale
-            true_pos_y = p.pos.y() / self.scale
+            true_pos_x = p.pos.x / self.scale
+            true_pos_y = p.pos.y / self.scale
 
             offset_x = frame.width() / 2
             offset_y = frame.height() / 2

@@ -15,7 +15,7 @@ a bit of syntax:
 PARTICLES = {
     "dirt": {
         "folder": "particles/dirt",
-        "fps": 3,
+        "fps": 2,
         "loop": False,
         "holds": {
             2: 1,
@@ -29,11 +29,13 @@ PARTICLES = {
         "emit_bottom": True,
 
         "duration": 5 , #duration of emission
-        "rate_over_time": 50,
-        "total_count": 200,
+        "rate_over_time": 10,
+        "random_timing": 1, # preferrably from 0 to 1, random offset to emition intervals
+        "total_count": 1000,
 
-        "lifetime": 1, #lifetime of each particle
-        "start_vel": (0, 10),
+        "lifetime": 10, #lifetime of each particle
+        "start_vel": (0, 100),
+        "start_acceleration": (0, -300),
         "start_size": 1,
     },
 

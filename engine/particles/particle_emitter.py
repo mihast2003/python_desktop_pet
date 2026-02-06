@@ -31,11 +31,11 @@ class ParticleEmitter:
         self.type = self.cfg.get("emitter_type", 1)
         self.lifetime = self.cfg.get("lifetime", 1)
         self.rate = self.cfg.get("rate_over_time", 1)
+        self.random_timing = self.cfg.get("random_timing", 0)
         self.total_count = self.cfg.get("total_count", 0)
         self.duration = self.cfg.get("duration", 1)  
         self.start_size =  self.cfg.get("start_size", 1)
         
-
         self.emit_top = self.cfg.get("emit_top", True)
         self.emit_bottom = self.cfg.get("emit_bottom", True)
         self.emit_left = self.cfg.get("emit_left", True)
@@ -49,29 +49,36 @@ class ParticleEmitter:
         # math to determine how many particles to emit
         emit_interval = 1.0 / self.rate
 
+        if self.random_timing != 0:
+            jitter = random.random() * emit_interval * self.random_timing
+            emit_interval += jitter - emit_interval/2
+
+
         self.time += dt
         self.elapsed += dt
 
         # print("elapsed", self.elapsed)
 
         # emitting those particles
-        while self.elapsed >= emit_interval:
+        count = int(self.elapsed / emit_interval)
+        for _ in range(count):
             self.spawn_particle()
-            self.emitted += 1
-            self.elapsed -= emit_interval        
+
+        self.elapsed %= emit_interval
 
 
-        if self.emitted >= self.total_count and self.rate != 0 or self.time >= self.duration:
+        if self.emitted >= self.total_count or self.time >= self.duration:
             self.done = True
+            print("done")
 
     def spawn_particle(self):
         # randomize vel, lifetime, etc
         name = self.name
-        values = self.cfg.get("start_vel", (0, 0))
 
-        if len(values) != 2:
-            raise Exception("VELOCITY OF PARTICLE ", name, " IS NOT TWO VALUES")  #no idea what this does will add user notification that error occured 
-        vel = Vec2(values)
+        vel = Vec2(self.cfg.get("start_vel", (0, 0)))
+        vel.y *= -1
+        acceleration = Vec2(self.cfg.get("start_acceleration", (0, 0)))
+        acceleration.y *= -1
 
         # print("shape", self.emitter_shape)
 
@@ -210,8 +217,9 @@ class ParticleEmitter:
 
             
         new_particle = Particle(
-                pos=QPointF(pos.x, pos.y),
-                vel=QPointF(vel.x, -vel.y),  # vel.y is inverted because upside down
+                pos=pos,
+                vel=vel,  # vel.y is inverted because upside down
+                acceleration=acceleration,
                 anim_name=name,
                 animations=self.animations,
                 start_size=self.start_size
