@@ -47,7 +47,7 @@ class ParticleEmitter:
         #for particles directly
         self.frames = self.anim["frames"]
         self.fps = self.anim["fps"]
-        self.loop = self.anim["loop"]
+        self.loop = self.anim.get("loop", False)
         self.lifetime = len(self.frames) / self.fps if not self.loop else float("inf")
 
 
@@ -82,7 +82,6 @@ class ParticleEmitter:
 
     def spawn_particle(self):
         # randomize vel, lifetime, etc
-        name = self.name
 
         vel = (self.start_vel[0], -self.start_vel[1])
 

@@ -5,21 +5,17 @@ from engine.vec2 import Vec2
 
 #data class
 class Particle:
-    __slots__ = ("pos_x", "pos_y", "vel_x", "vel_y", "acc_x", "acc_y", "name", "anim", "size", "frames", "fps", "loop", "animation_finished", "age", "lifetime", "alive_flag")
+    __slots__ = ("idx", "name", "size", "frames", "fps", "loop", "animation_finished", "age", "lifetime", "alive_flag")
 
     def __init__(self):
         self.alive_flag = False
 
-    def reset(self, pos_x, pos_y, vel_x, vel_y, acc_x, acc_y, anim_name, size, frames, fps, loop, lifetime):
+        self.idx = -1
 
-        self.pos_x = pos_x
-        self.pos_y = pos_y
-        self.vel_x = vel_x
-        self.vel_y = vel_y
-        self.acc_x = acc_x
-        self.acc_y = acc_y
+    def reset(self, idx, name, size, frames, fps, loop, lifetime):
+        self.idx = idx
 
-        self.name = anim_name
+        self.name = name
         self.size = size
 
         self.frames = frames

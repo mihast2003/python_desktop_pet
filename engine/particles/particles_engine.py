@@ -50,6 +50,17 @@ class ParticleOverlayWidget(QWidget):
         self.active_particles = []
         self.free_particles = [Particle() for _ in range(MAX_PARTICLES)]
 
+        # SoA storage
+        self.pos_x = [0.0] * MAX_PARTICLES
+        self.pos_y = [0.0] * MAX_PARTICLES
+        self.vel_x = [0.0] * MAX_PARTICLES
+        self.vel_y = [0.0] * MAX_PARTICLES
+        self.acc_x = [0.0] * MAX_PARTICLES
+        self.acc_y = [0.0] * MAX_PARTICLES
+        
+        # free indices
+        self.free_indices = list(range(MAX_PARTICLES))
+
         self.show()
 
         # get all particle animations in a dictionary
@@ -101,28 +112,32 @@ class ParticleOverlayWidget(QWidget):
 
 
     def emit(self, *, name, pos_x, pos_y, vel_x, vel_y, acc_x, acc_y, lifetime, frames, fps, loop, size):
-        if not self.free_particles:
-            return  # pool exhausted
+        if not self.free_indices:
+            return
 
+        idx = self.free_indices.pop()
         p = self.free_particles.pop()
-        p.reset(
-            anim_name=name,
-            pos_x=pos_x,
-            pos_y=pos_y,
-            vel_x=vel_x,
-            vel_y=vel_y,
-            acc_x=acc_x,
-            acc_y=acc_y,
-            lifetime=lifetime,
-            frames=frames,
-            fps=fps,
-            loop=loop,
-            size=size
-        )
+
+        p.reset(idx=idx, name=name, size=size, frames=frames, fps=fps, loop=loop, lifetime=lifetime)
+
+        # p.idx = idx
+        # p.name = name
+        # p.alive_flag = True
+        # p.frames = frames
+        # p.fps = fps
+        # p.loop = loop
+        # p.size = size
+
+        self.pos_x[idx] = pos_x
+        self.pos_y[idx] = pos_y
+        self.vel_x[idx] = vel_x
+        self.vel_y[idx] = vel_y
+        self.acc_x[idx] = acc_x
+        self.acc_y[idx] = acc_y
+
         self.active_particles.append(p)
 
 
-    #only triggers update_particle for now, maybe will add something later or remove
     def update_logic(self, dt):
 
         # --- EMITTERS ---
@@ -137,32 +152,33 @@ class ParticleOverlayWidget(QWidget):
         i = 0
         while i < len(self.active_particles):
             p = self.active_particles[i]
+            idx = p.idx
 
-            age, px, py, vx, vy, ax, ay = p.age, p.pos_x, p.pos_y, p.vel_x, p.vel_y, p.acc_x, p.acc_y
-        
-            # p.age += dt
-            # p.pos_x += p.vel_x * dt
-            # p.pos_y += p.vel_y * dt
-            # p.vel_x += p.acc_x * dt
-            # p.vel_y += p.acc_y * dt
+            # local references (VERY important)
+            px = self.pos_x
+            py = self.pos_y
+            vx = self.vel_x
+            vy = self.vel_y
+            ax = self.acc_x
+            ay = self.acc_y
 
-            age += dt
-
-            px += vx * dt
-            py += vy * dt
-            vx += ax * dt
-            vy += ay * dt
-            ax += ax * dt
-            ay += ay * dt
+            p.age += dt
+            vx[idx] += ax[idx] * dt
+            vy[idx] += ay[idx] * dt
+            px[idx] += vx[idx] * dt
+            py[idx] += vy[idx] * dt
 
 
-            p.age, p.pos_x, p.pos_y, p.vel_x, p.vel_y, p.acc_x, p.acc_y = age, px, py, vx, vy, ax, ay         
-        
-            if not p.alive or (p.pos_y >= self.pet.taskbar_top):
+            if p.alive() and py[idx] >= self.pet.taskbar_top:
                 p.alive_flag = False
+
+                # recycle index
+                self.free_indices.append(idx)
+
+                # recycle particle object
                 self.free_particles.append(p)
-        
-                # swap-remove (O(1))
+
+                # swap-remove particle
                 self.active_particles[i] = self.active_particles[-1]
                 self.active_particles.pop()
             else:
@@ -197,9 +213,11 @@ class ParticleOverlayWidget(QWidget):
             if not frame:
                 continue
 
+            idx = p.idx
+
             # draw sprite so its middle is at given possition
-            true_pos_x = p.pos_x / self.scale
-            true_pos_y = p.pos_y / self.scale
+            true_pos_x = self.pos_x[idx] / self.scale
+            true_pos_y = self.pos_y[idx] / self.scale
 
             offset_x = frame.width() / 2
             offset_y = frame.height() / 2
