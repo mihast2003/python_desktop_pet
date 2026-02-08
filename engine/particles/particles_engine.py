@@ -41,21 +41,19 @@ class ParticleOverlayWidget(QWidget):
         ctypes.windll.user32.SetWindowLongW(hwnd, -20, extended_style | 0x80000 | 0x20)
 
         self.pet = pet
-        # self.update_dpi_and_scale()
-        # self.update_hitbox()
-        # self.update_taskbar_position()
+        taskbar = self.pet.taskbar_top
 
         self.scale = 1
 
         self.emitters = []
 
         MAX_PARTICLES = RENDER_CONFIG.get("max_particle_count", 1000)
+
         self.active_particles = []
-        taskbar = self.pet.taskbar_top
         self.free_particles = [Particle(taskbar=taskbar) for _ in range(MAX_PARTICLES)]
         
         # free indices
-        self.free_indices = list(range(MAX_PARTICLES))
+        # self.free_indices = list(range(MAX_PARTICLES))
 
         self.show()
 
@@ -112,13 +110,13 @@ class ParticleOverlayWidget(QWidget):
 
 
     def emit(self, *, name, pos_x, pos_y, vel_x, vel_y, acc_x, acc_y, lifetime, frames, fps, loop, size):
-        if not self.free_indices:
+        if not self.free_particles:
             return
 
-        idx = self.free_indices.pop()
+        # idx = self.free_indices.pop()
         p = self.free_particles.pop()
 
-        p.reset(idx=idx, size=size, frames=frames, fps=fps, loop=loop, lifetime=lifetime,
+        p.reset(size=size, frames=frames, fps=fps, loop=loop, lifetime=lifetime,
                 pos_x=pos_x, pos_y=pos_y, vel_x=vel_x, vel_y=vel_y, acc_x=acc_x, acc_y=acc_y)
 
         self.active_particles.append(p)
@@ -138,14 +136,14 @@ class ParticleOverlayWidget(QWidget):
         i = 0
         while i < len(self.active_particles):
             p: Particle = self.active_particles[i]
-            idx = p.idx
+            # idx = p.idx
 
             p.update_physics(dt)
 
             if not p.alive():
 
                 # recycle index
-                self.free_indices.append(idx)
+                # self.free_indices.append(idx)
 
                 # recycle particle object
                 self.free_particles.append(p)

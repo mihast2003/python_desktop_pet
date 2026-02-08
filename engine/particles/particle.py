@@ -4,19 +4,19 @@ from PySide6.QtCore import Qt, QPointF
 
 #data class
 class Particle:
-    __slots__ = ("idx", "size", "frames", "fps", "loop", "animation_finished", "age", "lifetime",
+    __slots__ = ("size", "frames", "fps", "loop", "animation_finished", "age", "lifetime",
                  "pos_x", "pos_y", 'vel_x', 'vel_y', 'acc_x', 'acc_y', "taskbar")
 
     def __init__(self, taskbar):
 
         self.taskbar = taskbar
 
-        self.idx = -1
+        # self.idx = -1
 
-    def reset(self, idx, size, frames, fps, loop, lifetime,
+    def reset(self, size, frames, fps, loop, lifetime,
               pos_x, pos_y, vel_x, vel_y, acc_x, acc_y):
         
-        self.idx = idx
+        # self.idx = idx
 
         # self.name = name
         self.size = size
@@ -28,7 +28,6 @@ class Particle:
 
         self.age = 0.0
         self.lifetime = lifetime
-
 
         self.pos_x=pos_x
         self.pos_y=pos_y
