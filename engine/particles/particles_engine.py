@@ -50,13 +50,13 @@ class ParticleOverlayWidget(QWidget):
         self.active_particles = []
         self.free_particles = [Particle() for _ in range(MAX_PARTICLES)]
 
-        # SoA storage
-        self.pos_x = [0.0] * MAX_PARTICLES
-        self.pos_y = [0.0] * MAX_PARTICLES
-        self.vel_x = [0.0] * MAX_PARTICLES
-        self.vel_y = [0.0] * MAX_PARTICLES
-        self.acc_x = [0.0] * MAX_PARTICLES
-        self.acc_y = [0.0] * MAX_PARTICLES
+        # # SoA storage
+        # self.pos_x = [0.0] * MAX_PARTICLES
+        # self.pos_y = [0.0] * MAX_PARTICLES
+        # self.vel_x = [0.0] * MAX_PARTICLES
+        # self.vel_y = [0.0] * MAX_PARTICLES
+        # self.acc_x = [0.0] * MAX_PARTICLES
+        # self.acc_y = [0.0] * MAX_PARTICLES
         
         # free indices
         self.free_indices = list(range(MAX_PARTICLES))
@@ -118,7 +118,8 @@ class ParticleOverlayWidget(QWidget):
         idx = self.free_indices.pop()
         p = self.free_particles.pop()
 
-        p.reset(idx=idx, name=name, size=size, frames=frames, fps=fps, loop=loop, lifetime=lifetime)
+        p.reset(idx=idx, name=name, size=size, frames=frames, fps=fps, loop=loop, lifetime=lifetime,
+                pos_x=pos_x, pos_y=pos_y, vel_x=vel_x, vel_y=vel_y, acc_x=acc_x, acc_y=acc_y)
 
         # p.idx = idx
         # p.name = name
@@ -127,13 +128,17 @@ class ParticleOverlayWidget(QWidget):
         # p.fps = fps
         # p.loop = loop
         # p.size = size
+        # p.animation_finished = False
+        # p.age = 0
+        # p.lifetime = lifetime
+        # p.alive_flag=True
 
-        self.pos_x[idx] = pos_x
-        self.pos_y[idx] = pos_y
-        self.vel_x[idx] = vel_x
-        self.vel_y[idx] = vel_y
-        self.acc_x[idx] = acc_x
-        self.acc_y[idx] = acc_y
+        # self.pos_x[idx] = pos_x
+        # self.pos_y[idx] = pos_y
+        # self.vel_x[idx] = vel_x
+        # self.vel_y[idx] = vel_y
+        # self.acc_x[idx] = acc_x
+        # self.acc_y[idx] = acc_y
 
         self.active_particles.append(p)
 
@@ -151,25 +156,27 @@ class ParticleOverlayWidget(QWidget):
 
         i = 0
         while i < len(self.active_particles):
-            p = self.active_particles[i]
+            p: Particle = self.active_particles[i]
             idx = p.idx
 
             # local references (VERY important)
-            px = self.pos_x
-            py = self.pos_y
-            vx = self.vel_x
-            vy = self.vel_y
-            ax = self.acc_x
-            ay = self.acc_y
+            # px = self.pos_x
+            # py = self.pos_y
+            # vx = self.vel_x
+            # vy = self.vel_y
+            # ax = self.acc_x
+            # ay = self.acc_y
 
-            p.age += dt
-            vx[idx] += ax[idx] * dt
-            vy[idx] += ay[idx] * dt
-            px[idx] += vx[idx] * dt
-            py[idx] += vy[idx] * dt
+            # p.age += dt
+            # vx[idx] += ax[idx] * dt
+            # vy[idx] += ay[idx] * dt
+            # px[idx] += vx[idx] * dt
+            # py[idx] += vy[idx] * dt
+
+            p.update_physics(dt)
 
 
-            if p.alive() and py[idx] >= self.pet.taskbar_top:
+            if p.alive(taskbar=self.pet.taskbar_top):
                 p.alive_flag = False
 
                 # recycle index
@@ -216,8 +223,8 @@ class ParticleOverlayWidget(QWidget):
             idx = p.idx
 
             # draw sprite so its middle is at given possition
-            true_pos_x = self.pos_x[idx] / self.scale
-            true_pos_y = self.pos_y[idx] / self.scale
+            true_pos_x = p.pos_x / self.scale
+            true_pos_y = p.pos_y / self.scale
 
             offset_x = frame.width() / 2
             offset_y = frame.height() / 2

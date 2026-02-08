@@ -1,18 +1,19 @@
 import sys, os, random, time, math
 from PySide6.QtCore import Qt, QPointF
-from engine.vec2 import Vec2
 
 
 #data class
 class Particle:
-    __slots__ = ("idx", "name", "size", "frames", "fps", "loop", "animation_finished", "age", "lifetime", "alive_flag")
+    __slots__ = ("idx", "name", "size", "frames", "fps", "loop", "animation_finished", "age", "lifetime", "alive_flag",
+                 "pos_x", "pos_y", 'vel_x', 'vel_y', 'acc_x', 'acc_y')
 
     def __init__(self):
         self.alive_flag = False
 
         self.idx = -1
 
-    def reset(self, idx, name, size, frames, fps, loop, lifetime):
+    def reset(self, idx, name, size, frames, fps, loop, lifetime,
+              pos_x, pos_y, vel_x, vel_y, acc_x, acc_y):
         self.idx = idx
 
         self.name = name
@@ -27,8 +28,37 @@ class Particle:
         self.lifetime = lifetime
         self.alive_flag = True
 
-    def alive(self):
-        if not self.alive_flag:
+        self.pos_x=pos_x
+        self.pos_y=pos_y
+        self.vel_x=vel_x
+        self.vel_y=vel_y
+        self.acc_x=acc_x
+        self.acc_y=acc_y
+
+    def update_physics(self, dt):
+        age = self.age
+        age += dt
+        self.age=age
+
+        px = self.pos_x
+        py = self.pos_y
+        vx = self.vel_x
+        vy = self.vel_y
+        ax = self.acc_x
+        ay = self.acc_y
+
+        px += vx * dt
+        py += vy * dt
+        vx += ax * dt
+        vy += ay * dt
+
+        self.pos_x = px
+        self.pos_y = py
+        self.vel_x = vx
+        self.vel_y = vy
+
+    def alive(self, taskbar):
+        if not self.alive_flag or self.pos_y < taskbar:
             return False
         
         if self.loop:

@@ -25,8 +25,8 @@ class ParticleEmitter:
         shape = cfg.get("emitter_shape")
         self.emitter_shape = EmitterShape.__members__.get(shape, EmitterShape.DOT)
 
-        offset = Vec2(cfg.get("emitter_offset", (0, 0)))
-        self.emitter_offset = Vec2(self.hitbox.x * -offset.x, self.hitbox.y * offset.y)
+        offset_x, offset_y = cfg.get("emitter_offset", (0, 0))
+        self.emitter_offset = Vec2(self.hitbox.x * -offset_x, self.hitbox.y * offset_y)
 
         self.type = self.cfg.get("emitter_type", 1)
         self.lifetime = self.cfg.get("lifetime", 1)
@@ -221,23 +221,6 @@ class ParticleEmitter:
                     # y_interpolated = (1-circlage)*py + circlage*yw
 
                     # pos = Vec2(x_interpolated, y_interpolated)
-
-        # print(acceleration[0], acceleration[1])
-            
-        # new_particle = Particle(
-        #         pos=pos,
-        #         vel=vel,  # vel.y is inverted because upside down
-        #         acceleration=acceleration,
-        #         anim_name=name,
-        #         frames=self.frames,
-        #         fps=self.fps,
-        #         loop=self.loop,
-        #         lifetime=self.lifetime,
-        #         start_size=self.start_size
-        #     )
-        
-        # print("emitting a particle of type ", self.name, " at ", pos)
-        # self.particleSystem.emit(new_particle)
 
         pos_x, pos_y = pos
         vel_x, vel_y = vel
