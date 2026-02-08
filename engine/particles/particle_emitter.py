@@ -18,6 +18,8 @@ class ParticleEmitter:
         self.hitbox_x = hitbox_width 
         self.hitbox_y = hitbox_height
 
+
+
         self.time = 0.0
         self.emitted = 0
         self.elapsed = 0
@@ -29,6 +31,8 @@ class ParticleEmitter:
         offset_x, offset_y = cfg.get("emitter_offset", (0, 0))
         self.emitter_offset_x = self.hitbox_x * -offset_x
         self.emitter_offset_y = self.hitbox_y * offset_y
+
+        self.anchor_x, self.anchor_y = self.particleSystem.pet.anchor
 
         self.type = self.cfg.get("emitter_type", 1)
         self.lifetime = self.cfg.get("lifetime", 1)
@@ -91,7 +95,8 @@ class ParticleEmitter:
 
     def spawn_particle(self):
         # randomize vel, lifetime, etc
-        anchor_x, anchor_y = self.particleSystem.pet.anchor
+        anchor_x = self.anchor_x
+        anchor_y = self.anchor_y
 
         pos_x: float
         pos_y: float
@@ -104,12 +109,17 @@ class ParticleEmitter:
         circlage = self.circlage
         expand = self.expand
 
+        hitbox_x = self.hitbox_x
+        hitbox_y = self.hitbox_y
+        emitter_offset_x = self.emitter_offset_x
+        emitter_offset_y = self.emitter_offset_y
+
         # print("shape", self.emitter_shape)
 
         match self.emitter_shape:
             case EmitterShape.DOT:
-                pos_x = anchor_x - self.emitter_offset_x
-                pos_y = anchor_y - self.emitter_offset_y
+                pos_x = anchor_x - emitter_offset_x
+                pos_y = anchor_y - emitter_offset_y
             case EmitterShape.LINE:
                 point1 = Vec2(self.cfg.get("point1"))
                 point2 = Vec2(self.cfg.get("point2"))
@@ -123,8 +133,8 @@ class ParticleEmitter:
                 x = x1 + t * (x2 - x1)
                 y = y1 + t * (y2 - y1)
 
-                pos_x = anchor_x - (-x) * self.hitbox_x
-                pos_y = anchor_y - y * self.hitbox_y
+                pos_x = anchor_x - (-x) * hitbox_x
+                pos_y = anchor_y - y * hitbox_y
 
             case EmitterShape.CIRCLE:
                 theta = random.uniform(0, 2 * math.pi) # Random angle 0-2π
@@ -160,15 +170,18 @@ class ParticleEmitter:
                 pos_y = y
 
             case EmitterShape.RECTANGLE:
+
                 # corner1 = self.particleSystem.pet.anchor + Vec2(-self.hitbox_x/2 -expand.x, +expand.y) - self.emitter_offset
-                corner1 = Vec2(anchor_x - self.hitbox_x/2 - expand.x - self.emitter_offset_x, anchor_y + expand.y - self.emitter_offset_y)
+                corner1 = Vec2(anchor_x - hitbox_x/2 - expand.x - emitter_offset_x, anchor_y + expand.y - emitter_offset_y)
 
-                self.emitter_offset = Vec2(self.emitter_offset_x, self.emitter_offset_y)
-                anchor = Vec2(anchor_x, anchor_y)
+                # corner2 = anchor + Vec2(-self.hitbox_x/2 -expand.x, -self.hitbox_y -expand.y) - self.emitter_offset
+                corner2 = Vec2(anchor_x - hitbox_x/2 - expand.x - emitter_offset_x, anchor_y - hitbox_y - expand.y - emitter_offset_y)
 
-                corner2 = anchor + Vec2(-self.hitbox_x/2 -expand.x, -self.hitbox_y -expand.y) - self.emitter_offset
-                corner3 = anchor + Vec2(+self.hitbox_x/2 +expand.x, -self.hitbox_y -expand.y) - self.emitter_offset
-                corner4 = anchor + Vec2(+self.hitbox_x/2 +expand.x, +expand.y) - self.emitter_offset
+                # corner3 = anchor + Vec2(+self.hitbox_x/2 +expand.x, -self.hitbox_y -expand.y) - self.emitter_offset
+                corner3 = Vec2(anchor_x + hitbox_x/2 + expand.x - emitter_offset_x, anchor_y - hitbox_y - expand.y - emitter_offset_y)
+
+                # corner4 = anchor + Vec2(+self.hitbox_x/2 +expand.x, +expand.y) - self.emitter_offset
+                corner4 = Vec2(anchor_x + hitbox_x/2 + expand.x - emitter_offset_x, anchor_y + expand.y - emitter_offset_y)
 
                 rec_width: Vec2 = corner3 - corner2 
                 rec_height: Vec2 = corner2 - corner1
@@ -194,12 +207,12 @@ class ParticleEmitter:
 
 
                 if circlage is None:
-                    pos = point
+                    pos_x, pos_y = point
                 else:                # math for circling a square doesnt work because its not a unit circle and not a circle at all
                     px = point.x
                     py = point.y
-                    cx = self.particleSystem.pet.anchor.x  - self.emitter_offset_x 
-                    cy = self.particleSystem.pet.anchor.y - rec_height.length()/2  - self.emitter_offset_y
+                    cx = anchor_x - emitter_offset_x 
+                    cy = anchor_y - rec_height.length()/2 - emitter_offset_y
                     width = rec_width.length()
                     height = rec_height.length()
 
@@ -209,9 +222,6 @@ class ParticleEmitter:
 
                     a = width / 2
                     b = height / 2
-
-                    # # scale factor along ray
-                    # t = 1.0 / math.sqrt((x*x)/(a*a) + (y*y)/(b*b))
 
                     t_rect = min(
                         (a / abs(x)) if x != 0 else float("inf"),

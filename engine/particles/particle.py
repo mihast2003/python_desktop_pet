@@ -5,10 +5,12 @@ from PySide6.QtCore import Qt, QPointF
 #data class
 class Particle:
     __slots__ = ("idx", "name", "size", "frames", "fps", "loop", "animation_finished", "age", "lifetime", "alive_flag",
-                 "pos_x", "pos_y", 'vel_x', 'vel_y', 'acc_x', 'acc_y')
+                 "pos_x", "pos_y", 'vel_x', 'vel_y', 'acc_x', 'acc_y', "taskbar")
 
-    def __init__(self):
+    def __init__(self, taskbar):
         self.alive_flag = False
+
+        self.taskbar = taskbar
 
         self.idx = -1
 
@@ -57,8 +59,8 @@ class Particle:
         self.vel_x = vx
         self.vel_y = vy
 
-    def alive(self, taskbar):
-        if not self.alive_flag or self.pos_y > taskbar:
+    def alive(self):
+        if not self.alive_flag or self.pos_y > self.taskbar:
             return False
         
         if self.loop:

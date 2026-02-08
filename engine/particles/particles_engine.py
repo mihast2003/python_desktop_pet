@@ -51,15 +51,8 @@ class ParticleOverlayWidget(QWidget):
 
         MAX_PARTICLES = RENDER_CONFIG.get("max_particle_count", 1000)
         self.active_particles = []
-        self.free_particles = [Particle() for _ in range(MAX_PARTICLES)]
-
-        # # SoA storage
-        # self.pos_x = [0.0] * MAX_PARTICLES
-        # self.pos_y = [0.0] * MAX_PARTICLES
-        # self.vel_x = [0.0] * MAX_PARTICLES
-        # self.vel_y = [0.0] * MAX_PARTICLES
-        # self.acc_x = [0.0] * MAX_PARTICLES
-        # self.acc_y = [0.0] * MAX_PARTICLES
+        taskbar = self.pet.taskbar_top
+        self.free_particles = [Particle(taskbar=taskbar) for _ in range(MAX_PARTICLES)]
         
         # free indices
         self.free_indices = list(range(MAX_PARTICLES))
@@ -166,24 +159,9 @@ class ParticleOverlayWidget(QWidget):
             p: Particle = self.active_particles[i]
             idx = p.idx
 
-            # local references (VERY important)
-            # px = self.pos_x
-            # py = self.pos_y
-            # vx = self.vel_x
-            # vy = self.vel_y
-            # ax = self.acc_x
-            # ay = self.acc_y
-
-            # p.age += dt
-            # vx[idx] += ax[idx] * dt
-            # vy[idx] += ay[idx] * dt
-            # px[idx] += vx[idx] * dt
-            # py[idx] += vy[idx] * dt
-
             p.update_physics(dt)
 
-
-            if not p.alive(taskbar=self.pet.taskbar_top):
+            if not p.alive():
                 p.alive_flag = False
 
                 # recycle index

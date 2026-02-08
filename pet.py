@@ -407,7 +407,6 @@ class Pet(QWidget): # main logic
                   
         self.variables = VariableManager(VARIABLES)
         self.animator = Animator()
-        self.particles = ParticleOverlayWidget(pet=self)
 
         self.profiler = cProfile.Profile()
 
@@ -421,6 +420,8 @@ class Pet(QWidget): # main logic
         self.taskbar_top = screen.availableGeometry().bottom() # Taskbar position detection
         self.mover.set_position(init_pos.x, self.taskbar_top + init_pos.y + 1) # set initial position
 
+        self.particles = ParticleOverlayWidget(pet=self)
+        
         self.anchor = Vec2(init_pos.x, self.taskbar_top + init_pos.y + 1)
 
         cfg_facing = RENDER_CONFIG.get("default_facing")
