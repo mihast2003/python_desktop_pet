@@ -18,8 +18,6 @@ class ParticleEmitter:
         self.hitbox_x = hitbox_width 
         self.hitbox_y = hitbox_height
 
-
-
         self.time = 0.0
         self.emitted = 0
         self.elapsed = 0
@@ -85,6 +83,7 @@ class ParticleEmitter:
         count = int(self.elapsed / emit_interval)
         for _ in range(count):
             self.spawn_particle()
+            self.emitted += 1
 
         self.elapsed %= emit_interval
 
@@ -243,12 +242,10 @@ class ParticleEmitter:
                     pos_x = xw
                     pos_y = yw
 
-        # pos_x, pos_y = pos
         vel_x, vel_y = vel
         acc_x, acc_y = acceleration
 
         self.particleSystem.emit(
-            name=self.name,
             pos_x=pos_x,
             pos_y=pos_y,
             vel_x=vel_x,

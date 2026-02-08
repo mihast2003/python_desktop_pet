@@ -51,9 +51,6 @@ class ParticleOverlayWidget(QWidget):
 
         self.active_particles = []
         self.free_particles = [Particle(taskbar=taskbar) for _ in range(MAX_PARTICLES)]
-        
-        # free indices
-        # self.free_indices = list(range(MAX_PARTICLES))
 
         self.show()
 
@@ -109,11 +106,10 @@ class ParticleOverlayWidget(QWidget):
         )    
 
 
-    def emit(self, *, name, pos_x, pos_y, vel_x, vel_y, acc_x, acc_y, lifetime, frames, fps, loop, size):
+    def emit(self, *, pos_x, pos_y, vel_x, vel_y, acc_x, acc_y, lifetime, frames, fps, loop, size):
         if not self.free_particles:
             return
 
-        # idx = self.free_indices.pop()
         p = self.free_particles.pop()
 
         p.reset(size=size, frames=frames, fps=fps, loop=loop, lifetime=lifetime,
@@ -136,15 +132,10 @@ class ParticleOverlayWidget(QWidget):
         i = 0
         while i < len(self.active_particles):
             p: Particle = self.active_particles[i]
-            # idx = p.idx
 
             p.update_physics(dt)
 
             if not p.alive():
-
-                # recycle index
-                # self.free_indices.append(idx)
-
                 # recycle particle object
                 self.free_particles.append(p)
 
@@ -160,9 +151,7 @@ class ParticleOverlayWidget(QWidget):
 
         for emitter in self.emitters:
             self.emitters_by_type[emitter.name] += 1
-        
-        # for p in self.active_particles:
-        #     self.particles_by_type[p.name] += 1
+            self.particles_by_type[emitter.name] += emitter.emitted  # doesnt work i dunno why maybe remove
 
 
     # --- DRAWING ---
@@ -183,7 +172,6 @@ class ParticleOverlayWidget(QWidget):
 
             if not frame:
                 continue
-
 
             # draw sprite so its middle is at given possition
             true_pos_x = p.pos_x / self.scale

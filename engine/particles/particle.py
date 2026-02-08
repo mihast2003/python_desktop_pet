@@ -8,17 +8,12 @@ class Particle:
                  "pos_x", "pos_y", 'vel_x', 'vel_y', 'acc_x', 'acc_y', "taskbar")
 
     def __init__(self, taskbar):
-
         self.taskbar = taskbar
 
-        # self.idx = -1
 
     def reset(self, size, frames, fps, loop, lifetime,
               pos_x, pos_y, vel_x, vel_y, acc_x, acc_y):
         
-        # self.idx = idx
-
-        # self.name = name
         self.size = size
 
         self.frames = frames
