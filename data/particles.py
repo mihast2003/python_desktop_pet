@@ -22,6 +22,7 @@ PARTICLES = {
         },
 
         "emitter_shape": "RECTANGLE",
+        "point1": (-1, 1), "point2": (1, 1),
         "round_square": 0,    # from 0 (rectangle) to 1 (ellipse)
         "modify_border": (0.0, 0.0),
         "emitter_offset": (0, 0), 

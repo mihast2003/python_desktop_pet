@@ -41,6 +41,9 @@ class ParticleOverlayWidget(QWidget):
         ctypes.windll.user32.SetWindowLongW(hwnd, -20, extended_style | 0x80000 | 0x20)
 
         self.pet = pet
+        # self.update_dpi_and_scale()
+        # self.update_hitbox()
+        # self.update_taskbar_position()
 
         self.scale = 1
 
@@ -94,6 +97,12 @@ class ParticleOverlayWidget(QWidget):
     def update_dpi_and_scale(self, new_scale):
         self.scale = new_scale
 
+    def update_hitbox(self, hitbox_width, hitbox_height):
+        self.pet_hitbox_w = hitbox_width
+        self.pet_hitbox_h = hitbox_height
+
+    def update_taskbar_position(self, taskbar):
+        self.taskbar = taskbar
 
     def start_emitting(self, name):
         cfg = PARTICLES.get(name)
@@ -104,10 +113,8 @@ class ParticleOverlayWidget(QWidget):
 
         print("adding emitter", name)
 
-        hitbox = Vec2(self.pet.hitbox_width, self.pet.hitbox_height)
-
         self.emitters.append(
-            ParticleEmitter(particleSystem=self, name=name, cfg=cfg, animations=self.animations[name], hitbox=hitbox)
+            ParticleEmitter(particleSystem=self, name=name, cfg=cfg, animations=self.animations[name], hitbox_width=self.pet_hitbox_w, hitbox_height=self.pet_hitbox_h)
         )    
 
 
@@ -176,7 +183,7 @@ class ParticleOverlayWidget(QWidget):
             p.update_physics(dt)
 
 
-            if p.alive(taskbar=self.pet.taskbar_top):
+            if not p.alive(taskbar=self.pet.taskbar_top):
                 p.alive_flag = False
 
                 # recycle index

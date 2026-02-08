@@ -7,7 +7,7 @@ from engine.particles.particle import Particle
 from engine.enums import EmitterShape
 
 class ParticleEmitter:
-    def __init__(self, particleSystem, name, cfg, animations, hitbox):
+    def __init__(self, particleSystem, name, cfg, animations, hitbox_width, hitbox_height):
 
         self.particleSystem = particleSystem
 
@@ -15,7 +15,8 @@ class ParticleEmitter:
         self.cfg = cfg
         self.anim = animations
 
-        self.hitbox = hitbox
+        self.hitbox_x = hitbox_width 
+        self.hitbox_y = hitbox_height
 
         self.time = 0.0
         self.emitted = 0
@@ -26,7 +27,8 @@ class ParticleEmitter:
         self.emitter_shape = EmitterShape.__members__.get(shape, EmitterShape.DOT)
 
         offset_x, offset_y = cfg.get("emitter_offset", (0, 0))
-        self.emitter_offset = Vec2(self.hitbox.x * -offset_x, self.hitbox.y * offset_y)
+        self.emitter_offset_x = self.hitbox_x * -offset_x
+        self.emitter_offset_y = self.hitbox_y * offset_y
 
         self.type = self.cfg.get("emitter_type", 1)
         self.lifetime = self.cfg.get("lifetime", 1)
@@ -35,6 +37,13 @@ class ParticleEmitter:
         self.total_count = self.cfg.get("total_count", 0)
         self.duration = self.cfg.get("duration", 1)  
         self.start_size =  self.cfg.get("start_size", 1)
+        self.radius = self.cfg.get("radius", 1)
+        self.hollow: bool = self.cfg.get("hollow", False)
+        self.border = Vec2(self.cfg.get("modify_border", (0,0))) # get proportions
+        print("border is", self.border.x)
+        self.expand: Vec2 = Vec2(self.hitbox_x * self.border.x, self.hitbox_y * self.border.y / 2) # convert to pixel distances
+        print("expand is", self.expand.x)
+        self.circlage = self.cfg.get("round_square")
 
         self.start_vel = self.cfg.get("start_vel", (0, 0))
         self.start_acc = self.cfg.get("start_acceleration", (0, 0))
@@ -82,16 +91,25 @@ class ParticleEmitter:
 
     def spawn_particle(self):
         # randomize vel, lifetime, etc
+        anchor_x, anchor_y = self.particleSystem.pet.anchor
+
+        pos_x: float
+        pos_y: float
 
         vel = (self.start_vel[0], -self.start_vel[1])
 
         acceleration = (self.start_acc[0], -self.start_acc[1])
 
+        hollow = self.hollow
+        circlage = self.circlage
+        expand = self.expand
+
         # print("shape", self.emitter_shape)
 
         match self.emitter_shape:
             case EmitterShape.DOT:
-                pos = self.particleSystem.pet.anchor - self.emitter_offset
+                pos_x = anchor_x - self.emitter_offset_x
+                pos_y = anchor_y - self.emitter_offset_y
             case EmitterShape.LINE:
                 point1 = Vec2(self.cfg.get("point1"))
                 point2 = Vec2(self.cfg.get("point2"))
@@ -105,23 +123,22 @@ class ParticleEmitter:
                 x = x1 + t * (x2 - x1)
                 y = y1 + t * (y2 - y1)
 
-                pos = self.particleSystem.pet.anchor - (Vec2(-x, y) * self.hitbox)
+                pos_x = anchor_x - (-x) * self.hitbox_x
+                pos_y = anchor_y - y * self.hitbox_y
 
             case EmitterShape.CIRCLE:
                 theta = random.uniform(0, 2 * math.pi) # Random angle 0-2π
 
-                center = self.particleSystem.pet.anchor - self.emitter_offset
+                center_x = anchor_x - self.emitter_offset_x
+                center_y = anchor_y - self.emitter_offset_y
 
-                r = self.cfg.get("radius") * (self.hitbox.x + self.hitbox.y)/2
+                r = self.radius * (self.hitbox_x + self.hitbox_y)/2
 
-                hollow: bool = self.cfg.get("hollow", False)
                 if not hollow:
                     r *= math.sqrt(random.random())
 
-                x = center.x + r * math.cos(theta)
-                y = center.y + r * math.sin(theta)
-                
-                pos = Vec2(x, y)
+                pos_x = center_x + r * math.cos(theta)
+                pos_y = center_y + r * math.sin(theta)
             
             case EmitterShape.HITBOX:
                 center = self.particleSystem.pet.anchor - self.emitter_offset
@@ -139,23 +156,24 @@ class ParticleEmitter:
                 if hollow:
                     pass
                 
-                pos = Vec2(x, y)
+                pos_x = x
+                pos_y = y
 
             case EmitterShape.RECTANGLE:
+                # corner1 = self.particleSystem.pet.anchor + Vec2(-self.hitbox_x/2 -expand.x, +expand.y) - self.emitter_offset
+                corner1 = Vec2(anchor_x - self.hitbox_x/2 - expand.x - self.emitter_offset_x, anchor_y + expand.y - self.emitter_offset_y)
 
-                border = Vec2(self.cfg.get("modify_border", (0,0))) # get proportions
-                expand = Vec2(self.hitbox.x * border.x, self.hitbox.y * border.y / 2) # convert to pixel distances
-                
-                corner1 = self.particleSystem.pet.anchor + Vec2(-self.hitbox.x/2 -expand.x, +expand.y) - self.emitter_offset
-                corner2 = self.particleSystem.pet.anchor + Vec2(-self.hitbox.x/2 -expand.x, -self.hitbox.y -expand.y) - self.emitter_offset
-                corner3 = self.particleSystem.pet.anchor + Vec2(+self.hitbox.x/2 +expand.x, -self.hitbox.y -expand.y) - self.emitter_offset
-                corner4 = self.particleSystem.pet.anchor + Vec2(+self.hitbox.x/2 +expand.x, +expand.y) - self.emitter_offset
+                self.emitter_offset = Vec2(self.emitter_offset_x, self.emitter_offset_y)
+                anchor = Vec2(anchor_x, anchor_y)
+
+                corner2 = anchor + Vec2(-self.hitbox_x/2 -expand.x, -self.hitbox_y -expand.y) - self.emitter_offset
+                corner3 = anchor + Vec2(+self.hitbox_x/2 +expand.x, -self.hitbox_y -expand.y) - self.emitter_offset
+                corner4 = anchor + Vec2(+self.hitbox_x/2 +expand.x, +expand.y) - self.emitter_offset
 
                 rec_width: Vec2 = corner3 - corner2 
                 rec_height: Vec2 = corner2 - corner1
 
                 sides_list = []
-                hollow: bool = self.cfg.get("hollow", False)
 
                 if hollow:
                     if self.emit_left:
@@ -175,15 +193,13 @@ class ParticleEmitter:
                     point = corner1 + (rec_width * random.random()) + (rec_height * random.random())
 
 
-                circlage = self.cfg.get("round_square")
-
                 if circlage is None:
                     pos = point
                 else:                # math for circling a square doesnt work because its not a unit circle and not a circle at all
                     px = point.x
                     py = point.y
-                    cx = self.particleSystem.pet.anchor.x  - self.emitter_offset.x 
-                    cy = self.particleSystem.pet.anchor.y - rec_height.length()/2  - self.emitter_offset.y
+                    cx = self.particleSystem.pet.anchor.x  - self.emitter_offset_x 
+                    cy = self.particleSystem.pet.anchor.y - rec_height.length()/2  - self.emitter_offset_y
                     width = rec_width.length()
                     height = rec_height.length()
 
@@ -214,15 +230,10 @@ class ParticleEmitter:
                         yw = cy + y * t_interp
 
                     
+                    pos_x = xw
+                    pos_y = yw
 
-                    pos = Vec2(xw, yw)
-
-                    # x_interpolated = (1-circlage)*px + circlage*xw
-                    # y_interpolated = (1-circlage)*py + circlage*yw
-
-                    # pos = Vec2(x_interpolated, y_interpolated)
-
-        pos_x, pos_y = pos
+        # pos_x, pos_y = pos
         vel_x, vel_y = vel
         acc_x, acc_y = acceleration
 

@@ -574,7 +574,7 @@ class Pet(QWidget): # main logic
         self.particles.draw()
 
         self.profiler.disable()  # stop profiling
-        self.profiler.print_stats(sort='cumtime')  # print results
+        # self.profiler.print_stats(sort='cumtime')  # print results
         self.profiler.dump_stats("particle_profile.stats")
 
     def apply_window_position(self):
@@ -614,6 +614,7 @@ class Pet(QWidget): # main logic
         self.scale = self.pixel_ratio * self.dpi_scale
 
         self.particles.update_dpi_and_scale(self.scale)
+        self.particles.update_taskbar_position(self.taskbar_top)
 
         print("screen dpi", self.dpi_scale)
         print("new scale", self.scale)
@@ -630,6 +631,8 @@ class Pet(QWidget): # main logic
             # print(self.hitbox_width)
 
             self.mover.drag_offset = Vec2(self.hitbox_width * RENDER_CONFIG["drag_offset_x"], self.hitbox_height * RENDER_CONFIG["drag_offset_y"])
+
+            self.particles.update_hitbox(hitbox_width=self.hitbox_width, hitbox_height=self.hitbox_height)
 
 
     def mousePressEvent(self, event):

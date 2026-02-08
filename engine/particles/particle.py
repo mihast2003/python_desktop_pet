@@ -58,7 +58,7 @@ class Particle:
         self.vel_y = vy
 
     def alive(self, taskbar):
-        if not self.alive_flag or self.pos_y < taskbar:
+        if not self.alive_flag or self.pos_y > taskbar:
             return False
         
         if self.loop:
