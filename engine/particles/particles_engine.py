@@ -133,9 +133,14 @@ class ParticleOverlayWidget(QWidget):
         while i < len(self.active_particles):
             p: Particle = self.active_particles[i]
 
-            p.update_physics(dt)
+            p.age += dt
 
-            if not p.alive():
+            p.pos_x += p.vel_x * dt
+            p.pos_y += p.vel_y * dt
+            p.vel_x += p.acc_x * dt
+            p.vel_y += p.acc_y * dt
+
+            if(p.pos_y > self.taskbar) and ((p.loop and p.age > p.lifetime) or (not p.loop and p.animation_finished)):
                 # recycle particle object
                 self.free_particles.append(p)
 

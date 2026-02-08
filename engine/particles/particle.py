@@ -31,37 +31,6 @@ class Particle:
         self.acc_x=acc_x
         self.acc_y=acc_y
 
-    def update_physics(self, dt):
-        age = self.age
-        age += dt
-        self.age=age
-
-        px = self.pos_x
-        py = self.pos_y
-        vx = self.vel_x
-        vy = self.vel_y
-        ax = self.acc_x
-        ay = self.acc_y
-
-        px += vx * dt
-        py += vy * dt
-        vx += ax * dt
-        vy += ay * dt
-
-        self.pos_x = px
-        self.pos_y = py
-        self.vel_x = vx
-        self.vel_y = vy
-
-    def alive(self):
-        if self.pos_y > self.taskbar:
-            return False
-        
-        if self.loop:
-            return self.age < self.lifetime
-        else:
-            return not self.animation_finished
-
     def current_frame(self):
         frame_index = int(self.age * self.fps)
 
