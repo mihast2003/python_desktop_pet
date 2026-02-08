@@ -140,7 +140,7 @@ class ParticleOverlayWidget(QWidget):
             p.vel_x += p.acc_x * dt
             p.vel_y += p.acc_y * dt
 
-            if(p.pos_y > self.taskbar) and ((p.loop and p.age > p.lifetime) or (not p.loop and p.animation_finished)):
+            if(p.pos_y > self.taskbar) or (p.loop and p.age > p.lifetime) or (not p.loop and p.animation_finished):
                 # recycle particle object
                 self.free_particles.append(p)
 
@@ -156,7 +156,7 @@ class ParticleOverlayWidget(QWidget):
 
         for emitter in self.emitters:
             self.emitters_by_type[emitter.name] += 1
-            self.particles_by_type[emitter.name] += emitter.emitted  # doesnt work i dunno why maybe remove
+            self.particles_by_type[emitter.name] += emitter.emitted  # shows only total emitted particles
 
 
     # --- DRAWING ---

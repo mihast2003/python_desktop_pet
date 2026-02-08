@@ -30,7 +30,7 @@ PARTICLES = {
         "emit_bottom": True,
 
         "duration": 10, #duration of emission
-        "rate_over_time": 3000,
+        "rate_over_time": 100,
         "random_timing": 1, # preferrably from 0 to 1, random offset to emition intervals
         "total_count": 100000,
 
