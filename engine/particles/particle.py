@@ -4,21 +4,21 @@ from PySide6.QtCore import Qt, QPointF
 
 #data class
 class Particle:
-    __slots__ = ("idx", "name", "size", "frames", "fps", "loop", "animation_finished", "age", "lifetime", "alive_flag",
+    __slots__ = ("idx", "size", "frames", "fps", "loop", "animation_finished", "age", "lifetime",
                  "pos_x", "pos_y", 'vel_x', 'vel_y', 'acc_x', 'acc_y', "taskbar")
 
     def __init__(self, taskbar):
-        self.alive_flag = False
 
         self.taskbar = taskbar
 
         self.idx = -1
 
-    def reset(self, idx, name, size, frames, fps, loop, lifetime,
+    def reset(self, idx, size, frames, fps, loop, lifetime,
               pos_x, pos_y, vel_x, vel_y, acc_x, acc_y):
+        
         self.idx = idx
 
-        self.name = name
+        # self.name = name
         self.size = size
 
         self.frames = frames
@@ -28,7 +28,7 @@ class Particle:
 
         self.age = 0.0
         self.lifetime = lifetime
-        self.alive_flag = True
+
 
         self.pos_x=pos_x
         self.pos_y=pos_y
@@ -60,7 +60,7 @@ class Particle:
         self.vel_y = vy
 
     def alive(self):
-        if not self.alive_flag or self.pos_y > self.taskbar:
+        if self.pos_y > self.taskbar:
             return False
         
         if self.loop:

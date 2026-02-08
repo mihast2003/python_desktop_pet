@@ -118,27 +118,8 @@ class ParticleOverlayWidget(QWidget):
         idx = self.free_indices.pop()
         p = self.free_particles.pop()
 
-        p.reset(idx=idx, name=name, size=size, frames=frames, fps=fps, loop=loop, lifetime=lifetime,
+        p.reset(idx=idx, size=size, frames=frames, fps=fps, loop=loop, lifetime=lifetime,
                 pos_x=pos_x, pos_y=pos_y, vel_x=vel_x, vel_y=vel_y, acc_x=acc_x, acc_y=acc_y)
-
-        # p.idx = idx
-        # p.name = name
-        # p.alive_flag = True
-        # p.frames = frames
-        # p.fps = fps
-        # p.loop = loop
-        # p.size = size
-        # p.animation_finished = False
-        # p.age = 0
-        # p.lifetime = lifetime
-        # p.alive_flag=True
-
-        # self.pos_x[idx] = pos_x
-        # self.pos_y[idx] = pos_y
-        # self.vel_x[idx] = vel_x
-        # self.vel_y[idx] = vel_y
-        # self.acc_x[idx] = acc_x
-        # self.acc_y[idx] = acc_y
 
         self.active_particles.append(p)
 
@@ -162,7 +143,6 @@ class ParticleOverlayWidget(QWidget):
             p.update_physics(dt)
 
             if not p.alive():
-                p.alive_flag = False
 
                 # recycle index
                 self.free_indices.append(idx)
@@ -183,8 +163,8 @@ class ParticleOverlayWidget(QWidget):
         for emitter in self.emitters:
             self.emitters_by_type[emitter.name] += 1
         
-        for p in self.active_particles:
-            self.particles_by_type[p.name] += 1
+        # for p in self.active_particles:
+        #     self.particles_by_type[p.name] += 1
 
 
     # --- DRAWING ---
@@ -202,10 +182,10 @@ class ParticleOverlayWidget(QWidget):
 
         for p in self.active_particles:
             frame = p.current_frame()
+
             if not frame:
                 continue
 
-            idx = p.idx
 
             # draw sprite so its middle is at given possition
             true_pos_x = p.pos_x / self.scale
