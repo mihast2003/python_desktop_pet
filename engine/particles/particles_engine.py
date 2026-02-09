@@ -15,6 +15,9 @@ from data.particles import PARTICLES
 
 from collections import defaultdict
 
+import numpy as np
+from numba import njit
+
 import ctypes
          
 
@@ -41,21 +44,45 @@ class ParticleOverlayWidget(QWidget):
         ctypes.windll.user32.SetWindowLongW(hwnd, -20, extended_style | 0x80000 | 0x20)
 
         self.pet = pet
-        taskbar = self.pet.taskbar_top
+        self.taskbar_top = self.pet.taskbar_top
 
         self.scale = 1
 
         self.emitters = []
 
-        MAX_PARTICLES = RENDER_CONFIG.get("max_particle_count", 1000)
+        self.MAX_PARTICLES = RENDER_CONFIG.get("max_particle_count", 1000)
+        MAX_PARTICLES = self.MAX_PARTICLES
 
-        self.active_particles = []
-        self.free_particles = [Particle(taskbar=taskbar) for _ in range(MAX_PARTICLES)]
+        # self.active_particles = []
+        # self.free_particles = [Particle(taskbar=taskbar) for _ in range(MAX_PARTICLES)]
+
+        self.count = 0  # active particle count
+
+        # ---- ARRAYS (SoA) ----
+        self.pos_x = np.zeros(MAX_PARTICLES, dtype=np.float32)
+        self.pos_y = np.zeros(MAX_PARTICLES, dtype=np.float32)
+
+        self.vel_x = np.zeros(MAX_PARTICLES, dtype=np.float32)
+        self.vel_y = np.zeros(MAX_PARTICLES, dtype=np.float32)
+
+        self.acc_x = np.zeros(MAX_PARTICLES, dtype=np.float32)
+        self.acc_y = np.zeros(MAX_PARTICLES, dtype=np.float32)
+
+        self.age = np.zeros(MAX_PARTICLES, dtype=np.float32)
+
+        self.alive = np.zeros(MAX_PARTICLES, dtype=np.uint8)
+
+        self.type_id = np.zeros(MAX_PARTICLES, dtype=np.int16)
+
+        self.anim_lifetimes_by_id = np.zeros(len(PARTICLES), dtype=np.float32)
 
         self.show()
 
         # get all particle animations in a dictionary
         self.animations = {}
+
+        #for references
+        self.anim_name_to_id = {}
 
         current_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # we go back three folders
         base = os.path.dirname(current_folder)
@@ -72,13 +99,26 @@ class ParticleOverlayWidget(QWidget):
 
             if not frames:
                 raise RuntimeError(f"No frames found for animation '{name}'")
+            
+            #registring animations for reference by id
+            anim_id = len(self.animations) # starts with 0 and goes up as we add animations
+            self.anim_name_to_id[name] = anim_id
 
-            self.animations[name] = {
+            # precompute lifetime once
+            lifetime = (
+                len(frames) / cfg["fps"]
+                if not cfg["loop"]
+                else 1e9)  # effectively infinite
+            
+            #store lifetime for each particle type by id
+            self.anim_lifetimes_by_id[anim_id] = lifetime
+            
+            self.animations[anim_id] = { # we enter them by id to then reference by id
                 "frames": frames,
                 "fps": cfg["fps"],
                 "loop": cfg["loop"],
                 "holds": cfg.get("holds", {}),
-                "times_to_loop": cfg.get("times_to_loop", 1)
+                "times_to_loop": cfg.get("times_to_loop", 1),
             }
             print(f"[PARTICLES LOADED] {name}: {len(frames)} frames")
 
@@ -101,22 +141,30 @@ class ParticleOverlayWidget(QWidget):
 
         print("adding emitter", name)
 
-        self.emitters.append(
-            ParticleEmitter(particleSystem=self, name=name, cfg=cfg, animations=self.animations[name], hitbox_width=self.pet_hitbox_w, hitbox_height=self.pet_hitbox_h)
-        )    
+        self.emitters.append(ParticleEmitter(particleSystem=self, name=name, cfg=cfg, hitbox_width=self.pet_hitbox_w, hitbox_height=self.pet_hitbox_h))    
 
-
-    def emit(self, *, pos_x, pos_y, vel_x, vel_y, acc_x, acc_y, lifetime, frames, fps, loop, size):
-        if not self.free_particles:
+    def emit(self, *, pos_x, pos_y, vel_x, vel_y, acc_x, acc_y, name):
+    
+        if self.count >= self.MAX_PARTICLES:
             return
+        
+        anim_id = self.anim_name_to_id[name]
 
-        p = self.free_particles.pop()
+        i = self.count
 
-        p.reset(size=size, frames=frames, fps=fps, loop=loop, lifetime=lifetime,
-                pos_x=pos_x, pos_y=pos_y, vel_x=vel_x, vel_y=vel_y, acc_x=acc_x, acc_y=acc_y)
+        self.pos_x[i] = pos_x
+        self.pos_y[i] = pos_y
 
-        self.active_particles.append(p)
+        self.vel_x[i] = vel_x
+        self.vel_y[i] = vel_y
 
+        self.acc_x[i] = acc_x
+        self.acc_y[i] = acc_y
+
+        self.age[i] = 0.0
+        self.type_id[i] = anim_id
+
+        self.count += 1
 
     def update_logic(self, dt):
 
@@ -129,26 +177,15 @@ class ParticleOverlayWidget(QWidget):
 
         # --- PARTICLES ---
 
-        i = 0
-        while i < len(self.active_particles):
-            p: Particle = self.active_particles[i]
-
-            p.age += dt
-
-            p.pos_x += p.vel_x * dt
-            p.pos_y += p.vel_y * dt
-            p.vel_x += p.acc_x * dt
-            p.vel_y += p.acc_y * dt
-
-            if(p.pos_y > self.taskbar) or (p.loop and p.age > p.lifetime) or (not p.loop and p.animation_finished):
-                # recycle particle object
-                self.free_particles.append(p)
-
-                # swap-remove particle
-                self.active_particles[i] = self.active_particles[-1]
-                self.active_particles.pop()
-            else:
-                i += 1
+        self.count = update_particles(
+            dt,
+            self.count,
+            self.pos_x, self.pos_y,
+            self.vel_x, self.vel_y,
+            self.acc_x, self.acc_y,
+            self.age, self.type_id,
+            self.anim_lifetimes_by_id,
+            self.taskbar_top)
         
         # -- DEBUGGING TEXT --
         self.emitters_by_type = defaultdict(int)
@@ -160,7 +197,6 @@ class ParticleOverlayWidget(QWidget):
 
 
     # --- DRAWING ---
-
     def draw(self):
         self.update()  # triggers paintEvent
 
@@ -172,21 +208,25 @@ class ParticleOverlayWidget(QWidget):
 
         # painter.scale(self.scale, self.scale)
 
-        for p in self.active_particles:
-            frame = p.current_frame()
+        for i in range(self.count):
+            x = self.pos_x[i]
+            y = self.pos_y[i]
+
+            anim = self.animations[self.type_id[i]]
+            frame = get_frame(anim, self.age[i])
 
             if not frame:
                 continue
 
             # draw sprite so its middle is at given possition
-            true_pos_x = p.pos_x / self.scale
-            true_pos_y = p.pos_y / self.scale
+            true_pos_x = x / self.scale
+            true_pos_y = y / self.scale
 
             offset_x = frame.width() / 2
             offset_y = frame.height() / 2
 
-            corner_x = true_pos_x - offset_x
-            corner_y = true_pos_y - offset_y
+            corner_x = int(true_pos_x - offset_x)
+            corner_y = int(true_pos_y - offset_y)
 
             painter.save()
 
@@ -215,7 +255,7 @@ class ParticleOverlayWidget(QWidget):
                 )
 
             lines.append(
-                f' \n {len(self.active_particles)} active particles, {len(self.free_particles)} free particles'
+                f' \n {(self.count)} active particles, {self.MAX_PARTICLES - self.count} free particles'
             )
 
             debug_text = "\n".join(lines)
@@ -223,3 +263,48 @@ class ParticleOverlayWidget(QWidget):
             rect = QRect(10, 20, 300, 200)
             painter.drawText(rect, Qt.AlignLeft | Qt.AlignTop, debug_text)
 
+
+
+def get_frame(anim, age):
+        frame_index = int(age * anim["fps"])
+
+        if anim["loop"]:
+            frame_index %= len(anim["frames"])
+        else:
+            frame_index = min(frame_index, len(anim["frames"]) - 1)
+
+        return anim["frames"][frame_index]
+
+# Numba method, outside of ParticleEngine class
+@njit(fastmath=True)
+def update_particles(
+    dt,
+    count,
+    pos_x, pos_y,
+    vel_x, vel_y,
+    acc_x, acc_y,
+    age, type_id,
+    anim_lifetimes_by_id,
+    taskbar_top):
+    i = 0
+    while i < count:
+        age[i] += dt
+        vel_x[i] += acc_x[i] * dt
+        vel_y[i] += acc_y[i] * dt
+        pos_x[i] += vel_x[i] * dt
+        pos_y[i] += vel_y[i] * dt
+        # kill conditions
+        if age[i] >= anim_lifetimes_by_id[type_id[i]] or pos_y[i] > taskbar_top:
+            last = count - 1
+            pos_x[i] = pos_x[last]
+            pos_y[i] = pos_y[last]
+            vel_x[i] = vel_x[last]
+            vel_y[i] = vel_y[last]
+            acc_x[i] = acc_x[last]
+            acc_y[i] = acc_y[last]
+            age[i] = age[last]
+            type_id[i] = type_id[last]
+            count -= 1
+        else:
+            i += 1
+    return count

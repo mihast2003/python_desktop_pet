@@ -7,13 +7,12 @@ from engine.particles.particle import Particle
 from engine.enums import EmitterShape
 
 class ParticleEmitter:
-    def __init__(self, particleSystem, name, cfg, animations, hitbox_width, hitbox_height):
+    def __init__(self, particleSystem, name, cfg, hitbox_width, hitbox_height):
 
         self.particleSystem = particleSystem
 
         self.name = name
         self.cfg = cfg
-        self.anim = animations
 
         self.hitbox_x = hitbox_width 
         self.hitbox_y = hitbox_height
@@ -54,12 +53,6 @@ class ParticleEmitter:
         self.emit_bottom = self.cfg.get("emit_bottom", True)
         self.emit_left = self.cfg.get("emit_left", True)
         self.emit_right = self.cfg.get("emit_right", True)
-
-        #for particles directly
-        self.frames = self.anim["frames"]
-        self.fps = self.anim["fps"]
-        self.loop = self.anim.get("loop", False)
-        self.lifetime = len(self.frames) / self.fps if not self.loop else float("inf")
 
 
     def update(self, dt):
@@ -252,9 +245,5 @@ class ParticleEmitter:
             vel_y=vel_y,
             acc_x=acc_x,
             acc_y=acc_y,
-            lifetime=self.lifetime,
-            frames=self.frames,
-            fps=self.fps,
-            loop=self.loop,
-            size=self.start_size
+            name=self.name
         )
