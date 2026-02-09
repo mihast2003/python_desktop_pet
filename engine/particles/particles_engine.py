@@ -43,6 +43,15 @@ class ParticleOverlayWidget(QWidget):
         extended_style = ctypes.windll.user32.GetWindowLongW(hwnd, -20)
         ctypes.windll.user32.SetWindowLongW(hwnd, -20, extended_style | 0x80000 | 0x20)
 
+        # Create dummy data with FINAL types
+        dummy_positions = np.zeros(1000, dtype=np.float32)
+        dummy_vels = np.zeros(1000, dtype=np.float32)
+        dummy_id = np.zeros(1000, dtype=np.int16)
+        dummy_alive = np.zeros(1000, dtype=np.bool)
+        dt = np.float32(0.016)
+
+        update_particles(dt, np.uint32(1000), dummy_positions, dummy_positions, dummy_vels, dummy_vels, dummy_vels, dummy_vels, dummy_positions, dummy_id, dummy_alive, np.float32(1351))
+
         self.pet = pet
         self.taskbar_top = self.pet.taskbar_top
 
@@ -53,10 +62,7 @@ class ParticleOverlayWidget(QWidget):
         self.MAX_PARTICLES = RENDER_CONFIG.get("max_particle_count", 1000)
         MAX_PARTICLES = self.MAX_PARTICLES
 
-        # self.active_particles = []
-        # self.free_particles = [Particle(taskbar=taskbar) for _ in range(MAX_PARTICLES)]
-
-        self.count = 0  # active particle count
+        self.count = np.uint32(0)  # active particle count
 
         # ---- ARRAYS (SoA) ----
         self.pos_x = np.zeros(MAX_PARTICLES, dtype=np.float32)
@@ -70,7 +76,7 @@ class ParticleOverlayWidget(QWidget):
 
         self.age = np.zeros(MAX_PARTICLES, dtype=np.float32)
 
-        self.alive = np.zeros(MAX_PARTICLES, dtype=np.uint8)
+        self.alive = np.zeros(MAX_PARTICLES, dtype=bool)
 
         self.type_id = np.zeros(MAX_PARTICLES, dtype=np.int16)
 
@@ -163,10 +169,13 @@ class ParticleOverlayWidget(QWidget):
 
         self.age[i] = 0.0
         self.type_id[i] = anim_id
+        self.alive[i] = 1
 
         self.count += 1
 
     def update_logic(self, dt):
+
+        t0 = time.perf_counter()
 
         # --- EMITTERS ---
 
@@ -176,16 +185,22 @@ class ParticleOverlayWidget(QWidget):
         self.emitters = [e for e in self.emitters if not e.done] #pruning emitters
 
         # --- PARTICLES ---
+        print("self count is ", self.count)
+        i = 0
+        while i < self.count:
+            if self.age[i] >= self.anim_lifetimes_by_id[self.type_id[i]]:
+                self.alive[i] = 0
+            i += 1
 
         self.count = update_particles(
-            dt,
+            np.float32(dt),
             self.count,
             self.pos_x, self.pos_y,
             self.vel_x, self.vel_y,
             self.acc_x, self.acc_y,
             self.age, self.type_id,
-            self.anim_lifetimes_by_id,
-            self.taskbar_top)
+            self.alive,
+            np.float32(self.taskbar_top))
         
         # -- DEBUGGING TEXT --
         self.emitters_by_type = defaultdict(int)
@@ -194,6 +209,9 @@ class ParticleOverlayWidget(QWidget):
         for emitter in self.emitters:
             self.emitters_by_type[emitter.name] += 1
             self.particles_by_type[emitter.name] += emitter.emitted  # shows only total emitted particles
+
+
+        print("(", self.particles_by_type["dirt"], ", ", time.perf_counter() - t0, ")")
 
 
     # --- DRAWING ---
@@ -276,7 +294,7 @@ def get_frame(anim, age):
         return anim["frames"][frame_index]
 
 # Numba method, outside of ParticleEngine class
-@njit(fastmath=True)
+@njit(cache=True,fastmath=True)
 def update_particles(
     dt,
     count,
@@ -284,7 +302,7 @@ def update_particles(
     vel_x, vel_y,
     acc_x, acc_y,
     age, type_id,
-    anim_lifetimes_by_id,
+    alive,
     taskbar_top):
     i = 0
     while i < count:
@@ -293,8 +311,9 @@ def update_particles(
         vel_y[i] += acc_y[i] * dt
         pos_x[i] += vel_x[i] * dt
         pos_y[i] += vel_y[i] * dt
+
         # kill conditions
-        if age[i] >= anim_lifetimes_by_id[type_id[i]] or pos_y[i] > taskbar_top:
+        if not alive[i] or pos_y[i] > taskbar_top:
             last = count - 1
             pos_x[i] = pos_x[last]
             pos_y[i] = pos_y[last]

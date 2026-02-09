@@ -409,6 +409,7 @@ class Pet(QWidget): # main logic
         self.animator = Animator()
 
         self.profiler = cProfile.Profile()
+        self.not_first_time_update: bool = False
 
         self.hitbox_width = 0
         self.hitbox_height = 0
@@ -537,8 +538,9 @@ class Pet(QWidget): # main logic
     def update_logic(self):
         dt = 1 / 60
 
-        self.profiler.disable()  # start profiling
-        self.profiler.enable()  # start profiling
+        if self.not_first_time_update:
+            self.profiler.disable()  # start profiling
+            self.profiler.enable()  # start profiling
 
         self.particles.update_logic(dt) #updating particles widget
 
@@ -574,9 +576,10 @@ class Pet(QWidget): # main logic
         self.update()  # repaint
         self.particles.draw()
 
-        self.profiler.disable()  # stop profiling
         # self.profiler.print_stats(sort='cumtime')  # print results
+        self.profiler.disable()  # stop profiling
         self.profiler.dump_stats("particle_profile.stats")
+        self.not_first_time_update = True
 
     def apply_window_position(self):
         self.move(
