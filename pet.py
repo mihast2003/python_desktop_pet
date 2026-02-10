@@ -536,12 +536,15 @@ class Pet(QWidget): # main logic
         return Vec2(p.x(), p.y())
     
     def update_logic(self):
-        dt = 1 / 60
+        dt = 1 / FPS
+
+        t_start = time.perf_counter()
 
         if self.not_first_time_update:
             self.profiler.disable()  # start profiling
             self.profiler.enable()  # start profiling
 
+        print("pet updating logic")
         self.particles.update_logic(dt) #updating particles widget
 
         # --- INPUT PHASE ---
@@ -574,12 +577,22 @@ class Pet(QWidget): # main logic
         self.apply_window_position()
     
         self.update()  # repaint
+
+        # t1 = time.perf_counter()
+
+        print("particles draw")
+
         self.particles.draw()
 
+        t_finish = time.perf_counter()
+
+        # print(f'PET: \n update: {t1-t0} \n particles.draw: {t2-t1} \n In total: {t_finish-t_start}, while should be {dt}')
+        print(f'PET: \n In total: {t_finish-t_start} seconds, dt: {dt} seconds')
+
         # self.profiler.print_stats(sort='cumtime')  # print results
-        self.profiler.disable()  # stop profiling
-        self.profiler.dump_stats("particle_profile.stats")
-        self.not_first_time_update = True
+        # self.profiler.disable()  # stop profiling
+        # self.profiler.dump_stats("particle_profile.stats")
+        # self.not_first_time_update = True
 
     def apply_window_position(self):
         self.move(
@@ -665,6 +678,7 @@ class Pet(QWidget): # main logic
 
 
     def paintEvent(self, e): #draws the frame reveived from Animator 
+        t0 = time.perf_counter()
         painter = QPainter(self)
         painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
 
@@ -708,6 +722,9 @@ class Pet(QWidget): # main logic
         painter.drawPixmap(-offset_x, -offset_y, frame)
 
         painter.restore()
+
+        t1 = time.perf_counter()
+        print(f'Pet draw time: {t1-t0}ms')
 
 
 if __name__ == "__main__": # QT stuff, idk idc

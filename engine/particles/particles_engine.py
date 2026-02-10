@@ -175,6 +175,8 @@ class ParticleOverlayWidget(QWidget):
 
     def update_logic(self, dt):
 
+        print("pet updating logic confirmed")
+
         t0 = time.perf_counter()
 
         # --- EMITTERS ---
@@ -184,13 +186,17 @@ class ParticleOverlayWidget(QWidget):
 
         self.emitters = [e for e in self.emitters if not e.done] #pruning emitters
 
+        t1 = time.perf_counter()
+
         # --- PARTICLES ---
-        print("self count is ", self.count)
+        # print("self count is ", self.count)
         i = 0
         while i < self.count:
             if self.age[i] >= self.anim_lifetimes_by_id[self.type_id[i]]:
                 self.alive[i] = 0
             i += 1
+
+        t2 = time.perf_counter()
 
         self.count = update_particles(
             np.float32(dt),
@@ -202,6 +208,8 @@ class ParticleOverlayWidget(QWidget):
             self.alive,
             np.float32(self.taskbar_top))
         
+        t3 = time.perf_counter()
+        
         # -- DEBUGGING TEXT --
         self.emitters_by_type = defaultdict(int)
         self.particles_by_type = defaultdict(int)
@@ -211,14 +219,16 @@ class ParticleOverlayWidget(QWidget):
             self.particles_by_type[emitter.name] += emitter.emitted  # shows only total emitted particles
 
 
-        print("(", self.particles_by_type["dirt"], ", ", time.perf_counter() - t0, ")")
+        print(f'PARTICLES: \n emiiters: {t1-t0} \n particles alive: {t2-t1} \n update_particles: {t3-t2}')
 
 
     # --- DRAWING ---
     def draw(self):
+        # print("particles draw confirmed")
         self.update()  # triggers paintEvent
 
     def paintEvent(self, event):
+        t0 = time.perf_counter()
         painter = QPainter(self)
         painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
 
@@ -250,7 +260,7 @@ class ParticleOverlayWidget(QWidget):
 
             painter.scale(self.scale, self.scale)
 
-            painter.drawPixmap(corner_x, corner_y, frame)
+            painter.drawPixmap(corner_x, corner_y, frame)  # disabled drawing particles for test
 
             # painter.setPen(QPen(Qt.red, 3))
             # painter.drawEllipse(true_pos_x, true_pos_y, 50, 50)
@@ -280,6 +290,11 @@ class ParticleOverlayWidget(QWidget):
 
             rect = QRect(10, 20, 300, 200)
             painter.drawText(rect, Qt.AlignLeft | Qt.AlignTop, debug_text)
+
+        t1 = time.perf_counter()
+        print(f'Particles PaintEvent \n Time: {t1-t0}')
+
+        print("draw event")
 
 
 
