@@ -379,8 +379,8 @@ class Pet(QWidget): # main logic
     def __init__(self):
         super().__init__()
 
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)   # QT stuff idk idc
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)   # type: ignore # QT stuff idk idc
+        self.setAttribute(Qt.WA_TranslucentBackground) # type: ignore
 
         # get all animations in a dictionary
         self.animations = {}
@@ -421,7 +421,7 @@ class Pet(QWidget): # main logic
         self.mover.set_position(100, self.taskbar_top + 1) # set initial position
 
         cfg_facing = RENDER_CONFIG.get("default_facing")
-        self.facing = Facing.__members__.get(cfg_facing, Facing.RIGHT)  # defining dacing direction
+        self.facing = Facing.__members__.get(cfg_facing, Facing.RIGHT)  # type: ignore # defining dacing direction
 
         self.behaviour_resolver = BehaviourResolver(self)
 
@@ -607,7 +607,7 @@ class Pet(QWidget): # main logic
 
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.LeftButton: # type: ignore
             self.click_detector.press(event.globalPosition())
             self.last_mouse_pos = self._mouse_vec(event)
 
@@ -632,7 +632,7 @@ class Pet(QWidget): # main logic
 
     def paintEvent(self, e): #draws the frame reveived from Animator 
         p = QPainter(self)
-        p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        p.setRenderHint(QPainter.SmoothPixmapTransform, True) # pyright: ignore[reportAttributeAccessIssue]
 
         # p.fillRect(self.rect(), QColor(80, 80, 80))  # dark gray
 
