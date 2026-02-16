@@ -14,7 +14,8 @@ from data.animations import ANIMATIONS
 from data.render_config import RENDER_CONFIG
 
 from engine.state_machine import StateMachine
-from engine.enums import Flag, Pulse, MovementType
+from engine.click_detector import ClickDetector
+from engine.enums import Flag, Pulse, MovementType, Facing
 from engine.vec2 import Vec2
 from engine.behaviour_resolver import BehaviourResolver
 
@@ -22,81 +23,7 @@ from engine.behaviour_resolver import BehaviourResolver
 from data.variables import VARIABLES
 from engine.variable_manager import VariableManager
 
-FPS = 60 #fps of logic processes
-PET_SIZE_X, PET_SIZE_Y = 100, 80
-
-class Facing(Enum):
-    LEFT = auto()
-    RIGHT = auto()
-
-# helper function to detect clicks or holds on pet sprite
-class ClickDetector:
-    def __init__(self, state_machine):
-        self.sm = state_machine
-
-        self.press_time = None
-        self.press_pos = None
-        self.moved = False
-        self.hold_triggered = False
-
-        self.click_time = 0.1
-        self.long_press_time = 0.1
-        self.move_tolerance = 1   # CHANGE
-
-    def press(self, pos: QPointF):
-        self.press_time = time.monotonic()
-        self.press_pos = pos
-        self.moved = False
-        self.hold_triggered = False
-
-    def move(self, pos: QPointF):
-        if not self.press_pos:
-            return
-
-        if (pos - self.press_pos).manhattanLength() > self.move_tolerance:
-            self.moved = True
-
-    def update(self):
-        if self.press_time is None or self.hold_triggered:
-            return
-
-        elapsed = time.monotonic() - self.press_time
-
-        if elapsed >= self.long_press_time and not self.moved:
-            self.hold_triggered = True
-            self.sm.raise_flag(Flag.CLICK_HELD)
-            self.sm.raise_flag(Flag.DRAGGING)
-            print("HOLDIIING")
-
-        if self.moved:
-            self.sm.raise_flag(Flag.DRAGGING)
-
-    def release(self):
-        self.sm.remove_flag(Flag.DRAGGING)
-
-        if self.press_time is None:
-            return
-
-        duration = time.monotonic() - self.press_time
-
-
-        self.press_time = None
-        self.press_pos = None
-
-        if self.hold_triggered:
-            self.sm.remove_flag(Flag.CLICK_HELD)
-            self.sm.pulse(Pulse.LETGO)
-            print("stopped holding")
-            return
-
-        # if self.moved:
-        #     return
-
-        if duration <= self.click_time:
-            self.sm.pulse(Pulse.CLICK)
-            pet.variables.add("times_clicked_this_state", 1)
-            print("CLICK")
-
+FPS = RENDER_CONFIG.get("logic_FPS", 60) #fps of logic processes
 
 class Mover:
     def __init__(self):
@@ -431,7 +358,7 @@ class Pet(QWidget): # main logic
         self.update_dpi_and_scale(h=h, initial_state=initial_state)
 
         self.state_machine = StateMachine(pet=self, configs=STATES, initial=initial_state) # set initial state
-        self.click_detector = ClickDetector(state_machine=self.state_machine) #initialising ClickDetector
+        self.click_detector = ClickDetector(pet=self) #initialising ClickDetector
 
         self.last_mouse_pos = Vec2()
 

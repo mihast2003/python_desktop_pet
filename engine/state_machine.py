@@ -3,6 +3,7 @@
 from engine.state_runtime import StateRuntime
 from engine.enums import Flag, Pulse
 
+
 class StateMachine:
     def __init__(self, pet, configs, initial):
         self.pet = pet

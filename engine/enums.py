@@ -26,3 +26,7 @@ class MovementType(Enum):
     DRAG = auto() 
     INSTANT = auto()
     STATIONARY = auto()
+
+class Facing(Enum):
+    LEFT = auto()
+    RIGHT = auto()
