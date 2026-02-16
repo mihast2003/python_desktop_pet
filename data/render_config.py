@@ -1,7 +1,7 @@
 
 RENDER_CONFIG = {
 
-    "logic_FPS": 60,
+    "logic_FPS": 30,
     "display_FPS": 60,
 
     "pet_size_on_screen": 8.5,  # vertical scale of first sprite on the scren (in percent)

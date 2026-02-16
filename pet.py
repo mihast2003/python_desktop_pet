@@ -25,7 +25,7 @@ from engine.behaviour_resolver import BehaviourResolver
 from data.variables import VARIABLES
 from engine.variable_manager import VariableManager
 
-FPS = RENDER_CONFIG.get("logic_FPS", 60) #fps of logic processes
+LOGIC_FPS = RENDER_CONFIG.get("logic_FPS", 60) #fps of logic processes
 
 #region --- HELPERS ---
 # ANIMATION STUFF
@@ -124,7 +124,7 @@ class Pet(QWidget): # main logic
         # Timer for updating logic
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_logic)
-        self.timer.start(1000 // FPS)
+        self.timer.start(1000 // LOGIC_FPS)
 
 
     def on_state_enter(self, state): #called in state_machine when entering a new state
@@ -203,8 +203,8 @@ class Pet(QWidget): # main logic
         p = event.globalPosition()
         return Vec2(p.x(), p.y())
     
-    def update_logic(self):
-        dt = 1 / 60
+    def update_logic(self):  # UPDATE LOGIC
+        dt = 1 / LOGIC_FPS
 
         # --- INPUT PHASE ---
         if self.mover.movement_type == MovementType.DRAG:
@@ -232,7 +232,7 @@ class Pet(QWidget): # main logic
         self.anchor_y = self.mover.pos.y
     
         self.apply_window_position()
-    
+
         self.update()  # repaint
     
 
@@ -251,14 +251,10 @@ class Pet(QWidget): # main logic
         self.anchor_x = old_pos.x() + old_w // 2
         self.anchor_y = old_pos.y() + old_h
 
-        # move window so anchor stays fixed
-        self.move(
-            self.anchor_x - new_w // 2,
-            self.anchor_y - new_h
-        )
+        new_x = self.anchor_x - new_w // 2
+        new_y = self.anchor_y - new_h
 
-        # resize
-        self.resize(new_w, new_h)
+        self.setGeometry(new_x, new_y, new_w, new_h)
     
     def update_dpi_and_scale(self, h, initial_state):
         percentage = RENDER_CONFIG["pet_size_on_screen"] / 100
@@ -312,6 +308,11 @@ class Pet(QWidget): # main logic
     def leaveEvent(self, event):
         self.mover.end_drag()  
 
+    # def moveEvent(self, e):
+    #     print("Move:", self.pos())
+
+    # def resizeEvent(self, e):
+    #     print("Resize:", self.size())
 
     def paintEvent(self, e): #draws the frame reveived from Animator 
         p = QPainter(self)
