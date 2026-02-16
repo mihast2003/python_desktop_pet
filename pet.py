@@ -16,6 +16,7 @@ from data.render_config import RENDER_CONFIG
 from engine.state_machine import StateMachine
 from engine.click_detector import ClickDetector
 from engine.mover import Mover
+from engine.animator import Animator
 from engine.enums import Flag, Pulse, MovementType, Facing
 from engine.vec2 import Vec2
 from engine.behaviour_resolver import BehaviourResolver
@@ -26,6 +27,7 @@ from engine.variable_manager import VariableManager
 
 FPS = RENDER_CONFIG.get("logic_FPS", 60) #fps of logic processes
 
+#region --- HELPERS ---
 # ANIMATION STUFF
 def load_frames(folder):  # function for loading frames, recieves a string path to a folder, returns a list of png files( converted to PixMap ) in name order
     frames = []
@@ -52,65 +54,7 @@ def scan_animation_bounds(frames):
 
     return max_w, max_h
 
-class Animator:  # contains different animation functions
-    def __init__(self,):
-        self.frames = []
-        self.index = 0
-        self.timer = 0
-        self.loop = True
-        self.ticks_left = 0
-        self.done = False
-
-    def set(self, frames, fps, loop, times_to_loop, holds=None): #sets the animatios. receives a list of PixMap (frames), int (fps) and a bool(loop)
-        self.frames = frames
-        self.fps = fps if fps > 0 else 0.001
-        self.loop = loop
-        self.times_to_loop = times_to_loop
-        self.index = 0
-        self.timer = 0
-        self.holds = holds or {}
-        self.ticks_left = self.hold_for(0)
-        self.done = False
-        
-    def update(self, dt): #iterates over the list of frames with the speed of fps, loops if loop==True
-        if self.done or not self.frames:
-            return False
-
-        self.timer += dt
-        frame_time = 1 / self.fps
-
-        if self.timer >= frame_time:
-            self.timer -= frame_time
-            self.ticks_left -= 1
-
-            if self.ticks_left <= 0:
-                self.index += 1
-
-                # print(self.index)
-
-                if self.index >= len(self.frames):
-                    print("Animator: Pulse.ANIMATION_END ")
-                    pet.state_machine.pulse(Pulse.ANIMATION_END)  # if the index of the frame is more than we have frames, the animation is considered finished(for ease of connecting animations together), else - not
-
-                    if self.loop or self.times_to_loop >= 2 :
-                        self.index = 0
-                        self.times_to_loop -= 1
-                    else:
-                        self.index = len(self.frames) - 1
-                        print("Animator: Flag.ANIMATION_FINISHED ")
-                        pet.state_machine.raise_flag(Flag.ANIMATION_FINISHED)
-                        self.done = True
-
-
-                self.ticks_left = self.hold_for(self.index)
-
-
-    def hold_for(self, index):
-        return self.holds.get(index + 1, 1)
-
-    def frame(self): #returns a single frame which should be displayed at the moment
-        return self.frames[self.index]
-
+#endregion
 
 class Pet(QWidget): # main logic
     def __init__(self):
@@ -145,7 +89,7 @@ class Pet(QWidget): # main logic
 
                   
         self.variables = VariableManager(VARIABLES)
-        self.animator = Animator()
+        self.animator = Animator(self)
 
         self.hitbox_width = 0
         self.hitbox_height = 0
