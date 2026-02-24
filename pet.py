@@ -117,6 +117,9 @@ class Pet(QWidget): # main logic
 
         self.last_mouse_pos = Vec2()
 
+        self.drag_offset = Vec2(0,0)
+        self.rotation_angle = 0
+
         self.update_hitbox_size_and_drag_offset() # initial hitbox update
 
 
@@ -281,8 +284,8 @@ class Pet(QWidget): # main logic
             # print(self.hitbox_height)
             # print(self.hitbox_width)
 
-            self.mover.drag_offset = Vec2(self.hitbox_width * RENDER_CONFIG["drag_offset_x"], self.hitbox_height * RENDER_CONFIG["drag_offset_y"])
-
+            self.drag_offset = Vec2(self.hitbox_width * RENDER_CONFIG["drag_offset_x"], self.hitbox_height * RENDER_CONFIG["drag_offset_y"])
+            self.mover.drag_offset = self.drag_offset
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton: # type: ignore
@@ -351,6 +354,34 @@ class Pet(QWidget): # main logic
         # p.setPen(QPen(Qt.blue, 3))
         # p.drawLine(self.width(), 0, 0, self.height())
         # p.drawLine(offset_x, offset_y, anchor_x, anchor_y)
+
+        # angleInRads = self.rotation_angle * math.pi/180 # conversion to radians
+
+        cx, cy = self.anchor + self.drag_offset
+
+        # s: float = math.sin(angleInRads)
+        # c: float = math.cos(angleInRads)
+
+        # // translate point back to origin:
+        # p.x -= cx
+        # p.y -= cy
+        p.translate(-cx, -cy)
+
+        # // rotate point
+        # xnew = p.x * c - p.y * s
+        # ynew = p.x * s + p.y * c
+        p.rotate(self.rotation_angle)
+
+
+        # // translate point back:
+        # p.x = xnew + cx
+        # p.y = ynew + cy
+        p.translate(cx, cy)
+
+        # draw sprite so its bottom-middle is at (self.x, self.y)
+        pivot_x = 10
+        pivot_y = 10
+        p.translate(-pivot_x, -pivot_y)
 
         p.scale(sx, self.scale)
         p.drawPixmap(-offset_x, -offset_y, frame)
