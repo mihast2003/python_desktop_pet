@@ -1,6 +1,8 @@
 from engine.enums import Flag, Pulse, MovementType, Facing
 from engine.vec2 import Vec2
 
+from data.render_config import RENDER_CONFIG
+
 class Mover:
     def __init__(self, pet):
         self.pos = Vec2()
@@ -18,6 +20,13 @@ class Mover:
 
         self.movement_type = None
         self.active = False
+
+        # drag specific
+        self.max_angle = RENDER_CONFIG.get("max_angle", 0)
+        self.inertia = RENDER_CONFIG.get("inertia", 0)
+        self.angle = 0
+        self.angular_vel = 0
+        self.angular_acceleration = 100
 
         # jump specific
         self.jump_velocity = 1000
@@ -40,8 +49,8 @@ class Mover:
             self.pos = Vec2(x, y) #type: ignore
 
     def move_to(self, x, y, movement_type: MovementType):
+        if self.vel == None: return
         self.target = Vec2(x, y)
-        self.vel = Vec2()
         self.movement_type = movement_type
         self.active = True
 
@@ -132,21 +141,22 @@ class Mover:
         if dist < self.slow_radius:
             desired_speed *= dist / self.slow_radius
 
-        desired_velocity = direction * desired_speed
+        desired_velocity: Vec2 = direction * desired_speed # pyright: ignore
 
         # --- accelerate toward desired velocity (ease IN) ---
-        steering = desired_velocity - self.vel
+        steering: Vec2 = desired_velocity - self.vel
         max_change = self.acceleration * dt
 
         if steering.length() > max_change:
             steering = steering.normalized() * max_change
 
-        self.vel += steering
+        self.vel += steering # pyright: ignore
         self.pos += self.vel * dt
 
         return False
 
     def _update_jump(self, dt):
+        if self.vel == None: return
         # x moves toward target
         # direction_x = 1 if self.target.x > self.pos.x else -1
         # self.vel.x = direction_x * self.max_speed # normal option, where it just shoots at the max speed at that direction
@@ -175,7 +185,7 @@ class Mover:
         self.active = True
         self.vel = Vec2()
 
-    def update_drag_target(self, mouse_pos: Vec2):
+    def update_drag_target(self, mouse_pos: Vec2, dt):
         if not self.movement_type == MovementType.DRAG:
             return
 
@@ -184,12 +194,40 @@ class Mover:
             self.end_drag()
             return
         
+        change = mouse_pos.x - self.pos.x
+
+        self.angle += change / self.inertia / 2
+
+        self.angular_acceleration = abs(self.angle)
+
+        dampening = 10
+
+        self.angular_vel = min(max(self.angular_vel, -250), 250)
+
+        if self.angle > 0:
+            self.angular_vel -= self.angular_acceleration * 10 * dt
+        elif self.angle < 0:
+            self.angular_vel += self.angular_acceleration * 10 * dt
+        
+        if abs(self.angular_vel) < 15:
+            print("AHA")
+            self.angular_vel *= 0.9
+
+
+        print(self.angular_vel)
+        self.angle += self.angular_vel * dt
+        self.pet.rotation_angle = max(-self.max_angle, min(self.angle, self.max_angle))
+
         self.pos = mouse_pos - self.drag_offset
-            
+    
 
     def end_drag(self):
         if self.movement_type == MovementType.DRAG:
             self.active = False
             self.movement_type = None
+            self.pet.rotation_angle = 0
+            self.angle = 0
+            self.angular_vel = 0
+            self.angular_acceleration = 0
             self.pet.state_machine.pulse(Pulse.DRAGGING_ENDED)
             self.pet.click_detector.release()

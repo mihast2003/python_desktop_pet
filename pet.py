@@ -210,7 +210,7 @@ class Pet(QWidget): # main logic
 
         # --- INPUT PHASE ---
         if self.mover.movement_type == MovementType.DRAG:
-            self.mover.update_drag_target(self.last_mouse_pos)
+            self.mover.update_drag_target(self.last_mouse_pos, dt)
     
         self.click_detector.update()
         self.variables.update(dt)
@@ -355,33 +355,14 @@ class Pet(QWidget): # main logic
         # p.drawLine(self.width(), 0, 0, self.height())
         # p.drawLine(offset_x, offset_y, anchor_x, anchor_y)
 
-        # angleInRads = self.rotation_angle * math.pi/180 # conversion to radians
-
-        cx, cy = self.anchor + self.drag_offset
-
-        # s: float = math.sin(angleInRads)
-        # c: float = math.cos(angleInRads)
-
-        # // translate point back to origin:
-        # p.x -= cx
-        # p.y -= cy
-        p.translate(-cx, -cy)
-
-        # // rotate point
-        # xnew = p.x * c - p.y * s
-        # ynew = p.x * s + p.y * c
-        p.rotate(self.rotation_angle)
-
-
-        # // translate point back:
-        # p.x = xnew + cx
-        # p.y = ynew + cy
-        p.translate(cx, cy)
-
-        # draw sprite so its bottom-middle is at (self.x, self.y)
-        pivot_x = 10
-        pivot_y = 10
-        p.translate(-pivot_x, -pivot_y)
+        if self.rotation_angle != 0:
+            cx, cy = self.drag_offset
+            # // translate point back to origin:
+            p.translate(cx, cy)
+            # // rotate
+            p.rotate(self.rotation_angle)
+            # // translate point back:
+            p.translate(-cx, -cy)
 
         p.scale(sx, self.scale)
         p.drawPixmap(-offset_x, -offset_y, frame)
