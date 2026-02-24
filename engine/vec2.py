@@ -4,9 +4,21 @@ import math
 class Vec2:
     __slots__ = ("x", "y")
 
-    def __init__(self, x=0.0, y=0.0):
+    def __init__(self, x=0.0, y=None):
+        
+        # print("trying to make a vector2 out of ", x, y)
+
+        if y is None:
+            if isinstance(x, (tuple, list)):
+                x, y = x
+            else: y = 0.0
+
         self.x = float(x)
         self.y = float(y)
+
+
+    def __repr__(self):
+        return f"Vec2({self.x}, {self.y})"
 
     def copy(self):
         return Vec2(self.x, self.y)
@@ -18,10 +30,18 @@ class Vec2:
     def __sub__(self, other):
         return Vec2(self.x - other.x, self.y - other.y)
 
-    def __mul__(self, scalar: float):
-        return Vec2(self.x * scalar, self.y * scalar)
+    def __mul__(self, value):
+        if isinstance(value, float):
+            return Vec2(self.x * value, self.y * value)
+        if isinstance(value, Vec2):
+            return Vec2(self.x * value.x, self.y * value.y)
 
     __rmul__ = __mul__
+        
+
+    def __iter__(self):
+        yield self.x
+        yield self.y
 
     # utilities
     def length(self):
