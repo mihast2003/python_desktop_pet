@@ -33,8 +33,11 @@ class Mover:
         self.jump_velocity = jump_velocity
         self.gravity = gravity
 
-    def set_position(self, x, y):
-        self.pos = Vec2(x, y)
+    def set_position(self, x=0.0, y=None): 
+        if y is None and isinstance(x, Vec2):
+            self.pos = x
+        else:
+            self.pos = Vec2(x, y) #type: ignore
 
     def move_to(self, x, y, movement_type: MovementType):
         self.target = Vec2(x, y)

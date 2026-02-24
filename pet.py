@@ -95,8 +95,7 @@ class Pet(QWidget): # main logic
         self.hitbox_height = 0
         
         self.mover = Mover(self)
-        self.anchor_x = 500
-        self.anchor_y = 500
+        self.anchor = Vec2(500, 500)
 
         self.primary_screen = QApplication.primaryScreen()
         screen = QApplication.primaryScreen() # Screen detection
@@ -167,7 +166,7 @@ class Pet(QWidget): # main logic
             self.mover.begin_drag(pos)
             return
 
-        self.mover.set_position(self.anchor_x, self.anchor_y)
+        self.mover.set_position(self.anchor) #type: ignore
         self.mover.move_to(target_x, target_y, type)
 
        
@@ -228,8 +227,8 @@ class Pet(QWidget): # main logic
         # print("facing is", self.facing)
     
         # --- POSITION SYNC PHASE ---
-        self.anchor_x = self.mover.pos.x
-        self.anchor_y = self.mover.pos.y
+        self.anchor.x = self.mover.pos.x
+        self.anchor.y = self.mover.pos.y
     
         self.apply_window_position()
 
@@ -238,8 +237,8 @@ class Pet(QWidget): # main logic
 
     def apply_window_position(self):
         self.move(
-            int(self.anchor_x - self.width() / 2),
-            int(self.anchor_y - self.height())
+            int(self.anchor.x - self.width() / 2),
+            int(self.anchor.y - self.height())
         )
 
     def resize_keep_anchor(self, new_w, new_h):
@@ -248,11 +247,11 @@ class Pet(QWidget): # main logic
         old_h = self.height()
 
         # world-space anchor (bottom-middle)
-        self.anchor_x = old_pos.x() + old_w // 2
-        self.anchor_y = old_pos.y() + old_h
+        self.anchor.x = old_pos.x() + old_w // 2
+        self.anchor.y = old_pos.y() + old_h
 
-        new_x = self.anchor_x - new_w // 2
-        new_y = self.anchor_y - new_h
+        new_x = self.anchor.x - new_w // 2
+        new_y = self.anchor.y - new_h
 
         self.setGeometry(new_x, new_y, new_w, new_h)
     

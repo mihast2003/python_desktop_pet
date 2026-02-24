@@ -29,7 +29,7 @@ class BehaviourResolver:
     
     def _resolve_axis(self, axis, spec):
         if spec["type"] == "current":
-            return self.pet.anchor_x if axis == "x" else self.pet.anchor_y
+            return self.pet.anchor.x if axis == "x" else self.pet.anchor.y
 
         if spec["type"] == "random":
             min_val = self._resolve_bound(spec["min"], axis)
@@ -37,7 +37,7 @@ class BehaviourResolver:
             return random.randint(int(min_val), int(max_val))
         
         if spec["type"] == "random_range":
-            current_pos = self.pet.anchor_x if axis == "x" else self.pet.anchor_y
+            current_pos = self.pet.anchor.x if axis == "x" else self.pet.anchor.y
             range = spec["range"]
             min_val = self._resolve_bound(spec["min"], axis)
             max_val = self._resolve_bound(spec["max"], axis)
