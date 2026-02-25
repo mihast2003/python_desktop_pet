@@ -1,5 +1,6 @@
 from engine.enums import Flag, Pulse, MovementType, Facing
 from engine.vec2 import Vec2
+import math
 
 from data.render_config import RENDER_CONFIG
 
@@ -22,8 +23,10 @@ class Mover:
         self.active = False
 
         # drag specific
-        self.max_angle = RENDER_CONFIG.get("max_angle", 0)
-        self.inertia = RENDER_CONFIG.get("inertia", 0)
+        self.max_angle = RENDER_CONFIG.get("max_angle", 90)
+        self.inertia = RENDER_CONFIG.get("inertia", 1)
+        self.damping = RENDER_CONFIG.get("damping", 1)
+        self.gravity = RENDER_CONFIG.get("gravity", 2000)
         self.angle = 0
         self.angular_vel = 0
         self.angular_acceleration = 100
@@ -186,40 +189,43 @@ class Mover:
         self.vel = Vec2()
 
     def update_drag_target(self, mouse_pos: Vec2, dt):
-        if not self.movement_type == MovementType.DRAG:
+        if self.movement_type != MovementType.DRAG:
             return
 
         screen = self.pet.primary_screen.availableGeometry()
-        if mouse_pos.x >= screen.width() - self.pet.hitbox_width/2 or mouse_pos.x <= self.pet.hitbox_width/2 or mouse_pos.y >= screen.bottom():
+        if (
+            mouse_pos.x >= screen.width() - self.pet.hitbox_width / 2
+            or mouse_pos.x <= self.pet.hitbox_width / 2
+            or mouse_pos.y >= screen.bottom()
+        ):
             self.end_drag()
             return
-        
-        change = mouse_pos.x - self.pos.x
+            
+        self.angle = (self.angle + 180) % 360 - 180
 
-        self.angle += change / self.inertia / 2
+        # --- Inject energy from mouse movement ---
+        mouse_delta = mouse_pos.x - self.pos.x
+        self.angular_vel += mouse_delta * self.inertia # tweak multiplier
 
-        self.angular_acceleration = abs(self.angle)
+        # --- Damped spring physics ---
+        angular_acc = -(self.gravity / 1) * math.sin(math.radians(self.angle)) - self.damping * self.angular_vel
 
-        dampening = 10
-
-        self.angular_vel = min(max(self.angular_vel, -250), 250)
-
-        if self.angle > 0:
-            self.angular_vel -= self.angular_acceleration * 10 * dt
-        elif self.angle < 0:
-            self.angular_vel += self.angular_acceleration * 10 * dt
-        
-        if abs(self.angular_vel) < 15:
-            print("AHA")
-            self.angular_vel *= 0.9
-
-
-        print(self.angular_vel)
+        self.angular_vel += angular_acc * dt
         self.angle += self.angular_vel * dt
-        self.pet.rotation_angle = max(-self.max_angle, min(self.angle, self.max_angle))
+
+        # Clamp final rotation
+        if self.max_angle < 360:
+            self.angle = max(
+                -self.max_angle,
+                min(self.angle, self.max_angle)
+            )
+
+        print(self.angle)
+
+        self.pet.rotation_angle = self.angle
 
         self.pos = mouse_pos - self.drag_offset
-    
+
 
     def end_drag(self):
         if self.movement_type == MovementType.DRAG:
@@ -228,6 +234,5 @@ class Mover:
             self.pet.rotation_angle = 0
             self.angle = 0
             self.angular_vel = 0
-            self.angular_acceleration = 0
             self.pet.state_machine.pulse(Pulse.DRAGGING_ENDED)
             self.pet.click_detector.release()
