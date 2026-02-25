@@ -1,5 +1,8 @@
 from engine.enums import Flag, Pulse, MovementType, Facing
 from engine.vec2 import Vec2
+import math
+
+from data.render_config import RENDER_CONFIG
 
 class Mover:
     def __init__(self, pet):
@@ -18,6 +21,15 @@ class Mover:
 
         self.movement_type = None
         self.active = False
+
+        # drag specific
+        self.max_angle = RENDER_CONFIG.get("max_angle", 90)
+        self.inertia = RENDER_CONFIG.get("inertia", 1)
+        self.damping = RENDER_CONFIG.get("damping", 1)
+        self.gravity = RENDER_CONFIG.get("gravity", 2000)
+        self.angle = 0
+        self.angular_vel = 0
+        self.angular_acceleration = 100
 
         # jump specific
         self.jump_velocity = 1000
@@ -40,8 +52,8 @@ class Mover:
             self.pos = Vec2(x, y) #type: ignore
 
     def move_to(self, x, y, movement_type: MovementType):
+        if self.vel == None: return
         self.target = Vec2(x, y)
-        self.vel = Vec2()
         self.movement_type = movement_type
         self.active = True
 
@@ -132,21 +144,22 @@ class Mover:
         if dist < self.slow_radius:
             desired_speed *= dist / self.slow_radius
 
-        desired_velocity = direction * desired_speed
+        desired_velocity: Vec2 = direction * desired_speed # pyright: ignore
 
         # --- accelerate toward desired velocity (ease IN) ---
-        steering = desired_velocity - self.vel
+        steering: Vec2 = desired_velocity - self.vel
         max_change = self.acceleration * dt
 
         if steering.length() > max_change:
             steering = steering.normalized() * max_change
 
-        self.vel += steering
+        self.vel += steering # pyright: ignore
         self.pos += self.vel * dt
 
         return False
 
     def _update_jump(self, dt):
+        if self.vel == None: return
         # x moves toward target
         # direction_x = 1 if self.target.x > self.pos.x else -1
         # self.vel.x = direction_x * self.max_speed # normal option, where it just shoots at the max speed at that direction
@@ -175,21 +188,51 @@ class Mover:
         self.active = True
         self.vel = Vec2()
 
-    def update_drag_target(self, mouse_pos: Vec2):
-        if not self.movement_type == MovementType.DRAG:
+    def update_drag_target(self, mouse_pos: Vec2, dt):
+        if self.movement_type != MovementType.DRAG:
             return
 
         screen = self.pet.primary_screen.availableGeometry()
-        if mouse_pos.x >= screen.width() - self.pet.hitbox_width/2 or mouse_pos.x <= self.pet.hitbox_width/2 or mouse_pos.y >= screen.bottom():
+        if (
+            mouse_pos.x >= screen.width() - self.pet.hitbox_width / 2
+            or mouse_pos.x <= self.pet.hitbox_width / 2
+            or mouse_pos.y >= screen.bottom()
+        ):
             self.end_drag()
             return
-        
-        self.pos = mouse_pos - self.drag_offset
             
+        self.angle = (self.angle + 180) % 360 - 180
+
+        # --- Inject energy from mouse movement ---
+        mouse_delta = mouse_pos.x - self.pos.x
+        self.angular_vel += mouse_delta * math.cos(math.radians(self.angle)) * self.inertia # tweak multiplier
+
+        # --- Damped spring physics ---
+        angular_acc = -(self.gravity / 1) * math.sin(math.radians(self.angle)) - self.damping * self.angular_vel
+
+        self.angular_vel += angular_acc * dt
+        self.angle += self.angular_vel * dt
+
+        # Clamp final rotation
+        if self.max_angle < 360:
+            self.angle = max(
+                -self.max_angle,
+                min(self.angle, self.max_angle)
+            )
+
+        # print(self.angle)
+
+        self.pet.rotation_angle = self.angle
+
+        self.pos = mouse_pos - self.drag_offset
+
 
     def end_drag(self):
         if self.movement_type == MovementType.DRAG:
             self.active = False
             self.movement_type = None
+            self.pet.rotation_angle = 0
+            self.angle = 0
+            self.angular_vel = 0
             self.pet.state_machine.pulse(Pulse.DRAGGING_ENDED)
             self.pet.click_detector.release()

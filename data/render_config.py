@@ -11,4 +11,10 @@ RENDER_CONFIG = {
 
     "drag_offset_x": 0,
     "drag_offset_y": -1.4,
+
+    "max_angle": 360, # max angle when dragging. >360 is free spin
+    "inertia": 1,
+    "damping": 1.5,
+    "gravity": 4000,
+
 }

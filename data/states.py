@@ -32,7 +32,7 @@ STATES = {
 
         "transitions": [
             {
-                "when": [  "DRAGGING_STARTED" ],  
+                "when": ["DRAGGING_STARTED"],  
                 "to": "DRAGGING",
                 "chance": 1,
             },
@@ -81,6 +81,10 @@ STATES = {
 
         "transitions": [
             {
+                "when": ["DRAGGING_STARTED"],  
+                "to": "DRAGGING",
+            },
+            {
                 "when": [ {"pulse":"ANIMATION_END"}, ],
                 "to": "IDLE"
             },
@@ -95,6 +99,10 @@ STATES = {
             {
                 "when": [ {"pulse":"CLICK"}, ],
                 "to": "ROLL",
+            },
+            {
+                "when": ["DRAGGING_STARTED"],  
+                "to": "DRAGGING",
             },
         ],
         "exit_when": ["ANIMATION_END"],

@@ -117,6 +117,9 @@ class Pet(QWidget): # main logic
 
         self.last_mouse_pos = Vec2()
 
+        self.drag_offset = Vec2(0,0)
+        self.rotation_angle = 0
+
         self.update_hitbox_size_and_drag_offset() # initial hitbox update
 
 
@@ -135,9 +138,6 @@ class Pet(QWidget): # main logic
         cfg = STATES[state]      # gets the config for the state from states.py
         anim_name = cfg.get("animation")
 
-        self.play_animation(anim_name=anim_name, cfg=cfg)
-        # self.update() # I think it helps with glitching, so it repaints right after a new animation is set
-
         movement_settings = cfg.get("settings", {})
         acceleration = movement_settings.get("acceleration", self.mover.acceleration)
         max_speed = movement_settings.get("max_speed", self.mover.max_speed)
@@ -151,6 +151,10 @@ class Pet(QWidget): # main logic
         # print(behaviour_name)
 
         target_x, target_y, type, settings = self.behaviour_resolver.resolve(behaviour_name)
+
+        isAbletoRotate = True if type == MovementType.DRAG else False
+
+        self.play_animation(anim_name=anim_name, cfg=cfg, isAbletoRotate=isAbletoRotate)
 
         if type == MovementType.STATIONARY: # hardcoded doing nothing for stationary
             return
@@ -173,7 +177,7 @@ class Pet(QWidget): # main logic
     def on_state_exit(self, state): #just does nothing when the state is done
         pass
 
-    def play_animation(self, anim_name, cfg, isTransitionAnimation = False):
+    def play_animation(self, anim_name, cfg, isTransitionAnimation = False, isAbletoRotate = False):
         anim_name = anim_name
 
         if anim_name not in ANIMATIONS:
@@ -189,7 +193,11 @@ class Pet(QWidget): # main logic
         holds = cfg.get("holds", anim_cfg.get("holds", {}))  # safestate, will default to empty directory
 
         bounds_w, bounds_h = self.animations[anim_name]["bounds"]
-        self.resize_keep_anchor(int(bounds_w * self.scale), int(bounds_h * self.scale))
+
+        if not isAbletoRotate:
+            self.resize_keep_anchor(int(bounds_w * self.scale), int(bounds_h * self.scale))
+        else: 
+            self.resize_keep_anchor(int(bounds_h * self.scale * 2), int(bounds_h * self.scale * 2))
 
         if isTransitionAnimation: 
             loop = False  #if receiving a transition animation, looping is disabled
@@ -207,7 +215,7 @@ class Pet(QWidget): # main logic
 
         # --- INPUT PHASE ---
         if self.mover.movement_type == MovementType.DRAG:
-            self.mover.update_drag_target(self.last_mouse_pos)
+            self.mover.update_drag_target(self.last_mouse_pos, dt)
     
         self.click_detector.update()
         self.variables.update(dt)
@@ -281,8 +289,8 @@ class Pet(QWidget): # main logic
             # print(self.hitbox_height)
             # print(self.hitbox_width)
 
-            self.mover.drag_offset = Vec2(self.hitbox_width * RENDER_CONFIG["drag_offset_x"], self.hitbox_height * RENDER_CONFIG["drag_offset_y"])
-
+            self.drag_offset = Vec2(self.hitbox_width * RENDER_CONFIG["drag_offset_x"], self.hitbox_height * RENDER_CONFIG["drag_offset_y"])
+            self.mover.drag_offset = self.drag_offset
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton: # type: ignore
@@ -351,6 +359,15 @@ class Pet(QWidget): # main logic
         # p.setPen(QPen(Qt.blue, 3))
         # p.drawLine(self.width(), 0, 0, self.height())
         # p.drawLine(offset_x, offset_y, anchor_x, anchor_y)
+
+        if self.rotation_angle != 0:
+            cx, cy = self.drag_offset
+            # // translate point back to origin:
+            p.translate(cx, cy)
+            # // rotate
+            p.rotate(self.rotation_angle)
+            # // translate point back:
+            p.translate(-cx, -cy)
 
         p.scale(sx, self.scale)
         p.drawPixmap(-offset_x, -offset_y, frame)
