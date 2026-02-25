@@ -138,9 +138,6 @@ class Pet(QWidget): # main logic
         cfg = STATES[state]      # gets the config for the state from states.py
         anim_name = cfg.get("animation")
 
-        self.play_animation(anim_name=anim_name, cfg=cfg)
-        # self.update() # I think it helps with glitching, so it repaints right after a new animation is set
-
         movement_settings = cfg.get("settings", {})
         acceleration = movement_settings.get("acceleration", self.mover.acceleration)
         max_speed = movement_settings.get("max_speed", self.mover.max_speed)
@@ -154,6 +151,10 @@ class Pet(QWidget): # main logic
         # print(behaviour_name)
 
         target_x, target_y, type, settings = self.behaviour_resolver.resolve(behaviour_name)
+
+        isAbletoRotate = True if type == MovementType.DRAG else False
+
+        self.play_animation(anim_name=anim_name, cfg=cfg, isAbletoRotate=isAbletoRotate)
 
         if type == MovementType.STATIONARY: # hardcoded doing nothing for stationary
             return
@@ -176,7 +177,7 @@ class Pet(QWidget): # main logic
     def on_state_exit(self, state): #just does nothing when the state is done
         pass
 
-    def play_animation(self, anim_name, cfg, isTransitionAnimation = False):
+    def play_animation(self, anim_name, cfg, isTransitionAnimation = False, isAbletoRotate = False):
         anim_name = anim_name
 
         if anim_name not in ANIMATIONS:
@@ -192,7 +193,11 @@ class Pet(QWidget): # main logic
         holds = cfg.get("holds", anim_cfg.get("holds", {}))  # safestate, will default to empty directory
 
         bounds_w, bounds_h = self.animations[anim_name]["bounds"]
-        self.resize_keep_anchor(int(bounds_w * self.scale), int(bounds_h * self.scale))
+
+        if not isAbletoRotate:
+            self.resize_keep_anchor(int(bounds_w * self.scale), int(bounds_h * self.scale))
+        else: 
+            self.resize_keep_anchor(int(bounds_h * self.scale * 2), int(bounds_h * self.scale * 2))
 
         if isTransitionAnimation: 
             loop = False  #if receiving a transition animation, looping is disabled
