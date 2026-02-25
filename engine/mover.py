@@ -205,7 +205,7 @@ class Mover:
 
         # --- Inject energy from mouse movement ---
         mouse_delta = mouse_pos.x - self.pos.x
-        self.angular_vel += mouse_delta * self.inertia # tweak multiplier
+        self.angular_vel += mouse_delta * math.cos(math.radians(self.angle)) * self.inertia # tweak multiplier
 
         # --- Damped spring physics ---
         angular_acc = -(self.gravity / 1) * math.sin(math.radians(self.angle)) - self.damping * self.angular_vel
@@ -220,7 +220,7 @@ class Mover:
                 min(self.angle, self.max_angle)
             )
 
-        print(self.angle)
+        # print(self.angle)
 
         self.pet.rotation_angle = self.angle
 
