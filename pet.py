@@ -226,8 +226,8 @@ class Pet(QWidget): # main logic
         self.variables.update(dt)
     
         # --- STATE / SIMULATION PHASE ---
-        self.windowsOverlay._update_window_list
-        self.windowsOverlay._update_frame
+        self.windowsOverlay._update_window_list()
+        self.windowsOverlay._update_frame()
 
         self.animator.update(dt)
         arrived = self.mover.update(dt)

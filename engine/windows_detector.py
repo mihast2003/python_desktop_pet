@@ -214,9 +214,9 @@ class WindowsOverlay(QWidget):
 
         # timers
         # enumerate windows once per second
-        self.enum_timer = QTimer()
-        self.enum_timer.timeout.connect(self._update_window_list)
-        self.enum_timer.start(1000)
+        # self.enum_timer = QTimer()
+        # self.enum_timer.timeout.connect(self._update_window_list)
+        # self.enum_timer.start(1000)
 
         # update positions + recompute clipping every frame (16ms)
         # self.frame_timer = QTimer()
@@ -224,14 +224,16 @@ class WindowsOverlay(QWidget):
         # self.frame_timer.start(16)
 
         # initial population
-        self._update_window_list()
-        self._update_frame()
+        # self._update_window_list()
+        # self._update_frame()
 
     # expensive: run once/sec
     def _update_window_list(self):
         self.windows = self.windowsDetector.get_windows_in_zorder(excluded_hwnd=self.my_hwnd) # 
         if self.windowsDetector.DEBUG:
             print(f"[enum] found {len(self.windows)} windows")
+
+        print("List updated")
 
     # cheap: run each frame (16ms)
     def _update_frame(self):
@@ -261,6 +263,7 @@ class WindowsOverlay(QWidget):
                 print(f"  {i}: hwnd={hwnd} title={repr(title)} rect={rect} segs_top={len(seg['top']) if seg else 0}")
 
         # trigger repaint
+        print("REPAINT")
         self.update()
 
     def paintEvent(self, event):
