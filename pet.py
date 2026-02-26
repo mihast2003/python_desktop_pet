@@ -20,6 +20,8 @@ from engine.animator import Animator
 from engine.enums import Flag, Pulse, MovementType, Facing
 from engine.vec2 import Vec2
 from engine.behaviour_resolver import BehaviourResolver
+from engine.windows_detector import WindowsDetector
+from engine.windows_detector import WindowsOverlay
 
 
 from data.variables import VARIABLES
@@ -86,8 +88,7 @@ class Pet(QWidget): # main logic
                 "times_to_loop": cfg.get("times_to_loop", 1)
             }
             print(f"[ANIM LOAD] {name}: {len(frames)} frames")
-
-                  
+    
         self.variables = VariableManager(VARIABLES)
         self.animator = Animator(self)
 
@@ -114,6 +115,10 @@ class Pet(QWidget): # main logic
 
         self.state_machine = StateMachine(pet=self, configs=STATES, initial=initial_state) # set initial state
         self.click_detector = ClickDetector(pet=self) #initialising ClickDetector
+
+        self.WindowsDetector = VariableManager(VARIABLES)
+
+        self.windowsOverlay = WindowsOverlay()
 
         self.last_mouse_pos = Vec2()
 
@@ -221,6 +226,9 @@ class Pet(QWidget): # main logic
         self.variables.update(dt)
     
         # --- STATE / SIMULATION PHASE ---
+        self.windowsOverlay._update_window_list
+        self.windowsOverlay._update_frame
+
         self.animator.update(dt)
         arrived = self.mover.update(dt)
 
