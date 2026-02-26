@@ -218,35 +218,50 @@ class Pet(QWidget): # main logic
     def update_logic(self):  # UPDATE LOGIC
         dt = 1 / LOGIC_FPS
 
+        t0 = time.perf_counter()
+
         # --- INPUT PHASE ---
         if self.mover.movement_type == MovementType.DRAG:
             self.mover.update_drag_target(self.last_mouse_pos, dt)
     
         self.click_detector.update()
         self.variables.update(dt)
+
+        t1 = time.perf_counter()
     
         # --- STATE / SIMULATION PHASE ---
         self.windowsOverlay._update_window_list()
+        t2 = time.perf_counter()
+
         self.windowsOverlay._update_frame()
+        t3 = time.perf_counter()
 
         self.animator.update(dt)
+        t4 = time.perf_counter()
         arrived = self.mover.update(dt)
-
         
         if arrived:
             self.click_detector.release()
             self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
 
+        t5 = time.perf_counter()
+
         self.state_machine.update(dt)
 
         # print("position is", self.mover.pos.x, self.mover.pos.y)
         # print("facing is", self.facing)
+
+        t6 = time.perf_counter()
     
         # --- POSITION SYNC PHASE ---
         self.anchor.x = self.mover.pos.x
         self.anchor.y = self.mover.pos.y
     
         self.apply_window_position()
+
+        t7 = time.perf_counter()
+        # print(f"update windows list takes {t2-t1}")
+        # print(f"update windows frames takes {t3-t2}")
 
         self.update()  # repaint
     

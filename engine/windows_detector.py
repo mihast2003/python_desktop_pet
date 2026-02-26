@@ -271,7 +271,7 @@ class WindowsOverlay(QWidget):
         painter.setRenderHint(QPainter.Antialiasing) # type: ignore
 
         # pen width is in logical pixels; color alpha for nice appearance
-        pen = QPen(QColor(0, 200, 60, 220), 3)
+        pen = QPen(QColor(0, 200, 60, 255), 25)
         painter.setPen(pen)
 
         # draw every cached segment using per-window DPI scale conversion
@@ -295,24 +295,28 @@ class WindowsOverlay(QWidget):
             for x1, x2 in data["top"]:
                 sx1 = int(round(x1 / scale))
                 sx2 = int(round(x2 / scale))
+                painter.setPen(QColor(0, 200, 60))
                 painter.drawLine(sx1, dT, sx2, dT)
 
             # bottom
             for x1, x2 in data["bottom"]:
                 sx1 = int(round(x1 / scale))
                 sx2 = int(round(x2 / scale))
+                painter.setPen(QColor(220, 0, 220))
                 painter.drawLine(sx1, dB, sx2, dB)
 
             # left
             for y1, y2 in data["left"]:
                 sy1 = int(round(y1 / scale))
                 sy2 = int(round(y2 / scale))
+                painter.setPen(QColor(20, 150, 255))
                 painter.drawLine(dL, sy1, dL, sy2)
 
             # right
             for y1, y2 in data["right"]:
                 sy1 = int(round(y1 / scale))
                 sy2 = int(round(y2 / scale))
+                painter.setPen(QColor(210, 100, 100))
                 painter.drawLine(dR, sy1, dR, sy2)
 
         painter.end()
