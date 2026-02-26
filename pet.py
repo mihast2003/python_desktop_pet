@@ -20,7 +20,7 @@ from engine.animator import Animator
 from engine.enums import Flag, Pulse, MovementType, Facing
 from engine.vec2 import Vec2
 from engine.behaviour_resolver import BehaviourResolver
-from engine.windows_detector import WindowsDetector
+# from engine.windows_detector import WindowsDetector
 from engine.windows_detector import WindowsOverlay
 
 
