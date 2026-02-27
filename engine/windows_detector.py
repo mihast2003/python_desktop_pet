@@ -3,11 +3,18 @@ import time
 import win32gui
 import win32api
 import win32con
+import win32process
+import win32event
+import win32gui_struct
+import ctypes
+import psutil
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPainter, QPen, QColor
 from PySide6.QtWidgets import QApplication, QWidget
-import ctypes
 from ctypes import wintypes
+import win32con
+import pythoncom
+import time
 
 DWMWA_EXTENDED_FRAME_BOUNDS = 9
 DWMWA_CLOAKED = 14
@@ -15,13 +22,66 @@ dwmapi = ctypes.windll.dwmapi
 
 _has_getdpiforwindow: bool
 
-    # Debug toggle: set True to print windows / segments info
+# Debug toggle: set True to print windows / segments info
 DEBUG = False
-    # -----------------------
-    # DPI helper (robust)
-    # -----------------------
+
+
+#region WHAT IN THE HELL
 user32 = ctypes.windll.user32
-    # best-effort: if GetDpiForWindow exists use it
+
+# Callback for window events
+WinEventProcType = ctypes.WINFUNCTYPE(
+    None,
+    wintypes.HANDLE,
+    wintypes.DWORD,
+    wintypes.HWND,
+    wintypes.LONG,
+    wintypes.LONG,
+    wintypes.DWORD,
+    wintypes.DWORD
+)
+
+windows_detector = None
+
+def win_event_callback(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime):
+    # Only top-level windows
+    if idObject != win32con.OBJID_WINDOW or windows_detector == None:
+        return
+    
+    print("Hook went off")
+    # Call your update functions
+    QTimer.singleShot(0, windows_detector.update_window_list) #type: ignore
+    QTimer.singleShot(0, windows_detector.update_frame) #type: ignore
+
+# Convert the Python function into a callback
+WinEventProc = WinEventProcType(win_event_callback)
+
+# Hook events that indicate window changes
+EVENTS = [
+    win32con.EVENT_OBJECT_SHOW,
+    win32con.EVENT_OBJECT_HIDE,
+    win32con.EVENT_OBJECT_LOCATIONCHANGE,
+    win32con.EVENT_SYSTEM_FOREGROUND,
+    win32con.EVENT_SYSTEM_MINIMIZESTART,
+    win32con.EVENT_SYSTEM_MINIMIZEEND,
+]
+
+# Register hooks
+hooks = []
+for ev in EVENTS:
+    hook = user32.SetWinEventHook(
+        ev,
+        ev,
+        0,
+        WinEventProc,
+        0, 0,
+        win32con.WINEVENT_OUTOFCONTEXT | win32con.WINEVENT_SKIPOWNPROCESS
+    )
+    hooks.append(hook)
+
+print("Window event hooks installed — listening for changes...")
+
+#endregion
 
 try:
     user32.GetDpiForWindow.restype = ctypes.c_uint
@@ -169,12 +229,12 @@ def get_windows_in_zorder(excluded_hwnd):
             if window not in excluded_hwnd and is_window_real(window):
                 if is_fullscreen(window):
                     title = win32gui.GetWindowText(window)
-                    print("FULLSCREEN:", title)
+                    # print("FULLSCREEN:", title)
                     windows.append(window)
                     break
                 elif is_maximized(window):
                     title = win32gui.GetWindowText(window)
-                    print("MAXIMISED: ", title)
+                    # print("MAXIMISED: ", title)
                     windows.append(window)
                     break
 
@@ -190,6 +250,71 @@ def get_windows_in_zorder(excluded_hwnd):
             pass
 
     return windows
+
+
+def is_real_app(hwnd):
+    try:
+        if not win32gui.IsWindow(hwnd):
+            return False
+
+        # Top-level only
+        if win32gui.GetParent(hwnd) != 0:
+            return False
+        if win32gui.GetWindow(hwnd, win32con.GW_OWNER) != 0:
+            return False
+        
+                # Ignore cloaked windows (UWP / modern app hidden windows)
+        if is_window_cloaked(hwnd):
+            return False
+
+        # Styles
+        style = win32gui.GetWindowLong(hwnd, win32con.GWL_STYLE)
+        exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+
+        # Must be normal overlapped window, not tool window or pure popup
+        if not (style & win32con.WS_OVERLAPPEDWINDOW):
+            return False
+        
+        if exstyle & win32con.WS_EX_TOOLWINDOW:
+            return False
+        
+        if exstyle & win32con.WS_EX_APPWINDOW:
+            return False
+
+        # Size
+        rect = get_extended_frame_bounds(hwnd)
+        if not rect:
+            return False
+        L, T, R, B = rect
+        if R - L < 50 or B - T < 50:
+            return False
+
+        # Title
+        # title = win32gui.GetWindowText(hwnd).strip()
+        # if not title:
+        #     return False
+
+        # System classes to ignore
+        cls = win32gui.GetClassName(hwnd)
+        if cls in {
+            "Progman",
+            "WorkerW",
+            "Shell_TrayWnd",
+            "Shell_SecondaryTrayWnd",
+            "SystemTray_Main",
+        }:
+            return False
+
+        # Check process name to filter shell / system processes
+        _, pid = win32process.GetWindowThreadProcessId(hwnd)
+        proc_name = psutil.Process(pid).name().lower()
+        if proc_name in {"explorer.exe", "taskhostw.exe", "ctfmon.exe"}:
+            return False
+
+        return True
+
+    except Exception:
+        return False
 
 
 def compute_visible_segments(windows, rects):
@@ -268,7 +393,30 @@ def compute_visible_segments(windows, rects):
 
     return segs
 
+def update_active_apps():
+    try:
+        fg = win32gui.GetForegroundWindow()
+        start = win32gui.GetWindow(fg, win32con.GW_HWNDFIRST)
+    except Exception:
+        start = win32gui.GetWindow(win32gui.GetDesktopWindow(), win32con.GW_HWNDFIRST)
 
+    hwnd = start
+    apps = set()
+    pid_cache = {}
+
+    while hwnd:
+        if is_real_app(hwnd):
+            try:
+                _, pid = win32process.GetWindowThreadProcessId(hwnd)
+                if pid not in pid_cache:
+                    pid_cache[pid] = psutil.Process(pid).name()
+                apps.add(pid_cache[pid])
+            except Exception:
+                pass
+
+        hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT)
+
+    # print("Active apps:", apps)
     
 def get_window_dpi_scale(hwnd):
     """Return DPI scale for HWND (physical -> logical)."""
@@ -337,6 +485,9 @@ class WindowsOverlay(QWidget):
 
         self.pet: QWidget = pet
 
+        global windows_detector
+        windows_detector = self
+
         # Transparent click-through fullscreen overlay
         self.setWindowFlags(
             Qt.FramelessWindowHint # type: ignore
@@ -354,11 +505,17 @@ class WindowsOverlay(QWidget):
 
         # cached data
         self.windows = []   # top-first
+        self.active_apps = {}   # top-first
         self.rects = {}     # hwnd -> rect physical
         self.segments = {}  # hwnd -> clipped segments computed in physical pixels
 
+        # Hook all top-level window events
+        user32 = ctypes.windll.user32
+
+
     def update_window_list(self):
-        self.windows = get_windows_in_zorder(excluded_hwnd=self.excluded_hwnd) # 
+        update_active_apps()
+        self.windows = get_windows_in_zorder(excluded_hwnd=self.excluded_hwnd)
         if DEBUG:
             print(f"[enum] found {len(self.windows)} windows")
 
@@ -403,9 +560,7 @@ class WindowsOverlay(QWidget):
         rects = self.rects
 
         for hwnd in self.windows:
-            L, T, R, B = rects[hwnd]
-
-        
+            L, T, R, B = rects[hwnd]  
 
     def paintEvent(self, event):
         painter = QPainter(self)
