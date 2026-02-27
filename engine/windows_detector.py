@@ -1,6 +1,7 @@
 import sys
 import time
 import win32gui
+import win32api
 import win32con
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPainter, QPen, QColor
@@ -62,6 +63,86 @@ def is_window_cloaked(hwnd):
         return False
     return cloaked.value != 0
 
+def is_fullscreen(hwnd):
+    rect = get_extended_frame_bounds(hwnd)
+    if not rect:
+        return False
+
+    monitor = win32api.MonitorFromWindow(hwnd, win32con.MONITOR_DEFAULTTONEAREST)
+    info = win32api.GetMonitorInfo(monitor)
+    mx1, my1, mx2, my2 = info["Monitor"]
+    # print(" rect ==", (mx1, my1, mx2, my2))
+
+    return rect == (mx1, my1, mx2, my2)
+
+def is_maximized(hwnd):
+    try:
+        placement = win32gui.GetWindowPlacement(hwnd)
+        return placement[1] == win32con.SW_MAXIMIZE
+    except:
+        return False
+
+def is_window_real(hwnd):
+    """
+    Return True if this hwnd is a "real" user window your pet can interact with.
+    Filters out:
+        - Tool windows
+        - Taskbar, desktop, worker windows
+        - Flyouts / IME / popups
+        - Cloaked or zero-size windows
+    """
+    try:
+        # Must exist
+        if not win32gui.IsWindow(hwnd):
+            return False
+
+        if not win32gui.IsWindowVisible(hwnd):
+            return False
+
+        # Ignore cloaked windows (UWP / modern app hidden windows)
+        if is_window_cloaked(hwnd):
+            return False
+
+        # Get styles
+        style = win32gui.GetWindowLong(hwnd, win32con.GWL_STYLE)
+        exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+
+        # Skip tool windows
+        if exstyle & win32con.WS_EX_TOOLWINDOW:
+            return False
+
+        # Skip windows without overlapped style (normal app windows)
+        if not (style & win32con.WS_OVERLAPPEDWINDOW):
+            return False
+
+        # Skip system tray / taskbar / desktop
+        cls = win32gui.GetClassName(hwnd)
+        if cls in {
+            "Progman",
+            "WorkerW",
+            "Shell_TrayWnd",
+            "Shell_SecondaryTrayWnd",
+            "SystemTray_Main",
+        }:
+            return False
+
+        # Skip tiny or zero-size windows
+        rect = get_extended_frame_bounds(hwnd)
+        if not rect:
+            return False
+        L, T, R, B = rect
+        if R - L < 50 or B - T < 50:
+            return False
+
+        # Skip windows that are topmost flyouts (like Network / Volume / Emoji)
+        if style & win32con.WS_POPUP and not style & win32con.WS_OVERLAPPEDWINDOW:
+            return False
+
+        # If it passed all checks, it's probably a real window
+        return True
+
+    except Exception:
+        return False
 
 def get_windows_in_zorder(excluded_hwnd):
     """
@@ -82,20 +163,31 @@ def get_windows_in_zorder(excluded_hwnd):
     hwnd = start
 
     while hwnd:
+        window = hwnd
+        hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT)
         try:
-            if hwnd != excluded_hwnd and win32gui.IsWindow(hwnd):
+            if window not in excluded_hwnd and is_window_real(window):
+                if is_fullscreen(window):
+                    title = win32gui.GetWindowText(window)
+                    print("FULLSCREEN:", title)
+                    windows.append(window)
+                    break
+                elif is_maximized(window):
+                    title = win32gui.GetWindowText(window)
+                    print("MAXIMISED: ", title)
+                    windows.append(window)
+                    break
 
-                if win32gui.IsWindowVisible(hwnd) and not is_window_cloaked(hwnd):
+                cls = win32gui.GetClassName(window)
+                style = win32gui.GetWindowLong(window, win32con.GWL_STYLE)
+                exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
 
-                    rect = get_extended_frame_bounds(hwnd)
+                print(f"Name: {win32gui.GetWindowText(window)}\nWindow: {window}\nClass: {cls}\nStyle: {style}")
 
-                    if rect and rect[0] != rect[2] and rect[1] != rect[3]:
-                        windows.append(hwnd)
+                windows.append(window)
 
         except Exception:
             pass
-
-        hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT)
 
     return windows
 
@@ -243,7 +335,7 @@ class WindowsOverlay(QWidget):
     def __init__(self, pet):
         super().__init__()
 
-        self.pet = pet
+        self.pet: QWidget = pet
 
         # Transparent click-through fullscreen overlay
         self.setWindowFlags(
@@ -256,7 +348,9 @@ class WindowsOverlay(QWidget):
         self.showFullScreen()
 
         # store overlay hwnd to skip it in enumeration
-        self.my_hwnd = int(self.winId())
+        my_hwnd = int(self.winId())
+        pet_hwnd = int(self.pet.winId())
+        self.excluded_hwnd = {my_hwnd, pet_hwnd} # set of excluded from search hwnd 
 
         # cached data
         self.windows = []   # top-first
@@ -264,7 +358,7 @@ class WindowsOverlay(QWidget):
         self.segments = {}  # hwnd -> clipped segments computed in physical pixels
 
     def update_window_list(self):
-        self.windows = get_windows_in_zorder(excluded_hwnd=self.my_hwnd) # 
+        self.windows = get_windows_in_zorder(excluded_hwnd=self.excluded_hwnd) # 
         if DEBUG:
             print(f"[enum] found {len(self.windows)} windows")
 
@@ -277,7 +371,7 @@ class WindowsOverlay(QWidget):
             if scale <= 0:
                 scale = 1.0
             
-            if not is_window_cloaked(hwnd):
+            if not is_window_cloaked(hwnd) and not is_fullscreen(hwnd) and not is_maximized(hwnd):
                 try:
                     rect = get_extended_frame_bounds(hwnd)
                     if rect and rect[0] != rect[2] and rect[1] != rect[3]:
@@ -303,10 +397,15 @@ class WindowsOverlay(QWidget):
         # trigger repaint
         self.update()
 
+
     def get_nearest_surface(self, direction):
         self.update_window_list()
+        rects = self.rects
 
-        pass
+        for hwnd in self.windows:
+            L, T, R, B = rects[hwnd]
+
+        
 
     def paintEvent(self, event):
         painter = QPainter(self)
