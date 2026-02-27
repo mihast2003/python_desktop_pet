@@ -118,7 +118,7 @@ class Pet(QWidget): # main logic
 
         self.WindowsDetector = VariableManager(VARIABLES)
 
-        self.windowsOverlay = WindowsOverlay()
+        self.windowsOverlay = WindowsOverlay(self)
 
         self.last_mouse_pos = Vec2()
 
@@ -230,10 +230,10 @@ class Pet(QWidget): # main logic
         t1 = time.perf_counter()
     
         # --- STATE / SIMULATION PHASE ---
-        self.windowsOverlay._update_window_list()
+        self.windowsOverlay.update_window_list()
         t2 = time.perf_counter()
 
-        self.windowsOverlay._update_frame()
+        self.windowsOverlay.update_frame()
         t3 = time.perf_counter()
 
         self.animator.update(dt)

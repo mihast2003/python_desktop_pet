@@ -21,6 +21,7 @@ DEBUG = False
     # -----------------------
 user32 = ctypes.windll.user32
     # best-effort: if GetDpiForWindow exists use it
+
 try:
     user32.GetDpiForWindow.restype = ctypes.c_uint
     _has_getdpiforwindow = True
@@ -114,14 +115,6 @@ def compute_visible_segments(windows, rects):
     """
 
     segs = {}
-    rects = {}
-
-    # Build rect map using DWM visual bounds
-    for hwnd in windows:
-        if not is_window_cloaked(hwnd):
-            rect = get_extended_frame_bounds(hwnd)
-            if rect and rect[0] != rect[2] and rect[1] != rect[3]:
-                rects[hwnd] = rect
 
     # bottom-first for occlusion logic
     windows_bottom_first = list(reversed(windows))
@@ -247,8 +240,10 @@ def subtract_many(seg, cuts):
 # Overlay Widget
 # -----------------------
 class WindowsOverlay(QWidget):
-    def __init__(self):
+    def __init__(self, pet):
         super().__init__()
+
+        self.pet = pet
 
         # Transparent click-through fullscreen overlay
         self.setWindowFlags(
@@ -260,8 +255,6 @@ class WindowsOverlay(QWidget):
         self.setAttribute(Qt.WA_TranslucentBackground) # type: ignore
         self.showFullScreen()
 
-        # self.windowsDetector = WindowsDetector()
-
         # store overlay hwnd to skip it in enumeration
         self.my_hwnd = int(self.winId())
 
@@ -270,22 +263,28 @@ class WindowsOverlay(QWidget):
         self.rects = {}     # hwnd -> rect physical
         self.segments = {}  # hwnd -> clipped segments computed in physical pixels
 
-    def _update_window_list(self):
+    def update_window_list(self):
         self.windows = get_windows_in_zorder(excluded_hwnd=self.my_hwnd) # 
         if DEBUG:
             print(f"[enum] found {len(self.windows)} windows")
 
-    def _update_frame(self):
+    def update_frame(self):
         # update rects for current cached windows
         rects = {}
+
         for hwnd in self.windows:
-            try:
-                r = win32gui.GetWindowRect(hwnd)
-                # sanity check
-                if r and (r[0] != r[2] and r[1] != r[3]):
-                    rects[hwnd] = r
-            except Exception:
-                pass
+            scale = get_window_dpi_scale(hwnd=hwnd) # this is probably to remove or move up, its getting dpi per window
+            if scale <= 0:
+                scale = 1.0
+            
+            if not is_window_cloaked(hwnd):
+                try:
+                    rect = get_extended_frame_bounds(hwnd)
+                    if rect and rect[0] != rect[2] and rect[1] != rect[3]:
+                        rects[hwnd] = (rect[0]/scale, rect[1]/scale, rect[2]/scale, rect[3]/scale) # getting real scaled values for positions
+                except Exception:
+                    pass
+
         self.rects = rects
 
         # recompute clipped border segments in physical pixels
@@ -304,6 +303,11 @@ class WindowsOverlay(QWidget):
         # trigger repaint
         self.update()
 
+    def get_nearest_surface(self, direction):
+        self.update_window_list()
+
+        pass
+
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing) # type: ignore
@@ -319,41 +323,41 @@ class WindowsOverlay(QWidget):
                 continue
             L, T, R, B = rect
 
-            scale = get_window_dpi_scale(hwnd=hwnd)
-            if scale <= 0:
-                scale = 1.0
+            # scale = get_window_dpi_scale(hwnd=hwnd)
+            # if scale <= 0:
+            #     scale = 1.0
 
             # scaled coords (logical)
-            dL = int(round(L / scale))
-            dT = int(round(T / scale))
-            dR = int(round(R / scale))
-            dB = int(round(B / scale))
+            dL = int(round(L))
+            dT = int(round(T))
+            dR = int(round(R))
+            dB = int(round(B))
 
             # top
             for x1, x2 in data["top"]:
-                sx1 = int(round(x1 / scale))
-                sx2 = int(round(x2 / scale))
+                sx1 = int(round(x1))
+                sx2 = int(round(x2))
                 painter.setPen(QColor(0, 200, 60))
                 painter.drawLine(sx1, dT, sx2, dT)
 
             # bottom
             for x1, x2 in data["bottom"]:
-                sx1 = int(round(x1 / scale))
-                sx2 = int(round(x2 / scale))
+                sx1 = int(round(x1))
+                sx2 = int(round(x2))
                 painter.setPen(QColor(220, 0, 220))
                 painter.drawLine(sx1, dB, sx2, dB)
 
             # left
             for y1, y2 in data["left"]:
-                sy1 = int(round(y1 / scale))
-                sy2 = int(round(y2 / scale))
+                sy1 = int(round(y1))
+                sy2 = int(round(y2))
                 painter.setPen(QColor(20, 150, 255))
                 painter.drawLine(dL, sy1, dL, sy2)
 
             # right
             for y1, y2 in data["right"]:
-                sy1 = int(round(y1 / scale))
-                sy2 = int(round(y2 / scale))
+                sy1 = int(round(y1))
+                sy2 = int(round(y2))
                 painter.setPen(QColor(210, 100, 100))
                 painter.drawLine(dR, sy1, dR, sy2)
 
@@ -365,5 +369,5 @@ class WindowsOverlay(QWidget):
 # -----------------------
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    overlay = WindowsOverlay()
+    overlay = WindowsOverlay(pet=None)
     sys.exit(app.exec())
