@@ -260,8 +260,8 @@ class Pet(QWidget): # main logic
         self.apply_window_position()
 
         t7 = time.perf_counter()
-        # print(f"update windows list takes {t2-t1}")
-        # print(f"update windows frames takes {t3-t2}")
+        print(f"update windows list takes {t2-t1}")
+        print(f"update windows frames takes {t3-t2}")
 
         self.update()  # repaint
     

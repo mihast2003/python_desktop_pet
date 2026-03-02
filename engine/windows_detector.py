@@ -41,8 +41,6 @@ WinEventProcType = ctypes.WINFUNCTYPE(
     wintypes.DWORD
 )
 
-windows_detector = None
-
 def win_event_callback(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime):
     # Only top-level windows
     if idObject != win32con.OBJID_WINDOW or windows_detector == None:
@@ -50,8 +48,23 @@ def win_event_callback(hWinEventHook, event, hwnd, idObject, idChild, dwEventThr
     
     print("Hook went off")
     # Call your update functions
-    QTimer.singleShot(0, windows_detector.update_window_list) #type: ignore
-    QTimer.singleShot(0, windows_detector.update_frame) #type: ignore
+    schedule_update()
+    # QTimer.singleShot(0, windows_detector.update_window_list) #type: ignore
+    # QTimer.singleShot(0, windows_detector.update_frame) #type: ignore
+
+update_timer = QTimer()
+update_timer.setSingleShot(True)
+update_timer.setInterval(16)  # ~60Hz max
+
+def schedule_update():
+    if not update_timer.isActive():
+        update_timer.timeout.connect(run_update)
+        update_timer.start()
+
+def run_update():
+    print("actual update")
+    windows_detector.update_window_list()
+    windows_detector.update_frame()
 
 # Convert the Python function into a callback
 WinEventProc = WinEventProcType(win_event_callback)
@@ -242,7 +255,7 @@ def get_windows_in_zorder(excluded_hwnd):
                 style = win32gui.GetWindowLong(window, win32con.GWL_STYLE)
                 exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
 
-                print(f"Name: {win32gui.GetWindowText(window)}\nWindow: {window}\nClass: {cls}\nStyle: {style}")
+                # print(f"Name: {win32gui.GetWindowText(window)}\nWindow: {window}\nClass: {cls}\nStyle: {style}")
 
                 windows.append(window)
 
