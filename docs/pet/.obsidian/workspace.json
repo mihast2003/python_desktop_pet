@@ -4,20 +4,20 @@
     "type": "split",
     "children": [
       {
-        "id": "f784fb19929142fe",
+        "id": "15de96e1073b0db0",
         "type": "tabs",
         "children": [
           {
-            "id": "060e032992b2f39e",
+            "id": "7410b7542bdcd6e2",
             "type": "leaf",
             "state": {
               "type": "canvas",
               "state": {
                 "file": "Планы.canvas",
                 "viewState": {
-                  "x": 1096.68616297945,
-                  "y": -716.5965931550888,
-                  "zoom": -1.6666666666666665
+                  "x": -1346.959693325433,
+                  "y": 171.30330394479694,
+                  "zoom": 0.3333333333333334
                 }
               },
               "icon": "lucide-layout-dashboard",
@@ -186,13 +186,13 @@
       "bases:Создать новую базу": false
     }
   },
-  "active": "060e032992b2f39e",
+  "active": "7410b7542bdcd6e2",
   "lastOpenFiles": [
-    "sit1.png",
-    "Планы.canvas",
-    "Партиклы.md",
     "Взаимодействие с виндоус.md",
     "Код ежа.md",
+    "Планы.canvas",
+    "sit1.png",
+    "Партиклы.md",
     "Добро пожаловать.md"
   ]
 }
