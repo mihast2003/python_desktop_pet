@@ -66,6 +66,10 @@ class Pet(QWidget): # main logic
         # get all animations in a dictionary
         self.animations = {}
         base = os.path.dirname(os.path.abspath(__file__))
+
+        max_bounds_w = 0
+        max_bounds_h = 0
+
         for name in list(ANIMATIONS):
             cfg = ANIMATIONS[name]
             folder = os.path.join(base, cfg["folder"])
@@ -76,6 +80,10 @@ class Pet(QWidget): # main logic
 
             if not frames:
                 raise RuntimeError(f"No frames found for animation '{name}'")
+            
+            bounds_w, bounds_h = scan_animation_bounds(frames)
+            max_bounds_w = max(max_bounds_w, bounds_w)
+            max_bounds_h = max(max_bounds_h, bounds_h)
 
             self.animations[name] = {
                 "frames": frames,
@@ -111,6 +119,9 @@ class Pet(QWidget): # main logic
         initial_state = INITIAL_STATE.get("default", next(iter(INITIAL_STATE))) #either get the "default" from the INITIAL STATE, or the first item in the STATES dictinary
         
         self.update_dpi_and_scale(h=h, initial_state=initial_state)
+
+        max_measurement = max(max_bounds_w, max_bounds_h)
+        self.resize_keep_anchor(int(max_measurement * self.scale * 2), int(max_measurement * self.scale * 2))
 
         self.state_machine = StateMachine(pet=self, configs=STATES, initial=initial_state) # set initial state
         self.click_detector = ClickDetector(pet=self) #initialising ClickDetector
@@ -194,10 +205,10 @@ class Pet(QWidget): # main logic
 
         bounds_w, bounds_h = self.animations[anim_name]["bounds"]
 
-        if not isAbletoRotate:
-            self.resize_keep_anchor(int(bounds_w * self.scale), int(bounds_h * self.scale))
-        else: 
-            self.resize_keep_anchor(int(bounds_h * self.scale * 2), int(bounds_h * self.scale * 2))
+        # if not isAbletoRotate:
+        #     self.resize_keep_anchor(int(bounds_w * self.scale), int(bounds_h * self.scale))
+        # else: 
+        #     self.resize_keep_anchor(int(bounds_h * self.scale * 2), int(bounds_h * self.scale * 2))
 
         if isTransitionAnimation: 
             loop = False  #if receiving a transition animation, looping is disabled
@@ -348,7 +359,7 @@ class Pet(QWidget): # main logic
 
         p.translate(anchor_x, anchor_y)
 
-        #draws pets hitbox, pretty neat
+        # draws pets hitbox, pretty neat
         # p.setPen(QPen(Qt.red, 3))
         # p.drawRect(-self.hitbox_width/2, -self.hitbox_height, self.hitbox_width, self.hitbox_height)
         
