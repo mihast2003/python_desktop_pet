@@ -171,25 +171,35 @@ def is_window_real(hwnd):
         if not win32gui.IsWindow(hwnd):
             return False
 
-        if not win32gui.IsWindowVisible(hwnd):
-            return False
-
-        # Ignore cloaked windows (UWP / modern app hidden windows)
-        if is_window_cloaked(hwnd):
-            return False
-
         # Get styles
         style = win32gui.GetWindowLong(hwnd, win32con.GWL_STYLE)
+
+        # Skip windows without overlapped style
+        if not (style & win32con.WS_OVERLAPPEDWINDOW):
+            return False
+        
+        if not win32gui.IsWindowVisible(hwnd):
+            return False
+        
+        # Skip tiny or zero-size windows
+        rect = get_extended_frame_bounds(hwnd)
+        if not rect:
+            return False
+        L, T, R, B = rect
+        if R - L < 50 or B - T < 50:
+            return False
+
         exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
 
         # Skip tool windows
         if exstyle & win32con.WS_EX_TOOLWINDOW:
             return False
-
-        # Skip windows without overlapped style (normal app windows)
-        if not (style & win32con.WS_OVERLAPPEDWINDOW):
+            
+        
+        # Ignore cloaked windows (UWP / modern app hidden windows)
+        if is_window_cloaked(hwnd):
             return False
-
+        
         # Skip system tray / taskbar / desktop
         cls = win32gui.GetClassName(hwnd)
         if cls in {
@@ -201,14 +211,7 @@ def is_window_real(hwnd):
         }:
             return False
 
-        # Skip tiny or zero-size windows
-        rect = get_extended_frame_bounds(hwnd)
-        if not rect:
-            return False
-        L, T, R, B = rect
-        if R - L < 50 or B - T < 50:
-            return False
-
+        
         # Skip windows that are topmost flyouts (like Network / Volume / Emoji)
         if style & win32con.WS_POPUP and not style & win32con.WS_OVERLAPPEDWINDOW:
             return False
@@ -253,9 +256,9 @@ def get_windows_in_zorder(excluded_hwnd):
                     windows.append(window)
                     break
 
-                cls = win32gui.GetClassName(window)
-                style = win32gui.GetWindowLong(window, win32con.GWL_STYLE)
-                exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+                # cls = win32gui.GetClassName(window)
+                # style = win32gui.GetWindowLong(window, win32con.GWL_STYLE)
+                # exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
 
                 # print(f"Name: {win32gui.GetWindowText(window)}\nWindow: {window}\nClass: {cls}\nStyle: {style}")
 
@@ -270,12 +273,12 @@ def get_windows_in_zorder(excluded_hwnd):
 def is_real_app(hwnd):
     try:
         if not win32gui.IsWindow(hwnd):
-            print("not IsWindow")
+            # print("not IsWindow")
             return False
 
         # Top-level only
         if win32gui.GetParent(hwnd) != 0:
-            print("no GetParent")
+            # print("no GetParent")
             return False
         
         # Styles
@@ -283,27 +286,27 @@ def is_real_app(hwnd):
 
         # Must be normal overlapped window, not tool window or pure popup
         if not (style & win32con.WS_OVERLAPPEDWINDOW):
-            print("style is weird")
+            # print("style is weird")
             return False
         
         # Size
         rect = get_extended_frame_bounds(hwnd)
         if not rect:
-            print("no rect")
+            # print("no rect")
             return False
         L, T, R, B = rect
         if R - L < 50 or B - T < 50:
-            print("too small")
+            # print("too small")
             return False
 
         exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
         
         if exstyle & win32con.WS_EX_TOOLWINDOW:
-            print("exstyle is weird")
+            # print("exstyle is weird")
             return False
         
         if exstyle & win32con.WS_EX_APPWINDOW:
-            print("second exstyle is weird")
+            # print("second exstyle is weird")
             return False
 
         # Title
@@ -313,18 +316,18 @@ def is_real_app(hwnd):
         
         # Ignore cloaked windows (UWP / modern app hidden windows)
         if is_window_cloaked(hwnd):
-            print("is cloaked")
+            # print("is cloaked")
             return False
         
         # Check process name to filter shell / system processes
         _, pid = win32process.GetWindowThreadProcessId(hwnd)
         proc_name = psutil.Process(pid).name().lower()
         if proc_name in {"explorer.exe", "taskhostw.exe", "ctfmon.exe"}:
-            print("name is dumb")
+            # print("name is dumb")
             return False
         
         if win32gui.GetWindow(hwnd, win32con.GW_OWNER) != 0:
-            print("no GW OWNER")
+            # print("no GW OWNER")
             return False
         
         # System classes to ignore
@@ -336,7 +339,7 @@ def is_real_app(hwnd):
             "Shell_SecondaryTrayWnd",
             "SystemTray_Main",
         }:
-            print("weird classname")
+            # print("weird classname")
             return False
 
         return True
@@ -551,23 +554,33 @@ class WindowsOverlay(QWidget):
         # update rects for current cached windows
         rects = {}
 
+        t1 = time.perf_counter()
+
         for hwnd in self.windows:
             scale = get_window_dpi_scale(hwnd=hwnd) # this is probably to remove or move up, its getting dpi per window
             if scale <= 0:
                 scale = 1.0
             
-            if not is_window_cloaked(hwnd) and not is_fullscreen(hwnd) and not is_maximized(hwnd):
-                try:
-                    rect = get_extended_frame_bounds(hwnd)
-                    if rect and rect[0] != rect[2] and rect[1] != rect[3]:
-                        rects[hwnd] = (rect[0]/scale, rect[1]/scale, rect[2]/scale, rect[3]/scale) # getting real scaled values for positions
-                except Exception:
-                    pass
+            # if is_window_cloaked(hwnd) or is_fullscreen(hwnd) or is_maximized(hwnd): return
+
+            try:
+                rect = get_extended_frame_bounds(hwnd)
+                if not rect: return
+
+                rects[hwnd] = (rect[0]/scale, rect[1]/scale, rect[2]/scale, rect[3]/scale) # getting real scaled values for positions
+            except Exception:
+                pass
+    
+        t2 = time.perf_counter()
+        print(f"Time for getting rects: {t2 - t1}")
 
         self.rects = rects
 
         # recompute clipped border segments in physical pixels
         self.segments = compute_visible_segments(self.windows, self.rects)
+        
+        t3 = time.perf_counter()
+        print(f"Time for computing visible segments: {t3 - t2}")
 
         if DEBUG:
             # print a summary for the top few windows
