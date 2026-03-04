@@ -230,8 +230,6 @@ class Pet(QWidget): # main logic
         t1 = time.perf_counter()
     
         # --- STATE / SIMULATION PHASE ---
-        self.windowsOverlay.update_window_list()
-        t2 = time.perf_counter()
 
         self.windowsOverlay.update_frame()
         t3 = time.perf_counter()
@@ -260,8 +258,7 @@ class Pet(QWidget): # main logic
         self.apply_window_position()
 
         t7 = time.perf_counter()
-        print(f"update windows list takes {t2-t1}")
-        print(f"update windows frames takes {t3-t2}")
+        # print(f"update windows frames takes {t3-t1}")
 
         self.update()  # repaint
     

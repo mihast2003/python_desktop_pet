@@ -26,7 +26,7 @@ _has_getdpiforwindow: bool
 DEBUG = False
 
 
-#region WHAT IN THE HELL
+#region HOOKS IF WINDOW APPEAR/DISAPPEAR
 user32 = ctypes.windll.user32
 
 # Callback for window events
@@ -52,28 +52,30 @@ def win_event_callback(hWinEventHook, event, hwnd, idObject, idChild, dwEventThr
     # QTimer.singleShot(0, windows_detector.update_window_list) #type: ignore
     # QTimer.singleShot(0, windows_detector.update_frame) #type: ignore
 
-update_timer = QTimer()
-update_timer.setSingleShot(True)
-update_timer.setInterval(16)  # ~60Hz max
 
 def schedule_update():
+    print("schedule_update")
     if not update_timer.isActive():
-        update_timer.timeout.connect(run_update)
         update_timer.start()
 
 def run_update():
-    print("actual update")
+    print("---------- actual update ----------------")
     windows_detector.update_window_list()
     windows_detector.update_frame()
+
+update_timer = QTimer()
+update_timer.setSingleShot(True)
+update_timer.setInterval(16)  # ~60Hz max
+update_timer.timeout.connect(run_update)
 
 # Convert the Python function into a callback
 WinEventProc = WinEventProcType(win_event_callback)
 
 # Hook events that indicate window changes
-EVENTS = [
+UPDATE_EVENTS = [
     win32con.EVENT_OBJECT_SHOW,
     win32con.EVENT_OBJECT_HIDE,
-    win32con.EVENT_OBJECT_LOCATIONCHANGE,
+    # win32con.EVENT_OBJECT_LOCATIONCHANGE,
     win32con.EVENT_SYSTEM_FOREGROUND,
     win32con.EVENT_SYSTEM_MINIMIZESTART,
     win32con.EVENT_SYSTEM_MINIMIZEEND,
@@ -81,7 +83,7 @@ EVENTS = [
 
 # Register hooks
 hooks = []
-for ev in EVENTS:
+for ev in UPDATE_EVENTS:
     hook = user32.SetWinEventHook(
         ev,
         ev,
@@ -268,45 +270,63 @@ def get_windows_in_zorder(excluded_hwnd):
 def is_real_app(hwnd):
     try:
         if not win32gui.IsWindow(hwnd):
+            print("not IsWindow")
             return False
 
         # Top-level only
         if win32gui.GetParent(hwnd) != 0:
-            return False
-        if win32gui.GetWindow(hwnd, win32con.GW_OWNER) != 0:
+            print("no GetParent")
             return False
         
-                # Ignore cloaked windows (UWP / modern app hidden windows)
-        if is_window_cloaked(hwnd):
-            return False
-
         # Styles
         style = win32gui.GetWindowLong(hwnd, win32con.GWL_STYLE)
-        exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
 
         # Must be normal overlapped window, not tool window or pure popup
         if not (style & win32con.WS_OVERLAPPEDWINDOW):
+            print("style is weird")
             return False
         
-        if exstyle & win32con.WS_EX_TOOLWINDOW:
-            return False
-        
-        if exstyle & win32con.WS_EX_APPWINDOW:
-            return False
-
         # Size
         rect = get_extended_frame_bounds(hwnd)
         if not rect:
+            print("no rect")
             return False
         L, T, R, B = rect
         if R - L < 50 or B - T < 50:
+            print("too small")
+            return False
+
+        exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+        
+        if exstyle & win32con.WS_EX_TOOLWINDOW:
+            print("exstyle is weird")
+            return False
+        
+        if exstyle & win32con.WS_EX_APPWINDOW:
+            print("second exstyle is weird")
             return False
 
         # Title
         # title = win32gui.GetWindowText(hwnd).strip()
         # if not title:
         #     return False
-
+        
+        # Ignore cloaked windows (UWP / modern app hidden windows)
+        if is_window_cloaked(hwnd):
+            print("is cloaked")
+            return False
+        
+        # Check process name to filter shell / system processes
+        _, pid = win32process.GetWindowThreadProcessId(hwnd)
+        proc_name = psutil.Process(pid).name().lower()
+        if proc_name in {"explorer.exe", "taskhostw.exe", "ctfmon.exe"}:
+            print("name is dumb")
+            return False
+        
+        if win32gui.GetWindow(hwnd, win32con.GW_OWNER) != 0:
+            print("no GW OWNER")
+            return False
+        
         # System classes to ignore
         cls = win32gui.GetClassName(hwnd)
         if cls in {
@@ -316,12 +336,7 @@ def is_real_app(hwnd):
             "Shell_SecondaryTrayWnd",
             "SystemTray_Main",
         }:
-            return False
-
-        # Check process name to filter shell / system processes
-        _, pid = win32process.GetWindowThreadProcessId(hwnd)
-        proc_name = psutil.Process(pid).name().lower()
-        if proc_name in {"explorer.exe", "taskhostw.exe", "ctfmon.exe"}:
+            print("weird classname")
             return False
 
         return True
