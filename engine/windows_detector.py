@@ -668,74 +668,78 @@ class WindowsOverlay(QWidget):
 
         best = dy
         collision = False
+        
+        segments = self.segments
 
-        surfaces = self.surfaces
+        for hwnd, data in segments.items():
+            left, top, right, bottom = data["rect"]
 
-        if dy > 0:  # falling
+            if dy > 0:
 
-            for y, x1, x2 in surfaces["top"]:
+                for x1, x2 in data["top"]:
+                    if R < x1 or L > x2:
+                        continue
 
-                if R < x1 or L > x2:
-                    continue
+                    dist = top - B
 
-                dist = y - B
+                    if 0 <= dist < best:
+                        best = dist
+                        collision = True
+                        print(x1, x2, hwnd)
 
-                if 0 <= dist < best:
-                    best = dist
-                    collision = True
-                    print(y, x1, x2)
+            if dy > 0:  # falling
 
-        elif dy < 0:  # jumping
+                for x1, x2 in data["top"]:
+                    if R < x1 or L > x2:
+                        continue
 
-            for y, x1, x2 in surfaces["bottom"]:
+                    dist = bottom - T
 
-                if R < x1 or L > x2:
-                    continue
-
-                dist = y - T
-
-                if best < dist < 0:
-                    best = dist
-                    collision = True
-                    print(y, x1, x2)
+                    if 0 <= dist < best:
+                        best = dist
+                        collision = True
+                        print(x1, x2, hwnd)
 
         # print(dy, best, collision)
         return best, collision
 
-    def collide_horizontal(self, pos_x, pos_y, dx):
 
+    def collide_horizontal(self, pos_x, pos_y, dx):
         L,T,R,B = self.bounds(pos_x, pos_y)
 
         best = dx
         collision = False
 
-        surfaces = self.surfaces
+        segments = self.segments
 
-        if dx > 0:  # moving right
+        for hwnd, data in segments.items():
+            left, top, right, bottom = data["rect"]
 
-            for x, y1, y2 in surfaces["left"]:
+            if dx > 0:  # moving right
 
-                if B < y1 or T > y2:
-                    continue
+                for y1, y2 in data["left"]:
 
-                dist = x - R
+                    if B < y1 or T > y2:
+                        continue
 
-                if 0 <= dist < best:
-                    best = dist
-                    collision = True
+                    dist = left - R
 
-        elif dx < 0:  # moving left
+                    if 0 <= dist < best:
+                        best = dist
+                        collision = True
 
-            for x, y1, y2 in surfaces["right"]:
+            elif dx < 0:  # moving left
 
-                if B < y1 or T > y2:
-                    continue
+                for y1, y2 in data["right"]:
 
-                dist = x - L
+                    if B < y1 or T > y2:
+                        continue
 
-                if best < dist <= 0:
-                    best = dist
-                    collision = True
+                    dist = right - L
+
+                    if best < dist <= 0:
+                        best = dist
+                        collision = True
 
         return best, collision
 
