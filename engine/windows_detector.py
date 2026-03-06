@@ -594,29 +594,10 @@ class WindowsOverlay(QWidget):
 
         self.segments = segs
 
-        # clearing surfaces before appending
-        for k in self.surfaces:
-            self.surfaces[k].clear()
-        
-        # appending found surfaces
-        for hwnd, data in segs.items():
-            L, T, R, B = data["rect"]
-
-            for x1, x2 in data["top"]:
-                self.surfaces["top"].append((T, x1, x2))
-
-            for x1, x2 in data["bottom"]:
-                self.surfaces["bottom"].append((B, x1, x2))
-
-            for y1, y2 in data["left"]:
-                self.surfaces["left"].append((L, y1, y2))
-
-            for y1, y2 in data["right"]:
-                self.surfaces["right"].append((R, y1, y2))
+        self.rebuild_surfaces(segs)
 
         t3 = time.perf_counter()
         # print(f"Time for computing visible segments: {t3 - t2}")
-
         if DEBUG:
             # print a summary for the top few windows
             topn = min(6, len(self.windows))
@@ -629,6 +610,29 @@ class WindowsOverlay(QWidget):
 
         # trigger repaint
         self.update()
+
+
+    def rebuild_surfaces(self, segs):
+        # clearing surfaces before appending
+        for k in self.surfaces:
+            self.surfaces[k].clear()
+
+        # appending found surfaces
+        for hwnd, data in segs.items():
+
+            L, T, R, B = data["rect"]
+
+            for x1, x2 in data["top"]:
+                self.surfaces["top"].append((T, x1, x2, hwnd))
+
+            for x1, x2 in data["bottom"]:
+                self.surfaces["bottom"].append((B, x1, x2, hwnd))
+
+            for y1, y2 in data["left"]:
+                self.surfaces["left"].append((L, y1, y2, hwnd))
+
+            for y1, y2 in data["right"]:
+                self.surfaces["right"].append((R, y1, y2, hwnd))
 
 # --- Update position of the top active window ---
     def update_active_window(self, hwnd):
@@ -655,9 +659,9 @@ class WindowsOverlay(QWidget):
 
     def movement_collision(self, pos_x, pos_y, dx, dy):
 
-        dx, col_x = self.collide_horizontal(pos_x, pos_y, dx)
+        dx, col_x, hwnd = self.collide_horizontal(pos_x, pos_y, dx)
     
-        dy, col_y = self.collide_vertical(pos_x, pos_y, dy)
+        dy, col_y, hwnd = self.collide_vertical(pos_x, pos_y, dy)
 
         collision = col_x or col_y
         
@@ -667,13 +671,14 @@ class WindowsOverlay(QWidget):
         L,T,R,B = self.bounds(pos_x, pos_y)
 
         best = dy
+        best_hwnd = None
         collision = False
 
         surfaces = self.surfaces
 
         if dy > 0:  # falling
 
-            for y, x1, x2 in surfaces["top"]:
+            for y, x1, x2, hwnd in surfaces["top"]:
 
                 if R < x1 or L > x2:
                     continue
@@ -683,11 +688,12 @@ class WindowsOverlay(QWidget):
                 if 0 <= dist < best:
                     best = dist
                     collision = True
-                    print(y, x1, x2)
+                    best_hwnd = hwnd
+                    # print(y, x1, x2)
 
         elif dy < 0:  # jumping
 
-            for y, x1, x2 in surfaces["bottom"]:
+            for y, x1, x2, hwnd in surfaces["bottom"]:
 
                 if R < x1 or L > x2:
                     continue
@@ -697,23 +703,25 @@ class WindowsOverlay(QWidget):
                 if best < dist < 0:
                     best = dist
                     collision = True
-                    print(y, x1, x2)
+                    best_hwnd = hwnd
+                    # print(y, x1, x2)
 
         # print(dy, best, collision)
-        return best, collision
+        return best, collision, best_hwnd
 
     def collide_horizontal(self, pos_x, pos_y, dx):
 
         L,T,R,B = self.bounds(pos_x, pos_y)
 
         best = dx
+        best_hwnd = None
         collision = False
 
         surfaces = self.surfaces
 
         if dx > 0:  # moving right
 
-            for x, y1, y2 in surfaces["left"]:
+            for x, y1, y2, hwnd in surfaces["left"]:
 
                 if B < y1 or T > y2:
                     continue
@@ -723,10 +731,11 @@ class WindowsOverlay(QWidget):
                 if 0 <= dist < best:
                     best = dist
                     collision = True
+                    best_hwnd = hwnd
 
         elif dx < 0:  # moving left
 
-            for x, y1, y2 in surfaces["right"]:
+            for x, y1, y2, hwnd in surfaces["right"]:
 
                 if B < y1 or T > y2:
                     continue
@@ -736,8 +745,9 @@ class WindowsOverlay(QWidget):
                 if best < dist <= 0:
                     best = dist
                     collision = True
+                    best_hwnd = hwnd
 
-        return best, collision
+        return best, collision, best_hwnd
 
 # --- Find nearest surface in a given direction ---
     def get_nearest_surface(self, direction, hitbox_w, hitbox_h):

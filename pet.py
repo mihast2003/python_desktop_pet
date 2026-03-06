@@ -244,10 +244,11 @@ class Pet(QWidget): # main logic
         dx = self.mover.pos.x - self.anchor.x
         dy = self.mover.pos.y - self.anchor.y
 
-        dx, dy, collision_happened = self.windowsOverlay.movement_collision(self.anchor.x, self.anchor.y, dx, dy)
+        if self.mover.movement_type != MovementType.DRAG:
+            dx, dy, collision_happened = self.windowsOverlay.movement_collision(self.anchor.x, self.anchor.y, dx, dy)
 
-        if collision_happened:
-            arrived = True
+            if collision_happened:
+                arrived = True
 
         if arrived:
             self.click_detector.release()
@@ -270,7 +271,7 @@ class Pet(QWidget): # main logic
     
         self.apply_window_position()
         t7 = time.perf_counter()
-        
+
         # print(f"update windows frames takes {t3-t1}")
 
         self.update()  # repaint
