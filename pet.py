@@ -230,6 +230,8 @@ class Pet(QWidget): # main logic
         t1 = time.perf_counter()
     
         # --- STATE / SIMULATION PHASE ---
+        surface = self.windowsOverlay.get_nearest_surface("up", hitbox_h=self.hitbox_height, hitbox_w=self.hitbox_width)
+        print(surface)
 
         self.windowsOverlay.update_frame()
         t3 = time.perf_counter()

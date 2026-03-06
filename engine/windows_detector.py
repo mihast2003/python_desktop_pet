@@ -505,6 +505,8 @@ def subtract_many(seg, cuts):
         visible = new_list
     return visible
 
+def ranges_overlap(a1, a2, b1, b2):
+    return a1 <= b2 and b1 <= a2
 
 
 # -----------------------
@@ -514,7 +516,7 @@ class WindowsOverlay(QWidget):
     def __init__(self, pet):
         super().__init__()
 
-        self.pet: QWidget = pet
+        self.pet = pet
 
         global windows_detector
         windows_detector = self
@@ -572,7 +574,7 @@ class WindowsOverlay(QWidget):
                 pass
     
         t2 = time.perf_counter()
-        print(f"Time for getting rects: {t2 - t1}")
+        # print(f"Time for getting rects: {t2 - t1}")
 
         self.rects = rects
 
@@ -580,7 +582,7 @@ class WindowsOverlay(QWidget):
         self.segments = compute_visible_segments(self.windows, self.rects)
         
         t3 = time.perf_counter()
-        print(f"Time for computing visible segments: {t3 - t2}")
+        # print(f"Time for computing visible segments: {t3 - t2}")
 
         if DEBUG:
             # print a summary for the top few windows
@@ -595,13 +597,76 @@ class WindowsOverlay(QWidget):
         # trigger repaint
         self.update()
 
+    def update_active_window(self, hwnd):
+        scale = get_window_dpi_scale(hwnd=hwnd) # this is probably to remove or move up, its getting dpi per window
+        if scale <= 0:
+            scale = 1.0
 
-    def get_nearest_surface(self, direction):
-        self.update_window_list()
-        rects = self.rects
+        rect = get_extended_frame_bounds(hwnd)
+        if not rect: return
 
-        for hwnd in self.windows:
-            L, T, R, B = rects[hwnd]  
+        rect = (rect[0]/scale, rect[1]/scale, rect[2]/scale, rect[3]/scale) # getting real scaled values for positions
+        
+
+    def get_nearest_surface(self, direction, hitbox_w, hitbox_h):
+
+        px, py = self.pet.anchor.x, self.pet.anchor.y
+
+        pet_left  = px - hitbox_w / 4
+        pet_right = px + hitbox_w / 4
+        pet_top   = py - hitbox_h / 2
+        pet_bot   = py + hitbox_h / 2
+
+        best_dist = float("inf")
+        best_surface = None
+
+        segments = self.segments
+
+        for hwnd, data in segments.items():
+            L, T, R, B = data["rect"]
+
+            if direction == "down":
+
+                for x1, x2 in data["top"]:
+                    if ranges_overlap(pet_left, pet_right, x1, x2):
+
+                        dist = T - pet_bot
+                        if 0 <= dist < best_dist:
+                            best_dist = dist
+                            best_surface = T
+
+            elif direction == "up":
+
+                for x1, x2 in data["bottom"]:
+                    if ranges_overlap(pet_left, pet_right, x1, x2):
+
+                        dist = pet_top - B
+                        if 0 <= dist < best_dist:
+                            best_dist = dist
+                            best_surface = B
+
+            elif direction == "right":
+
+                for y1, y2 in data["left"]:
+                    if ranges_overlap(pet_top, pet_bot, y1, y2):
+
+                        dist = L - pet_right
+                        if 0 <= dist < best_dist:
+                            best_dist = dist
+                            best_surface = L
+
+            elif direction == "left":
+
+                for y1, y2 in data["right"]:
+                    if ranges_overlap(pet_top, pet_bot, y1, y2):
+
+                        dist = pet_left - R
+                        if 0 <= dist < best_dist:
+                            best_dist = dist
+                            best_surface = R
+
+        return best_surface
+    
 
     def paintEvent(self, event):
         painter = QPainter(self)
