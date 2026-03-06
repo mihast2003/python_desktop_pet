@@ -230,16 +230,25 @@ class Pet(QWidget): # main logic
         t1 = time.perf_counter()
     
         # --- STATE / SIMULATION PHASE ---
-        surface = self.windowsOverlay.get_nearest_surface("up", hitbox_h=self.hitbox_height, hitbox_w=self.hitbox_width)
-        print(surface)
+        # surface = self.windowsOverlay.get_nearest_surface("up", hitbox_h=self.hitbox_height, hitbox_w=self.hitbox_width)
+        # print(surface)
 
         self.windowsOverlay.update_frame()
         t3 = time.perf_counter()
 
         self.animator.update(dt)
         t4 = time.perf_counter()
+
         arrived = self.mover.update(dt)
         
+        dx = self.mover.pos.x - self.anchor.x
+        dy = self.mover.pos.y - self.anchor.y
+
+        dx, dy, collision_happened = self.windowsOverlay.movement_collision(self.anchor.x, self.anchor.y, dx, dy)
+
+        if collision_happened:
+            arrived = True
+
         if arrived:
             self.click_detector.release()
             self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
@@ -247,19 +256,21 @@ class Pet(QWidget): # main logic
         t5 = time.perf_counter()
 
         self.state_machine.update(dt)
+        t6 = time.perf_counter()
 
         # print("position is", self.mover.pos.x, self.mover.pos.y)
         # print("facing is", self.facing)
-
-        t6 = time.perf_counter()
     
         # --- POSITION SYNC PHASE ---
-        self.anchor.x = self.mover.pos.x
-        self.anchor.y = self.mover.pos.y
+        self.anchor.x += dx
+        self.anchor.y += dy
+
+        self.mover.pos.x = self.anchor.x
+        self.mover.pos.y = self.anchor.y
     
         self.apply_window_position()
-
         t7 = time.perf_counter()
+        
         # print(f"update windows frames takes {t3-t1}")
 
         self.update()  # repaint

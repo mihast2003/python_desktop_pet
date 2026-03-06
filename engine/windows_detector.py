@@ -47,10 +47,8 @@ def win_event_callback(hWinEventHook, event, hwnd, idObject, idChild, dwEventThr
         return
     
     print("Hook went off")
-    # Call your update functions
     schedule_update()
-    # QTimer.singleShot(0, windows_detector.update_window_list) #type: ignore
-    # QTimer.singleShot(0, windows_detector.update_frame) #type: ignore
+
 
 
 def schedule_update():
@@ -509,6 +507,7 @@ def ranges_overlap(a1, a2, b1, b2):
     return a1 <= b2 and b1 <= a2
 
 
+
 # -----------------------
 # Overlay Widget
 # -----------------------
@@ -517,6 +516,8 @@ class WindowsOverlay(QWidget):
         super().__init__()
 
         self.pet = pet
+
+        self.update_hitbox(pet.hitbox_width, pet.hitbox_height)
 
         global windows_detector
         windows_detector = self
@@ -541,10 +542,20 @@ class WindowsOverlay(QWidget):
         self.active_apps = {}   # top-first
         self.rects = {}     # hwnd -> rect physical
         self.segments = {}  # hwnd -> clipped segments computed in physical pixels
+        self.surfaces = {
+            "top": [],     # floors
+            "bottom": [],  # ceilings
+            "left": [],    # right walls
+            "right": []    # left walls
+        }
 
         # Hook all top-level window events
         user32 = ctypes.windll.user32
 
+        
+    def update_hitbox(self, new_hitbox_w, new_hitbox_h):
+        self.hitbox_w = new_hitbox_w
+        self.hitbox_h = new_hitbox_h
 
     def update_window_list(self):
         update_active_apps()
@@ -579,8 +590,30 @@ class WindowsOverlay(QWidget):
         self.rects = rects
 
         # recompute clipped border segments in physical pixels
-        self.segments = compute_visible_segments(self.windows, self.rects)
+        segs = compute_visible_segments(self.windows, self.rects)
+
+        self.segments = segs
+
+        # clearing surfaces before appending
+        for k in self.surfaces:
+            self.surfaces[k].clear()
         
+        # appending found surfaces
+        for hwnd, data in segs.items():
+            L, T, R, B = data["rect"]
+
+            for x1, x2 in data["top"]:
+                self.surfaces["top"].append((T, x1, x2))
+
+            for x1, x2 in data["bottom"]:
+                self.surfaces["bottom"].append((B, x1, x2))
+
+            for y1, y2 in data["left"]:
+                self.surfaces["left"].append((L, y1, y2))
+
+            for y1, y2 in data["right"]:
+                self.surfaces["right"].append((R, y1, y2))
+
         t3 = time.perf_counter()
         # print(f"Time for computing visible segments: {t3 - t2}")
 
@@ -597,6 +630,7 @@ class WindowsOverlay(QWidget):
         # trigger repaint
         self.update()
 
+# --- Update position of the top active window ---
     def update_active_window(self, hwnd):
         scale = get_window_dpi_scale(hwnd=hwnd) # this is probably to remove or move up, its getting dpi per window
         if scale <= 0:
@@ -607,7 +641,105 @@ class WindowsOverlay(QWidget):
 
         rect = (rect[0]/scale, rect[1]/scale, rect[2]/scale, rect[3]/scale) # getting real scaled values for positions
         
+# --- Movement collision stuff ---
+    def bounds(self, pos_x, pos_y):
+        hw = self.hitbox_w / 4
+        hh = self.hitbox_h / 2
+    
+        return (
+            pos_x - hw,
+            pos_y - hh,
+            pos_x + hw,
+            pos_y + hh
+        )
 
+    def movement_collision(self, pos_x, pos_y, dx, dy):
+
+        dx, col_x = self.collide_horizontal(pos_x, pos_y, dx)
+    
+        dy, col_y = self.collide_vertical(pos_x, pos_y, dy)
+
+        collision = col_x or col_y
+        
+        return dx, dy, collision
+
+    def collide_vertical(self, pos_x, pos_y, dy):
+        L,T,R,B = self.bounds(pos_x, pos_y)
+
+        best = dy
+        collision = False
+
+        surfaces = self.surfaces
+
+        if dy > 0:  # falling
+
+            for y, x1, x2 in surfaces["top"]:
+
+                if R < x1 or L > x2:
+                    continue
+
+                dist = y - B
+
+                if 0 <= dist < best:
+                    best = dist
+                    collision = True
+                    print(y, x1, x2)
+
+        elif dy < 0:  # jumping
+
+            for y, x1, x2 in surfaces["bottom"]:
+
+                if R < x1 or L > x2:
+                    continue
+
+                dist = y - T
+
+                if best < dist < 0:
+                    best = dist
+                    collision = True
+                    print(y, x1, x2)
+
+        # print(dy, best, collision)
+        return best, collision
+
+    def collide_horizontal(self, pos_x, pos_y, dx):
+
+        L,T,R,B = self.bounds(pos_x, pos_y)
+
+        best = dx
+        collision = False
+
+        surfaces = self.surfaces
+
+        if dx > 0:  # moving right
+
+            for x, y1, y2 in surfaces["left"]:
+
+                if B < y1 or T > y2:
+                    continue
+
+                dist = x - R
+
+                if 0 <= dist < best:
+                    best = dist
+                    collision = True
+
+        elif dx < 0:  # moving left
+
+            for x, y1, y2 in surfaces["right"]:
+
+                if B < y1 or T > y2:
+                    continue
+
+                dist = x - L
+
+                if best < dist <= 0:
+                    best = dist
+                    collision = True
+
+        return best, collision
+
+# --- Find nearest surface in a given direction ---
     def get_nearest_surface(self, direction, hitbox_w, hitbox_h):
 
         px, py = self.pet.anchor.x, self.pet.anchor.y
