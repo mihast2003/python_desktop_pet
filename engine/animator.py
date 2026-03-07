@@ -40,7 +40,7 @@ class Animator:  # contains different animation functions
                 # print(self.index)
 
                 if self.index >= len(self.frames):
-                    print("Animator: Pulse.ANIMATION_END ")
+                    # print("Animator: Pulse.ANIMATION_END ")
                     self.pet.state_machine.pulse(Pulse.ANIMATION_END)  # if the index of the frame is more than we have frames, the animation is considered finished(for ease of connecting animations together), else - not
 
                     if self.loop or self.times_to_loop >= 2 :
@@ -48,7 +48,7 @@ class Animator:  # contains different animation functions
                         self.times_to_loop -= 1
                     else:
                         self.index = len(self.frames) - 1
-                        print("Animator: Flag.ANIMATION_FINISHED ")
+                        # print("Animator: Flag.ANIMATION_FINISHED ")
                         self.pet.state_machine.raise_flag(Flag.ANIMATION_FINISHED)
                         self.done = True
 

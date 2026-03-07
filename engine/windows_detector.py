@@ -46,18 +46,18 @@ def win_event_callback(hWinEventHook, event, hwnd, idObject, idChild, dwEventThr
     if idObject != win32con.OBJID_WINDOW or windows_detector == None:
         return
     
-    print("Hook went off")
+    # print("Hook went off")
     schedule_update()
 
 
 
 def schedule_update():
-    print("schedule_update")
+    # print("schedule_update")
     if not update_timer.isActive():
         update_timer.start()
 
 def run_update():
-    print("---------- actual update ----------------")
+    print("---------- window list update ----------------")
     windows_detector.update_window_list()
     windows_detector.update_frame()
 

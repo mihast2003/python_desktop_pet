@@ -387,7 +387,7 @@ class Pet(QWidget): # main logic
 
         p.translate(anchor_x, anchor_y)
 
-        #draws pets hitbox, pretty neat
+        # draws pets hitbox, pretty neat (says there are problems but works anyway)
         # p.setPen(QPen(Qt.red, 3))
         # p.drawRect(-self.hitbox_width/2, -self.hitbox_height, self.hitbox_width, self.hitbox_height)
         
