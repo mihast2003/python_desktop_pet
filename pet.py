@@ -245,16 +245,18 @@ class Pet(QWidget): # main logic
         dx = self.mover.pos.x - self.anchor.x
         dy = self.mover.pos.y - self.anchor.y
 
+        col_x, col_y = False, False
+
         if self.mover.movement_type != MovementType.DRAG:
-            dx, dy, collision_happened = self.windowsOverlay.movement_collision(self.anchor.x, self.anchor.y, dx, dy)
+            dx, dy, col_x, col_y, surface_data = self.windowsOverlay.movement_collision(self.anchor.x, self.anchor.y, dx, dy)
             
             print(dy)
+        
+        self.anchor.x += dx
+        self.anchor.y += dy
 
-            if collision_happened:
-                arrived = True
-                self.mover.set_position(self.anchor.x, self.anchor.y)
-
-        if arrived:
+        if arrived or col_x or col_y:      #type: ignore
+            self.mover.set_position(self.anchor.x, self.anchor.y)
             self.click_detector.release()
             self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
 
@@ -267,11 +269,6 @@ class Pet(QWidget): # main logic
         # print("facing is", self.facing)
     
         # --- POSITION SYNC PHASE ---
-        self.anchor.x += dx
-        self.anchor.y += dy
-
-        self.mover.pos.x = self.anchor.x
-        self.mover.pos.y = self.anchor.y
     
         self.apply_window_position()
         t7 = time.perf_counter()
