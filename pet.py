@@ -247,29 +247,33 @@ class Pet(QWidget): # main logic
 
         col_x, col_y = False, False
 
+        # --- checking for collisions and applying delta ---
         if self.mover.movement_type != MovementType.DRAG:
-            dx, dy, col_x, col_y, surface_data = self.windowsOverlay.movement_collision(self.anchor.x, self.anchor.y, dx, dy)
-            
-            print(dy)
-        
-        self.anchor.x += dx
-        self.anchor.y += dy
+            dx, col_x, surface_data = self.windowsOverlay.collide_horizontal(self.anchor.x, self.anchor.y, dx)
 
-        if arrived or col_x or col_y:      #type: ignore
+        self.anchor.x += dx
+
+        if self.mover.movement_type != MovementType.DRAG and not col_x:
+            dy, col_y, surface_data = self.windowsOverlay.collide_vertical(self.anchor.x, self.anchor.y, dy)
+            # print(dy)
+        
+        self.anchor.y += dy
+        
+        # --- if mover reached destination or collision occured - movement finished ---
+        if arrived or col_x or col_y:
             self.mover.set_position(self.anchor.x, self.anchor.y)
             self.click_detector.release()
             self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
 
+        # print("position is", self.mover.pos.x, self.mover.pos.y)
+        # print("facing is", self.facing)
         t5 = time.perf_counter()
 
         self.state_machine.update(dt)
         t6 = time.perf_counter()
 
-        # print("position is", self.mover.pos.x, self.mover.pos.y)
-        # print("facing is", self.facing)
     
-        # --- POSITION SYNC PHASE ---
-    
+        # --- SYNC PHASE ---
         self.apply_window_position()
         t7 = time.perf_counter()
 

@@ -236,6 +236,9 @@ def get_windows_in_zorder(excluded_hwnd):
         )
 
     windows = []
+
+    windows.append("taskbar") # appending taskbar as a top window
+
     hwnd = start
 
     while hwnd:
@@ -519,6 +522,13 @@ class WindowsOverlay(QWidget):
 
         self.update_hitbox(pet.hitbox_width, pet.hitbox_height)
 
+        self.primary_screen = QApplication.primaryScreen()
+        screen = QApplication.primaryScreen() # Screen detection
+        self.screen_geom = screen.geometry()
+        self.screen_avail_geom = screen.availableGeometry()
+
+        self.taskbar_top = self.screen_avail_geom.bottom() + 1
+
         global windows_detector
         windows_detector = self
 
@@ -569,13 +579,19 @@ class WindowsOverlay(QWidget):
 
         t1 = time.perf_counter()
 
+        # appending taskbar as a rect for collisions
+        rects["taskbar"] = (
+            self.screen_geom.left(),
+            self.screen_avail_geom.bottom() + 1,
+            self.screen_geom.right(),
+            self.screen_geom.bottom()
+        )
+
         for hwnd in self.windows:
             scale = get_window_dpi_scale(hwnd=hwnd) # this is probably to remove or move up, its getting dpi per window
             if scale <= 0:
                 scale = 1.0
             
-            # if is_window_cloaked(hwnd) or is_fullscreen(hwnd) or is_maximized(hwnd): return
-
             try:
                 rect = get_extended_frame_bounds(hwnd)
                 if not rect: return
@@ -656,14 +672,6 @@ class WindowsOverlay(QWidget):
             pos_x + hw,
             pos_y + hh
         )
-
-    def movement_collision(self, pos_x, pos_y, dx, dy):
-
-        dx, col_x, data = self.collide_horizontal(pos_x, pos_y, dx)
-    
-        dy, col_y, data = self.collide_vertical(pos_x, pos_y, dy)
-        
-        return dx, dy, col_x, col_y, data
 
     def collide_vertical(self, pos_x, pos_y, dy):
         L,T,R,B = self.bounds(pos_x, pos_y)

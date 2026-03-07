@@ -69,6 +69,7 @@ class Mover:
         
         if movement_type == MovementType.JUMP:
             self.grounded_y = self.pos.y
+            self.pos.y -= 1 
             self.vel.y = -self.jump_velocity
 
 
@@ -174,12 +175,8 @@ class Mover:
         self.pos += self.vel * dt
 
         # landing
-        # if self.pos.y >= self.grounded_y:
-        #     self.pos.y = self.grounded_y
-        #     self.vel = Vec2()
-        #     self.active = False
-        #     print("landed after jumping")
-        #     return True
+        if self.pos.y >= self.grounded_y:
+            print("jumping reached")
 
         return False
     
