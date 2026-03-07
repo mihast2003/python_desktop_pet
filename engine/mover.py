@@ -45,11 +45,13 @@ class Mover:
         self.jump_velocity = jump_velocity
         self.gravity = gravity
 
-    def set_position(self, x=0.0, y=None): 
+    def set_position(self, x=0.0, y=None):
         if y is None and isinstance(x, Vec2):
             self.pos = x
         else:
             self.pos = Vec2(x, y) #type: ignore
+        self.vel = Vec2()
+        self.active = False 
 
     def move_to(self, x, y, movement_type: MovementType):
         if self.vel == None: return
@@ -172,12 +174,12 @@ class Mover:
         self.pos += self.vel * dt
 
         # landing
-        if self.pos.y >= self.grounded_y:
-            self.pos.y = self.grounded_y
-            self.vel = Vec2()
-            self.active = False
-            print("landed after jumping")
-            return True
+        # if self.pos.y >= self.grounded_y:
+        #     self.pos.y = self.grounded_y
+        #     self.vel = Vec2()
+        #     self.active = False
+        #     print("landed after jumping")
+        #     return True
 
         return False
     
