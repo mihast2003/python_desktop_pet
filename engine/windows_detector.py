@@ -666,7 +666,7 @@ class WindowsOverlay(QWidget):
         rect = None
         try:
             rect = get_extended_frame_bounds(hwnd)
-            print("rect:", rect)
+            # print("rect:", rect)
             if not rect: return
         except Exception:
             pass
@@ -679,7 +679,7 @@ class WindowsOverlay(QWidget):
         if scale <= 0:
             scale = 1.0
 
-        print("updating window:", hwnd)
+        # print("updating window:", hwnd)
         L, T, R, B = rect
         return (L / scale, T / scale, R / scale, B / scale)
         

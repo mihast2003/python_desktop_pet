@@ -224,6 +224,7 @@ class Pet(QWidget): # main logic
         # --- INPUT PHASE ---
         if self.mover.movement_type == MovementType.DRAG:
             self.mover.update_drag_target(self.last_mouse_pos, dt)
+            self._clear_parent_window()
     
         self.click_detector.update()
         self.variables.update(dt)
@@ -294,16 +295,14 @@ class Pet(QWidget): # main logic
 
     def _follow_parent_window(self):
         if not self.parent_window_hwnd:
+            # self.mover.move_to(100, 100, MovementType.INSTANT)
             return
 
         # print("getting parent rect")
         rect = self.windowsOverlay.pet_parent_window_rect
         if not rect or not self.parent_window_rect_last:
             self.parent_window_rect_last = rect
-            print("no rect")
             return
-
-        print("moving mover")
 
         # Compute delta movement
         x1, y1, x2, y2 = rect
@@ -323,7 +322,8 @@ class Pet(QWidget): # main logic
         self.parent_window_rect_last = None
 
     def _set_parent_window(self, surface_data):
-        hwnd = int(surface_data[0])
+        hwnd = surface_data[0]
+        if hwnd == "taskbar": return
         self.parent_window_hwnd = hwnd
         self.parent_window_rect_last = self.windowsOverlay.pet_parent_window_rect
         print("Parent window:", hwnd)
