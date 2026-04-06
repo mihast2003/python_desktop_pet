@@ -116,9 +116,10 @@ class Pet(QWidget): # main logic
         self.state_machine = StateMachine(pet=self, configs=STATES, initial=initial_state) # set initial state
         self.click_detector = ClickDetector(pet=self) #initialising ClickDetector
 
-        self.WindowsDetector = VariableManager(VARIABLES)
-
         self.windowsOverlay = WindowsOverlay(self)
+
+        self.parent_window_hwnd = None
+        self.parent_window_rect_last = None
 
         self.last_mouse_pos = Vec2()
 
@@ -236,6 +237,10 @@ class Pet(QWidget): # main logic
         self.windowsOverlay.update_frame()
         t3 = time.perf_counter()
 
+        # pply parent window movement
+        self._follow_parent_window()
+
+        
         self.animator.update(dt)
         t4 = time.perf_counter()
 
@@ -246,6 +251,7 @@ class Pet(QWidget): # main logic
         dy = self.mover.pos.y - self.anchor.y
 
         col_x, col_y = False, False
+        surface_data = None
 
         # --- checking for collisions and applying delta ---
         if self.mover.movement_type != MovementType.DRAG:
@@ -265,6 +271,10 @@ class Pet(QWidget): # main logic
             self.click_detector.release()
             self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
 
+            if surface_data:
+                self._set_parent_window(surface_data)
+
+
         # print("position is", self.mover.pos.x, self.mover.pos.y)
         # print("facing is", self.facing)
         t5 = time.perf_counter()
@@ -281,6 +291,42 @@ class Pet(QWidget): # main logic
 
         self.update()  # repaint
     
+
+    def _follow_parent_window(self):
+        if not self.parent_window_hwnd:
+            return
+
+        # print("getting parent rect")
+        rect = self.windowsOverlay.pet_parent_window_rect
+        if not rect or not self.parent_window_rect_last:
+            self.parent_window_rect_last = rect
+            print("no rect")
+            return
+
+        print("moving mover")
+
+        # Compute delta movement
+        x1, y1, x2, y2 = rect
+        px1, py1, px2, py2 = self.parent_window_rect_last
+
+        dx = x1 - px1
+        dy = y1 - py1
+
+        # Apply motion
+        if dx != 0 or dy != 0:
+            self.mover.move_global(dx, dy)
+
+        self.parent_window_rect_last = rect
+
+    def _clear_parent_window(self):
+        self.parent_window_hwnd = None
+        self.parent_window_rect_last = None
+
+    def _set_parent_window(self, surface_data):
+        hwnd = int(surface_data[0])
+        self.parent_window_hwnd = hwnd
+        self.parent_window_rect_last = self.windowsOverlay.pet_parent_window_rect
+        print("Parent window:", hwnd)
 
     def apply_window_position(self):
         self.move(

@@ -53,6 +53,12 @@ class Mover:
         self.vel = Vec2()
         self.active = False 
 
+    def move_global(self, dx, dy):
+        self.pos.x += dx
+        self.pos.y += dy
+        self.target.x += dx
+        self.target.y += dy
+
     def move_to(self, x, y, movement_type: MovementType):
         if self.vel == None: return
         self.target = Vec2(x, y)
@@ -66,11 +72,13 @@ class Mover:
 
         if movement_type == MovementType.INSTANT:
             self.set_position(x, y)
+            self.pet._clear_parent_window()
         
         if movement_type == MovementType.JUMP:
             self.grounded_y = self.pos.y
             self.pos.y -= 1 
             self.vel.y = -self.jump_velocity
+            self.pet._clear_parent_window()
 
 
         # print(pet.facing)

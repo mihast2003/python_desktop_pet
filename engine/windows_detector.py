@@ -520,6 +520,8 @@ class WindowsOverlay(QWidget):
 
         self.pet = pet
 
+        self.pet_parent_window_rect = None
+
         self.update_hitbox(pet.hitbox_width, pet.hitbox_height)
 
         self.primary_screen = QApplication.primaryScreen()
@@ -527,7 +529,7 @@ class WindowsOverlay(QWidget):
         self.screen_geom = screen.geometry()
         self.screen_avail_geom = screen.availableGeometry()
 
-        self.taskbar_top = self.screen_avail_geom.bottom() + 1
+        # self.taskbar_top = self.screen_avail_geom.bottom() + 1
 
         global windows_detector
         windows_detector = self
@@ -569,11 +571,20 @@ class WindowsOverlay(QWidget):
 
     def update_window_list(self):
         update_active_apps()
-        self.windows = get_windows_in_zorder(excluded_hwnd=self.excluded_hwnd)
+        excluded = self.excluded_hwnd
+        self.windows = get_windows_in_zorder(excluded_hwnd=excluded)
+
+        # print("rects:", self.rects)
+        # print("segmesnts:", self.segments)
+        # print("surfaces:", self.surfaces)
+
         if DEBUG:
             print(f"[enum] found {len(self.windows)} windows")
 
     def update_frame(self):
+        if self.pet.parent_window_hwnd:
+            self.pet_parent_window_rect = self.update_window_by_hwnd(self.pet.parent_window_hwnd)
+
         # update rects for current cached windows
         rects = {}
 
@@ -588,13 +599,13 @@ class WindowsOverlay(QWidget):
         )
 
         for hwnd in self.windows:
-            scale = get_window_dpi_scale(hwnd=hwnd) # this is probably to remove or move up, its getting dpi per window
-            if scale <= 0:
-                scale = 1.0
-            
             try:
                 rect = get_extended_frame_bounds(hwnd)
                 if not rect: return
+                
+                scale = get_window_dpi_scale(hwnd=hwnd) # this is probably to remove or move up, its getting dpi per window
+                if scale <= 0:
+                    scale = 1.0
 
                 rects[hwnd] = (rect[0]/scale, rect[1]/scale, rect[2]/scale, rect[3]/scale) # getting real scaled values for positions
             except Exception:
@@ -650,16 +661,27 @@ class WindowsOverlay(QWidget):
             for y1, y2 in data["right"]:
                 self.surfaces["right"].append((R, y1, y2, hwnd))
 
-# --- Update position of the top active window ---
-    def update_active_window(self, hwnd):
+# --- Get rect of a window by hwnd ---
+    def update_window_by_hwnd(self, hwnd):
+        rect = None
+        try:
+            rect = get_extended_frame_bounds(hwnd)
+            print("rect:", rect)
+            if not rect: return
+        except Exception:
+            pass
+        
+        # rect = get_extended_frame_bounds(hwnd) #SOMETHING IS WRONG
+        
+        if not rect: return
+
         scale = get_window_dpi_scale(hwnd=hwnd) # this is probably to remove or move up, its getting dpi per window
         if scale <= 0:
             scale = 1.0
 
-        rect = get_extended_frame_bounds(hwnd)
-        if not rect: return
-
-        rect = (rect[0]/scale, rect[1]/scale, rect[2]/scale, rect[3]/scale) # getting real scaled values for positions
+        print("updating window:", hwnd)
+        L, T, R, B = rect
+        return (L / scale, T / scale, R / scale, B / scale)
         
 # --- Movement collision stuff ---
     def bounds(self, pos_x, pos_y):
