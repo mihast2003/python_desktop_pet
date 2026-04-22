@@ -582,9 +582,6 @@ class WindowsOverlay(QWidget):
             print(f"[enum] found {len(self.windows)} windows")
 
     def update_frame(self):
-        if self.pet.parent_window_hwnd:
-            self.pet_parent_window_rect = self.update_window_by_hwnd(self.pet.parent_window_hwnd)
-
         # update rects for current cached windows
         rects = {}
 
@@ -618,13 +615,19 @@ class WindowsOverlay(QWidget):
 
         # recompute clipped border segments in physical pixels
         segs = compute_visible_segments(self.windows, self.rects)
+        # print(f"Time for computing visible segments: {t3 - t2}")
 
         self.segments = segs
 
         self.rebuild_surfaces(segs)
-
         t3 = time.perf_counter()
-        # print(f"Time for computing visible segments: {t3 - t2}")
+
+        parent_hwnd = self.pet.parent_window_hwnd
+        if parent_hwnd:
+            self.pet_parent_window_rect = self.update_window_by_hwnd(parent_hwnd)
+            if not is_window_real(parent_hwnd):  # THIS DOESBT WORK FOR OBSTRUCTED WINDOWS, HAVE TO COME UP WITH A CHECK FOR THAT
+                self.pet._clear_parent_window()
+                
         if DEBUG:
             # print a summary for the top few windows
             topn = min(6, len(self.windows))
@@ -671,7 +674,6 @@ class WindowsOverlay(QWidget):
         except Exception:
             pass
         
-        # rect = get_extended_frame_bounds(hwnd) #SOMETHING IS WRONG
         
         if not rect: return
 

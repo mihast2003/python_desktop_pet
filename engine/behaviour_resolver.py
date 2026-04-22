@@ -50,9 +50,27 @@ class BehaviourResolver:
 
         raise ValueError(f"Unknown axis spec: {spec}")
     
-    def _resolve_bound(self, name, axis):
+    def _resolve_bound(self, name: str, axis):
         screen = QApplication.primaryScreen().availableGeometry()
+        name = name
 
+        if name.startswith("surface"):
+            if self.pet.parent_window_hwnd:
+                x1, y1, x2, y2 = self.pet.parent_window_rect_last
+            else: name = name.replace("surface", "screen")
+
+            if name == "surface.left":
+                return x1 + self.pet.hitbox_width / 2 #type: ignore
+
+            if name == "surface.right":
+                return x2 - self.pet.hitbox_width / 2 #type: ignore
+            
+            if name == "surface.up":   # NOT SURE IT MIGHT BE Y2 AND Y1 i dunno
+                return y1 - self.pet.hitbox_height #type: ignore
+
+            if name == "surface.down":
+                return y2 - self.pet.hitbox_height #type: ignore
+            
         if name == "screen.left":
             return self.pet.hitbox_width / 2
 
@@ -64,6 +82,7 @@ class BehaviourResolver:
 
         if name == "screen.bottom":
             return screen.height()
+        
 
         raise ValueError(f"Unknown bound: {name}")
 

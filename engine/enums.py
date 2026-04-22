@@ -9,7 +9,7 @@ class Flag(Enum):
     CLICK_HELD = auto()
     ANIMATION_FINISHED = auto()
     DRAGGING = auto()
-
+    PARENTED_TO_WINDOW = auto()
 
 class Pulse(Enum):
     ANIMATION_END = auto()
@@ -17,6 +17,8 @@ class Pulse(Enum):
     LETGO = auto()
     DRAGGING_STARTED = auto()
     DRAGGING_ENDED = auto()
+    LOST_PARENT = auto()
+    GAINED_PARENT = auto()
 
 class MovementType(Enum):
     LINEAR = auto()

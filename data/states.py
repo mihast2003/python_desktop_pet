@@ -32,6 +32,11 @@ STATES = {
 
         "transitions": [
             {
+                "when": ["LOST_PARENT"],  
+                "to": "FALLING",
+                "chance": 1,
+            },
+            {
                 "when": ["DRAGGING_STARTED"],  
                 "to": "DRAGGING",
                 "chance": 1,
@@ -111,7 +116,7 @@ STATES = {
 
     "ROLL": {
         "animation": "roll",
-        "behaviour": "MOVE_RANDOM_X",
+        "behaviour": "MOVE_RANDOM_X_ON_SURFACE",
         "settings": {
             "gravity": 700,
         },
@@ -161,7 +166,7 @@ STATES = {
 
     "FALLING": {
         "animation": "roll",
-        "behaviour": "FALLING",
+        "behaviour": "FALL",
         
         "transitions": [
             {

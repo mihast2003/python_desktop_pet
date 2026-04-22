@@ -137,6 +137,7 @@ class Pet(QWidget): # main logic
 
     def on_state_enter(self, state): #called in state_machine when entering a new state
         print("STATE:", state)
+        self.current_state = state
         
         self.variables.set("times_clicked_this_state", 0)
         self.variables.set("time_spent_in_this_state", 0)
@@ -153,10 +154,10 @@ class Pet(QWidget): # main logic
         gravity = movement_settings.get("gravity", self.mover.gravity)
         self.mover.set_settings(acceleration=acceleration, max_speed=max_speed, slow_radius=slow_radius, snap_distance=snap_distance, jump_velocity=jump_velocity,gravity=gravity)
 
-        behaviour_name = cfg.get("behaviour", "STATIONARY")
-        # print(behaviour_name)
+        self.behaviour_name = cfg.get("behaviour", "STATIONARY")
+        # print(self.behaviour_name)
 
-        target_x, target_y, type, settings = self.behaviour_resolver.resolve(behaviour_name)
+        target_x, target_y, type, settings = self.behaviour_resolver.resolve(self.behaviour_name)
 
         isAbletoRotate = True if type == MovementType.DRAG else False
 
@@ -320,11 +321,15 @@ class Pet(QWidget): # main logic
     def _clear_parent_window(self):
         self.parent_window_hwnd = None
         self.parent_window_rect_last = None
+        self.state_machine.pulse(Pulse.LOST_PARENT)
+        self.state_machine.remove_flag(Flag.PARENTED_TO_WINDOW)
 
     def _set_parent_window(self, surface_data):
         hwnd = surface_data[0]
         if hwnd == "taskbar": return
         self.parent_window_hwnd = hwnd
+        self.state_machine.pulse(Pulse.GAINED_PARENT)
+        self.state_machine.raise_flag(Flag.PARENTED_TO_WINDOW)
         # self.parent_window_rect_last = self.windowsOverlay.pet_parent_window_rect   # it was causing weird behaviour when window moves
         print("Parent window:", hwnd)
 
@@ -399,6 +404,12 @@ class Pet(QWidget): # main logic
 
     def leaveEvent(self, event):
         self.mover.end_drag()  
+
+    def keyPressEvent(self, e): #doesnt work when app is in background
+        if e.key() == Qt.Key.Key_F4:
+            print(f"______________________________\n\n  PET REPORT\n\nPosition: {self.anchor.x}, {self.anchor.y}\nState: {self.current_state}\nCurrent behaviour: {self.behaviour_name}\nParent window: {self.parent_window_hwnd}\n\n  ^^^.>.\n______________________________")
+        elif e.key() == Qt.Key.Key_L:
+            print("yeah okay")
 
     # def moveEvent(self, e):
     #     print("Move:", self.pos())
