@@ -325,7 +325,7 @@ class Pet(QWidget): # main logic
         hwnd = surface_data[0]
         if hwnd == "taskbar": return
         self.parent_window_hwnd = hwnd
-        self.parent_window_rect_last = self.windowsOverlay.pet_parent_window_rect
+        # self.parent_window_rect_last = self.windowsOverlay.pet_parent_window_rect   # it was causing weird behaviour when window moves
         print("Parent window:", hwnd)
 
     def apply_window_position(self):

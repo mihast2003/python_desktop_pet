@@ -131,7 +131,7 @@ STATES = {
         "exit_to": "IDLE"
     }, 
 
-    "ROLL": {
+    "JUMP": {
         "animation": "roll",
         "behaviour": "JUMP",
 
