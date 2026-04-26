@@ -77,7 +77,7 @@ STATES = {
     },
 
     "BLINK": {
-        "animation": "blink",
+        "animation": "clock",
 
         "transitions": [
             {

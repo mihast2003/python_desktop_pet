@@ -63,4 +63,14 @@ ANIMATIONS = {
             1: 10,
         }
     },
+
+    "clock": {
+        "folder": "animations/clock",
+        "fps": 6,
+        "loop": False,
+        "holds": {
+            15: 6,
+            20: 10,
+        }
+    },
 }
