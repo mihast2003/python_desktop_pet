@@ -167,6 +167,10 @@ STATES = {
     "FALLING": {
         "animation": "roll",
         "behaviour": "FALL",
+
+        "forced_transitions": [
+
+        ],
         
         "transitions": [
             {

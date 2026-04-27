@@ -8,7 +8,7 @@ class StateMachine:
     def __init__(self, pet, configs, initial):
         self.pet = pet
         self.configs = configs
-        self.state = StateRuntime(state_name=initial, config=configs[initial], variables=self.pet.variables)   # created instance of runtime and then changed
+        self.state = StateRuntime(state_name=initial, config=configs[initial], all_configs=configs, variables=self.pet.variables)   # created instance of runtime and then changed
         self.change(initial)
         self.in_transition = False
 

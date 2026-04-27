@@ -10,6 +10,7 @@ class Flag(Enum):
     ANIMATION_FINISHED = auto()
     DRAGGING = auto()
     PARENTED_TO_WINDOW = auto()
+    NOT_PARENTED_TO_WINDOW = auto()
 
 class Pulse(Enum):
     ANIMATION_END = auto()

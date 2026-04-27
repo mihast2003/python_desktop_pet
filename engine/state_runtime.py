@@ -5,9 +5,10 @@ import random
 from engine.enums import Flag, Pulse
 
 class StateRuntime:
-    def __init__(self, state_name, config, variables):
+    def __init__(self, state_name, config, all_configs, variables):
         self.name = state_name
         self.config = config
+        self.all_configs = all_configs
         self.variables = variables
 
         self.flags = set()
@@ -19,7 +20,6 @@ class StateRuntime:
             self.pulse(Pulse.DRAGGING_STARTED)
 
         self.flags.add(flag)
-
 
     def remove_flag(self, flag: Flag):
         self.flags.discard(flag)
@@ -83,6 +83,9 @@ class StateRuntime:
 
 
     def handle_events(self):
+        for tran in self.all_configs:
+            pass   # WORKING ON IT
+
         transitions = self.config.get("transitions", [])
 
         # print("handling events: Flags: ", self.flags, " Pulses: ", self.pulses)

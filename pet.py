@@ -302,8 +302,6 @@ class Pet(QWidget): # main logic
             self.anchor.y = min(self.primary_screen.geometry().bottom(), max(self.anchor.y, self.hitbox_height))
             self._clear_parent_window()
 
-
-
     def _follow_parent_window(self):
         if not self.parent_window_hwnd:
             # self.mover.move_to(100, 100, MovementType.INSTANT)
@@ -330,6 +328,7 @@ class Pet(QWidget): # main logic
 
     def _clear_parent_window(self):
         self.state_machine.pulse(Pulse.LOST_PARENT)
+        self.state_machine.raise_flag(Flag.NOT_PARENTED_TO_WINDOW)
         self.state_machine.remove_flag(Flag.PARENTED_TO_WINDOW)
         self.parent_window_hwnd = None
         self.parent_window_rect_last = None
