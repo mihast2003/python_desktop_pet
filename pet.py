@@ -286,6 +286,7 @@ class Pet(QWidget): # main logic
 
     
         # --- SYNC PHASE ---
+        self.clamp_position_to_screen()
         self.apply_window_position()
         t7 = time.perf_counter()
 
@@ -293,6 +294,15 @@ class Pet(QWidget): # main logic
 
         self.update()  # repaint
     
+
+    def clamp_position_to_screen(self):
+        self.anchor.x = min(self.primary_screen.availableGeometry().width() - self.hitbox_width / 2, max(self.anchor.x, self.hitbox_width / 2))
+
+        if self.anchor.y < self.hitbox_height:
+            self.anchor.y = min(self.primary_screen.geometry().bottom(), max(self.anchor.y, self.hitbox_height))
+            self._clear_parent_window()
+
+
 
     def _follow_parent_window(self):
         if not self.parent_window_hwnd:
@@ -319,10 +329,10 @@ class Pet(QWidget): # main logic
         self.parent_window_rect_last = rect
 
     def _clear_parent_window(self):
-        self.parent_window_hwnd = None
-        self.parent_window_rect_last = None
         self.state_machine.pulse(Pulse.LOST_PARENT)
         self.state_machine.remove_flag(Flag.PARENTED_TO_WINDOW)
+        self.parent_window_hwnd = None
+        self.parent_window_rect_last = None
 
     def _set_parent_window(self, surface_data):
         hwnd = surface_data[0]
