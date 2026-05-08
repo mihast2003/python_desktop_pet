@@ -8,7 +8,7 @@ class StateMachine:
     def __init__(self, pet, configs, initial):
         self.pet = pet
         self.configs = configs
-        self.state = StateRuntime(state_name=initial, config=configs[initial], all_configs=configs, variables=self.pet.variables)   # created instance of runtime and then changed
+        self.state = StateRuntime(current_state_name=initial, config=configs[initial], all_configs=configs, variables=self.pet.variables)   # created instance of runtime and then changed
         self.change(initial)
         self.in_transition = False
 
@@ -88,11 +88,12 @@ class StateMachine:
         self.in_transition = False
   
     def change(self, next_state): #changes the state, updates state_runtime, calls on_state_enter in pet.py
-        if self.state.name != next_state:
+        if self.state.current_state_name != next_state:
             self.pet.on_state_exit(self.state)
         
         self.remove_flag(Flag.ANIMATION_FINISHED) # later will add some way to automatically clear these
         self.remove_flag(Flag.MOVEMENT_FINISHED)
+        self.state.current_state_name = next_state
         self.state.config = self.configs[next_state]
         self.state._apply_on_enter()
         self.pet.on_state_enter(next_state)

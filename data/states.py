@@ -32,11 +32,6 @@ STATES = {
 
         "transitions": [
             {
-                "when": ["LOST_PARENT"],  
-                "to": "FALLING",
-                "chance": 1,
-            },
-            {
                 "when": ["DRAGGING_STARTED"],  
                 "to": "DRAGGING",
                 "chance": 1,
@@ -168,8 +163,15 @@ STATES = {
         "animation": "roll",
         "behaviour": "FALL",
 
-        "forced_transitions": [
-
+        "force_transition": [
+            {
+                "when": ["LOST_PARENT"],
+                "except_states": ["DRAGGING"],
+                # "transition_anim": "standing_up",
+                # "transition_anim_cfg": {
+                #     "fps": 4,
+                # },
+            }
         ],
         
         "transitions": [
@@ -179,7 +181,6 @@ STATES = {
                 "transition_anim": "standing_up",
                 "transition_anim_cfg": {
                     "fps": 12,
-                    "loop": False,
                 },
             }
         ],
