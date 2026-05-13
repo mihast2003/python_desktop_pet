@@ -5,10 +5,34 @@ import random
 from engine.enums import Flag, Pulse
 
 class StateRuntime:
-    def __init__(self, state_name, config, variables):
-        self.name = state_name
+    def __init__(self, current_state_name, config, all_configs, variables):
+        self.current_state_name = current_state_name
         self.config = config
+        self.all_configs = all_configs
         self.variables = variables
+
+        self.all_forced_transitions = {}
+
+        # getting all force transitions in a dictionary for ease of use
+        for state in self.all_configs:
+            force_transition = self.all_configs[state].get("force_transition")
+            if not force_transition: continue
+
+            for t in force_transition:
+                conditions = t.get("when")
+                exception_states = t.get("except_states")
+                to = state
+                chance = t.get("chance", 1)
+                trans_anim = t.get("transition_anim")
+                trans_anim_cfg = t.get("transition_anim_cfg")
+
+                # print(conditions)
+                # print(to)
+                # print(chance)
+
+                self.all_forced_transitions[to] = {"conditions": conditions, "except_states": exception_states, "chance": chance, "transition_anim": trans_anim, "transition_anim_cfg": trans_anim_cfg}
+
+        # print(self.all_forced_transitions)
 
         self.flags = set()
         self.pulses = set()
@@ -19,7 +43,6 @@ class StateRuntime:
             self.pulse(Pulse.DRAGGING_STARTED)
 
         self.flags.add(flag)
-
 
     def remove_flag(self, flag: Flag):
         self.flags.discard(flag)
@@ -83,15 +106,38 @@ class StateRuntime:
 
 
     def handle_events(self):
-        transitions = self.config.get("transitions", [])
+        # print(f"state_runtime: handling events, {self.flags}, {self.pulses}")
 
+        # --- Checking for forced transitions ---
+        for state in self.all_forced_transitions:
+            force_trans = self.all_forced_transitions[state]
+
+            # print(self.current_state_name)
+            if self.current_state_name in force_trans.get("except_states"):
+                # print("this state is an exception")
+                break
+
+            conditions = force_trans.get("conditions")
+            chance = force_trans.get("chance", 1)
+
+            if all(self._check_condition(c) for c in conditions) and random.random() <= chance:  # all() returns true if all iterable conditions inside are true
+                print("-- Forced transition --")
+
+                return (
+                    state,  # return the destination state
+                    force_trans.get("transition_anim", None),  # may be None
+                    force_trans.get("transition_anim_cfg", {})
+                )        
+
+
+        # --- Normal transitions now ---
+        transitions = self.config.get("transitions", [])
         # print("handling events: Flags: ", self.flags, " Pulses: ", self.pulses)
 
         for t in transitions:  # handling all "transitions" in configs
             conditions = t["when"]
             chance = t.get("chance", 1)
 
-            
             if all(self._check_condition(c) for c in conditions) and random.random() <= chance:  # all() returns true if all iterable conditions inside are true
                 # print("chance of this was: ", chance)
                 # print("state_runtime detected transition to:", t["to"])

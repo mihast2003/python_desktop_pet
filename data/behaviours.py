@@ -23,6 +23,14 @@ BEHAVIOURS = {
         "movement": "LERP"
     },
 
+    "MOVE_RANDOM_X_ON_SURFACE": {
+        "target": {
+            "x": {"type": "random", "min": "surface.left", "max": "surface.right"},
+            "y": {"type": "current"}
+        },
+        "movement": "LERP"
+    },
+
     "MOVE_RANDOM_Y": {
         "target": {
             "x": {"type": "current"},
@@ -39,7 +47,7 @@ BEHAVIOURS = {
         "movement": "LERP"
     },
 
-    "FALLING": {
+    "FALL": {
         "target": {
             "x": {"type": "current"},
             "y": {"type": "fixed", "to": "screen.bottom"}

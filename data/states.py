@@ -111,7 +111,7 @@ STATES = {
 
     "ROLL": {
         "animation": "roll",
-        "behaviour": "MOVE_RANDOM_X",
+        "behaviour": "MOVE_RANDOM_X_ON_SURFACE",
         "settings": {
             "gravity": 700,
         },
@@ -131,7 +131,7 @@ STATES = {
         "exit_to": "IDLE"
     }, 
 
-    "ROLL": {
+    "JUMP": {
         "animation": "roll",
         "behaviour": "JUMP",
 
@@ -161,7 +161,18 @@ STATES = {
 
     "FALLING": {
         "animation": "roll",
-        "behaviour": "FALLING",
+        "behaviour": "FALL",
+
+        "force_transition": [
+            {
+                "when": ["LOST_PARENT"],
+                "except_states": ["DRAGGING"],
+                # "transition_anim": "standing_up",
+                # "transition_anim_cfg": {
+                #     "fps": 4,
+                # },
+            }
+        ],
         
         "transitions": [
             {
@@ -170,7 +181,6 @@ STATES = {
                 "transition_anim": "standing_up",
                 "transition_anim_cfg": {
                     "fps": 12,
-                    "loop": False,
                 },
             }
         ],

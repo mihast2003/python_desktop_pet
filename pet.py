@@ -20,6 +20,8 @@ from engine.animator import Animator
 from engine.enums import Flag, Pulse, MovementType, Facing
 from engine.vec2 import Vec2
 from engine.behaviour_resolver import BehaviourResolver
+# from engine.windows_detector import WindowsDetector
+from engine.windows_detector import WindowsOverlay
 
 
 from data.variables import VARIABLES
@@ -94,8 +96,7 @@ class Pet(QWidget): # main logic
                 "times_to_loop": cfg.get("times_to_loop", 1)
             }
             print(f"[ANIM LOAD] {name}: {len(frames)} frames")
-
-                  
+    
         self.variables = VariableManager(VARIABLES)
         self.animator = Animator(self)
 
@@ -126,6 +127,11 @@ class Pet(QWidget): # main logic
         self.state_machine = StateMachine(pet=self, configs=STATES, initial=initial_state) # set initial state
         self.click_detector = ClickDetector(pet=self) #initialising ClickDetector
 
+        self.windowsOverlay = WindowsOverlay(self)
+
+        self.parent_window_hwnd = None
+        self.parent_window_rect_last = None
+
         self.last_mouse_pos = Vec2()
 
         self.drag_offset = Vec2(0,0)
@@ -142,6 +148,7 @@ class Pet(QWidget): # main logic
 
     def on_state_enter(self, state): #called in state_machine when entering a new state
         print("STATE:", state)
+        self.current_state = state
         
         self.variables.set("times_clicked_this_state", 0)
         self.variables.set("time_spent_in_this_state", 0)
@@ -158,10 +165,10 @@ class Pet(QWidget): # main logic
         gravity = movement_settings.get("gravity", self.mover.gravity)
         self.mover.set_settings(acceleration=acceleration, max_speed=max_speed, slow_radius=slow_radius, snap_distance=snap_distance, jump_velocity=jump_velocity,gravity=gravity)
 
-        behaviour_name = cfg.get("behaviour", "STATIONARY")
-        # print(behaviour_name)
+        self.behaviour_name = cfg.get("behaviour", "STATIONARY")
+        # print(self.behaviour_name)
 
-        target_x, target_y, type, settings = self.behaviour_resolver.resolve(behaviour_name)
+        target_x, target_y, type, settings = self.behaviour_resolver.resolve(self.behaviour_name)
 
         isAbletoRotate = True if type == MovementType.DRAG else False
 
@@ -224,35 +231,127 @@ class Pet(QWidget): # main logic
     def update_logic(self):  # UPDATE LOGIC
         dt = 1 / LOGIC_FPS
 
+        t0 = time.perf_counter()
+
         # --- INPUT PHASE ---
         if self.mover.movement_type == MovementType.DRAG:
             self.mover.update_drag_target(self.last_mouse_pos, dt)
+            self._clear_parent_window()
     
         self.click_detector.update()
         self.variables.update(dt)
+
+        t1 = time.perf_counter()
     
         # --- STATE / SIMULATION PHASE ---
-        self.animator.update(dt)
-        arrived = self.mover.update(dt)
+        # surface = self.windowsOverlay.get_nearest_surface("up", hitbox_h=self.hitbox_height, hitbox_w=self.hitbox_width)
+        # print(surface)
+
+        self.windowsOverlay.update_frame()
+        t3 = time.perf_counter()
+
+        # pply parent window movement
+        self._follow_parent_window()
 
         
-        if arrived:
+        self.animator.update(dt)
+        t4 = time.perf_counter()
+
+        # --- updating Mover and movement collisions ---
+        arrived = self.mover.update(dt)
+        
+        dx = self.mover.pos.x - self.anchor.x
+        dy = self.mover.pos.y - self.anchor.y
+
+        col_x, col_y = False, False
+        surface_data = None
+
+        # --- checking for collisions and applying delta ---
+        if self.mover.movement_type != MovementType.DRAG:
+            dx, col_x, surface_data = self.windowsOverlay.collide_horizontal(self.anchor.x, self.anchor.y, dx)
+
+        self.anchor.x += dx
+
+        if self.mover.movement_type != MovementType.DRAG and not col_x:
+            dy, col_y, surface_data = self.windowsOverlay.collide_vertical(self.anchor.x, self.anchor.y, dy)
+            # print(dy)
+        
+        self.anchor.y += dy
+        
+        # --- if mover reached destination or collision occured - movement finished ---
+        if arrived or col_x or col_y:
+            self.mover.set_position(self.anchor.x, self.anchor.y)
             self.click_detector.release()
             self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
 
-        self.state_machine.update(dt)
+            if surface_data:
+                self._set_parent_window(surface_data)
+
 
         # print("position is", self.mover.pos.x, self.mover.pos.y)
         # print("facing is", self.facing)
+        t5 = time.perf_counter()
+
+        self.state_machine.update(dt)
+        t6 = time.perf_counter()
+
     
-        # --- POSITION SYNC PHASE ---
-        self.anchor.x = self.mover.pos.x
-        self.anchor.y = self.mover.pos.y
-    
+        # --- SYNC PHASE ---
+        self.clamp_position_to_screen()
         self.apply_window_position()
+        t7 = time.perf_counter()
+
+        # print(f"update windows frames takes {t3-t1}")
 
         self.update()  # repaint
     
+
+    def clamp_position_to_screen(self):
+        self.anchor.x = min(self.primary_screen.availableGeometry().width() - self.hitbox_width / 2, max(self.anchor.x, self.hitbox_width / 2))
+
+        if self.anchor.y < self.hitbox_height:
+            self.anchor.y = min(self.primary_screen.geometry().bottom(), max(self.anchor.y, self.hitbox_height))
+            self._clear_parent_window()
+
+    def _follow_parent_window(self):
+        if not self.parent_window_hwnd:
+            # self.mover.move_to(100, 100, MovementType.INSTANT)
+            return
+
+        # print("getting parent rect")
+        rect = self.windowsOverlay.pet_parent_window_rect
+        if not rect or not self.parent_window_rect_last:
+            self.parent_window_rect_last = rect
+            return
+
+        # Compute delta movement
+        x1, y1, x2, y2 = rect
+        px1, py1, px2, py2 = self.parent_window_rect_last
+
+        dx = x1 - px1
+        dy = y1 - py1
+
+        # Apply motion
+        if dx != 0 or dy != 0:
+            self.mover.move_global(dx, dy)
+
+        self.parent_window_rect_last = rect
+
+    def _clear_parent_window(self):
+        self.state_machine.pulse(Pulse.LOST_PARENT)
+        self.state_machine.raise_flag(Flag.NOT_PARENTED_TO_WINDOW)
+        self.state_machine.remove_flag(Flag.PARENTED_TO_WINDOW)
+        self.parent_window_hwnd = None
+        self.parent_window_rect_last = None
+
+    def _set_parent_window(self, surface_data):
+        hwnd = surface_data[0]
+        if hwnd == "taskbar": return
+        self.parent_window_hwnd = hwnd
+        self.state_machine.pulse(Pulse.GAINED_PARENT)
+        self.state_machine.raise_flag(Flag.PARENTED_TO_WINDOW)
+        # self.parent_window_rect_last = self.windowsOverlay.pet_parent_window_rect   # it was causing weird behaviour when window moves
+        print("Parent window:", hwnd)
 
     def apply_window_position(self):
         self.move(
@@ -326,6 +425,12 @@ class Pet(QWidget): # main logic
     def leaveEvent(self, event):
         self.mover.end_drag()  
 
+    def keyPressEvent(self, e): #doesnt work when app is in background
+        if e.key() == Qt.Key.Key_F4:
+            print(f"______________________________\n\n  PET REPORT\n\nPosition: {self.anchor.x}, {self.anchor.y}\nState: {self.current_state}\nCurrent behaviour: {self.behaviour_name}\nParent window: {self.parent_window_hwnd}\n\n  ^^^.>.\n______________________________")
+        elif e.key() == Qt.Key.Key_L:
+            print("yeah okay")
+
     # def moveEvent(self, e):
     #     print("Move:", self.pos())
 
@@ -359,7 +464,7 @@ class Pet(QWidget): # main logic
 
         p.translate(anchor_x, anchor_y)
 
-        # draws pets hitbox, pretty neat
+        # draws pets hitbox, pretty neat (says there are problems but works anyway)
         # p.setPen(QPen(Qt.red, 3))
         # p.drawRect(-self.hitbox_width/2, -self.hitbox_height, self.hitbox_width, self.hitbox_height)
         
