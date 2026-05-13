@@ -310,11 +310,21 @@ class Pet(QWidget): # main logic
     
 
     def clamp_position_to_screen(self):
-        self.anchor.x = min(self.primary_screen.availableGeometry().width() - self.hitbox_width / 2, max(self.anchor.x, self.hitbox_width / 2))
+        clamped_x = self.anchor.x
+        clamped_x = min(self.primary_screen.availableGeometry().width() - self.hitbox_width / 2, max(self.anchor.x, self.hitbox_width / 2))
+
+        clamped_y = self.anchor.y
+        clamped_y = min(self.primary_screen.geometry().bottom(), max(self.anchor.y, self.hitbox_height))
 
         if self.anchor.y < self.hitbox_height:
-            self.anchor.y = min(self.primary_screen.geometry().bottom(), max(self.anchor.y, self.hitbox_height))
             self._clear_parent_window()
+
+        dx = clamped_x - self.anchor.x
+        dy = clamped_y - self.anchor.y
+
+        self.mover.move_global(dx,dy)
+
+        self.anchor = Vec2(clamped_x, clamped_y)
 
     def _follow_parent_window(self):
         if not self.parent_window_hwnd:
