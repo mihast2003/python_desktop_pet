@@ -274,7 +274,7 @@ class Pet(QWidget): # main logic
 
         self.anchor.x += dx
 
-        if self.mover.movement_type != MovementType.DRAG and not col_x:
+        if not col_x and self.mover.movement_type != MovementType.DRAG:
             dy, col_y, surface_data = self.windowsOverlay.collide_vertical(self.anchor.x, self.anchor.y, dy)
             # print(dy)
         
@@ -439,6 +439,8 @@ class Pet(QWidget): # main logic
                       
             self.hitbox_width = frame.width() * self.scale
             self.hitbox_height = frame.height() * self.scale
+
+            self.windowsOverlay.update_hitbox(self.hitbox_width, self.hitbox_height)
 
             # print(self.hitbox_height)
             # print(self.hitbox_width)

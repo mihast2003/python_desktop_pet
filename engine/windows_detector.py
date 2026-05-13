@@ -689,14 +689,14 @@ class WindowsOverlay(QWidget):
         
 # --- Movement collision stuff ---
     def bounds(self, pos_x, pos_y):
-        hw = self.hitbox_w / 4
-        hh = self.hitbox_h / 2
+        hw = self.hitbox_w
+        hh = self.hitbox_h
     
         return (
-            pos_x - hw,
+            pos_x - hw/2,
             pos_y - hh,
-            pos_x + hw,
-            pos_y + hh
+            pos_x + hw/2,
+            pos_y
         )
 
     def collide_vertical(self, pos_x, pos_y, dy):
