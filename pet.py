@@ -160,13 +160,22 @@ class Pet(QWidget): # main logic
         anim_name = cfg.get("animation")
 
         movement_settings = cfg.get("settings", {})
-        acceleration = movement_settings.get("acceleration", self.mover.acceleration)
-        max_speed = movement_settings.get("max_speed", self.mover.max_speed)
-        slow_radius = movement_settings.get("slow_radius", self.mover.slow_radius)
-        snap_distance = movement_settings.get("snap_distance", self.mover.snap_distance)
-        jump_velocity = movement_settings.get("jump_velocity", self.mover.jump_velocity)
-        gravity = movement_settings.get("gravity", self.mover.gravity)
-        self.mover.set_settings(acceleration=acceleration, max_speed=max_speed, slow_radius=slow_radius, snap_distance=snap_distance, jump_velocity=jump_velocity,gravity=gravity)
+
+        if movement_settings:
+            acceleration = movement_settings.get("acceleration", self.mover.acceleration)
+            max_speed = movement_settings.get("max_speed", self.mover.max_speed)
+            slow_radius = movement_settings.get("slow_radius", self.mover.slow_radius)
+            snap_distance = movement_settings.get("snap_distance", self.mover.snap_distance)
+            # drag specific
+            max_angle = movement_settings.get("max_angle", self.mover.max_angle)
+            inertia = movement_settings.get("inertia", self.mover.inertia)
+            damping = movement_settings.get("damping", self.mover.damping)
+            # jump specific
+            jump_velocity = movement_settings.get("jump_velocity", self.mover.jump_velocity)
+            gravity = movement_settings.get("gravity", self.mover.gravity)
+            self.mover.set_settings(acceleration=acceleration, max_speed=max_speed, slow_radius=slow_radius, snap_distance=snap_distance, max_angle=max_angle, inertia=inertia, damping=damping, jump_velocity=jump_velocity,gravity=gravity)
+        else:
+            self.mover.reset_settings()
 
         self.behaviour_name = cfg.get("behaviour", "STATIONARY")
         # print(self.behaviour_name)

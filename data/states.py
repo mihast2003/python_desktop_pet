@@ -112,9 +112,9 @@ STATES = {
     "ROLL": {
         "animation": "roll",
         "behaviour": "MOVE_RANDOM_X_ON_SURFACE",
-        "settings": {
-            "gravity": 700,
-        },
+        # "settings": {
+        #     "gravity": 700,
+        # },
 
         "on_enter": [
             {"var": "sitting_still_timer", "op": "=", "value": 0},
@@ -154,6 +154,9 @@ STATES = {
         "animation": "held_by_the_nose",
         "fps": 5,
         "behaviour": "DRAGGING",
+        "settings": {
+            "gravity": 5000,
+        },
         
         "exit_when": ["DRAGGING_ENDED"],
         "exit_to": "FALLING"

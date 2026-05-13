@@ -35,6 +35,8 @@ class Vec2:
             return Vec2(self.x * value, self.y * value)
         if isinstance(value, Vec2):
             return Vec2(self.x * value.x, self.y * value.y)
+        if isinstance(value, int):
+            return Vec2(self.x * value, self.y * value)
 
     __rmul__ = __mul__
         

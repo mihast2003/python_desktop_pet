@@ -12,12 +12,25 @@ class Mover:
 
         self.pet = pet
 
+        self.movement_type = None
+        self.active = False
+
+        self.reset_settings()
+
         self.drag_offset = Vec2()
 
-        self.acceleration = 1200.0
-        self.max_speed = 700.0
-        self.slow_radius = 120.0
-        self.snap_distance = 8.0
+        # drag specific
+        self.angle = 0
+        self.angular_vel = 0
+
+        # jump specific
+        self.grounded_y = None
+
+    def reset_settings(self):
+        self.acceleration = RENDER_CONFIG.get("acceleration", 1200)
+        self.max_speed = RENDER_CONFIG.get("max_speed", 700)
+        self.slow_radius= RENDER_CONFIG.get("slow_radius", 120)
+        self.snap_distance= RENDER_CONFIG.get("snap_distance", 8)
 
         self.movement_type = None
         self.active = False
@@ -26,21 +39,21 @@ class Mover:
         self.max_angle = RENDER_CONFIG.get("max_angle", 90)
         self.inertia = RENDER_CONFIG.get("inertia", 1)
         self.damping = RENDER_CONFIG.get("damping", 1)
-        self.gravity = RENDER_CONFIG.get("gravity", 2000)
-        self.angle = 0
-        self.angular_vel = 0
-        self.angular_acceleration = 100
+        self.gravity = RENDER_CONFIG.get("gravity", 4000)
 
         # jump specific
-        self.jump_velocity = 1000
-        self.gravity = 2500.0
-        self.grounded_y = None
+        self.jump_velocity = RENDER_CONFIG.get("jump_velocity", 1000)
+        self.gravity = RENDER_CONFIG.get("gravity", 2500)
 
-    def set_settings(self, acceleration, max_speed, slow_radius, snap_distance, jump_velocity, gravity):
+    def set_settings(self, acceleration, max_speed, slow_radius, snap_distance, max_angle, inertia, damping, jump_velocity, gravity):
         self.acceleration = acceleration
         self.max_speed = max_speed
         self.slow_radius = slow_radius
         self.snap_distance = snap_distance
+        # drag specific
+        self.max_angle = max_angle
+        self.inertia = inertia
+        self.damping = damping
         # jump specific
         self.jump_velocity = jump_velocity
         self.gravity = gravity
