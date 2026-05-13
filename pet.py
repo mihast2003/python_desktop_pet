@@ -105,6 +105,8 @@ class Pet(QWidget): # main logic
 
         self.parent_window_hwnd = None
         self.parent_window_rect_last = None
+
+        self.stay_on_window_when_resize = RENDER_CONFIG.get("stay_on_window_when_resize", False) 
         
         self.mover = Mover(self)
         self.anchor = Vec2(500, 500)
@@ -259,13 +261,13 @@ class Pet(QWidget): # main logic
         # surface = self.windowsOverlay.get_nearest_surface("up", hitbox_h=self.hitbox_height, hitbox_w=self.hitbox_width)
         # print(surface)
 
-        self.windowsOverlay.update_frame()
+        self.animator.update(dt)
         t3 = time.perf_counter()
 
+        self.windowsOverlay.update_frame()
+        
         # pply parent window movement
         self._follow_parent_window()
-        
-        self.animator.update(dt)
         t4 = time.perf_counter()
 
         # --- updating Mover and movement collisions ---
@@ -345,14 +347,12 @@ class Pet(QWidget): # main logic
             self.parent_window_rect_last = rect
             return
 
-        # Compute delta movement
         x1, y1, x2, y2 = rect
         px1, py1, px2, py2 = self.parent_window_rect_last
 
         dx, dy = 0, 0
 
         # --- following general movement ---
-
         match self.parent_surface_type:
             case SurfaceType.TOP:
                 if (x1 - px1) == (x2 - px2): dx = x1 - px1 
@@ -368,7 +368,6 @@ class Pet(QWidget): # main logic
                 dx = x1 - px1
 
         # --- double checking if it deviated from actual anchor position ---
-
         if dy == 0:
             if self.parent_surface_type == SurfaceType.TOP: dy = y1 - self.anchor.y
             if self.parent_surface_type == SurfaceType.BOTTOM: dy = y2 - self.anchor.y
@@ -380,6 +379,13 @@ class Pet(QWidget): # main logic
         # Applying delta position
         if dx != 0 or dy != 0:
             self.mover.move_global(dx, dy)
+
+        # --- staying on windows or falling off ---
+        # if self.stay_on_window_when_resize:
+        #     self.anchor.x = min(max(x1 + self.hitbox_width/2, self.anchor.y), x2-self.hitbox_width/2)
+        #     # self.anchor.y = min(max(y1 + self.hitbox_height, self.anchor.y), y2)
+        #     print(self.anchor.x)
+        #     print(x1 + self.hitbox_width/2)
 
         self.parent_window_rect_last = rect
 
