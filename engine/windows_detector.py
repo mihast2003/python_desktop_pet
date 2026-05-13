@@ -16,6 +16,8 @@ import win32con
 import pythoncom
 import time
 
+from engine.enums import SurfaceType
+
 DWMWA_EXTENDED_FRAME_BOUNDS = 9
 DWMWA_CLOAKED = 14
 dwmapi = ctypes.windll.dwmapi
@@ -625,7 +627,7 @@ class WindowsOverlay(QWidget):
         parent_hwnd = self.pet.parent_window_hwnd
         if parent_hwnd:
             self.pet_parent_window_rect = self.update_window_by_hwnd(parent_hwnd)
-            if not is_window_real(parent_hwnd):  # THIS DOESBT WORK FOR OBSTRUCTED WINDOWS, HAVE TO COME UP WITH A CHECK FOR THAT
+            if not is_window_real(parent_hwnd) or parent_hwnd not in self.windows:  #checks if window is real OR if not fully obstructed
                 self.pet._clear_parent_window()
                 
         if DEBUG:
@@ -717,7 +719,7 @@ class WindowsOverlay(QWidget):
 
                 if 0 <= dist < best:
                     best = dist
-                    collision = True
+                    collision = SurfaceType.TOP
                     surface_data = (hwnd, y, x1, x2)
                     # print(y, x1, x2)
 
@@ -732,7 +734,7 @@ class WindowsOverlay(QWidget):
 
                 if best < dist < 0:
                     best = dist
-                    collision = True
+                    collision = SurfaceType.BOTTOM
                     surface_data = (hwnd, y, x1, x2)
                     # print(y, x1, x2)
 
@@ -760,7 +762,7 @@ class WindowsOverlay(QWidget):
 
                 if 0 <= dist < best:
                     best = dist
-                    collision = True
+                    collision = SurfaceType.LEFT
                     surface_data = (hwnd, x, y1, y2)
 
         elif dx < 0:  # moving left
@@ -774,7 +776,7 @@ class WindowsOverlay(QWidget):
 
                 if best < dist <= 0:
                     best = dist
-                    collision = True
+                    collision = SurfaceType.RIGHT
                     surface_data = (hwnd, x, y1, y2)
 
         return best, collision, surface_data

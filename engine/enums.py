@@ -33,3 +33,10 @@ class MovementType(Enum):
 class Facing(Enum):
     LEFT = auto()
     RIGHT = auto()
+
+class SurfaceType(Enum):
+    NOT = auto()
+    TOP = auto()
+    RIGHT = auto()
+    BOTTOM = auto()
+    LEFT = auto()

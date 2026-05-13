@@ -17,7 +17,7 @@ from engine.state_machine import StateMachine
 from engine.click_detector import ClickDetector
 from engine.mover import Mover
 from engine.animator import Animator
-from engine.enums import Flag, Pulse, MovementType, Facing
+from engine.enums import Flag, Pulse, MovementType, Facing, SurfaceType
 from engine.vec2 import Vec2
 from engine.behaviour_resolver import BehaviourResolver
 # from engine.windows_detector import WindowsDetector
@@ -102,6 +102,9 @@ class Pet(QWidget): # main logic
 
         self.hitbox_width = 0
         self.hitbox_height = 0
+
+        self.parent_window_hwnd = None
+        self.parent_window_rect_last = None
         
         self.mover = Mover(self)
         self.anchor = Vec2(500, 500)
@@ -129,8 +132,6 @@ class Pet(QWidget): # main logic
 
         self.windowsOverlay = WindowsOverlay(self)
 
-        self.parent_window_hwnd = None
-        self.parent_window_rect_last = None
 
         self.last_mouse_pos = Vec2()
 
@@ -149,6 +150,8 @@ class Pet(QWidget): # main logic
     def on_state_enter(self, state): #called in state_machine when entering a new state
         print("STATE:", state)
         self.current_state = state
+        if self.parent_window_hwnd:
+            print(f"Position: {self.anchor.x}, {self.anchor.y}\nState: {self.current_state}\nParent window: {self.parent_window_hwnd}\nParent window position: {self.parent_window_rect_last}")
         
         self.variables.set("times_clicked_this_state", 0)
         self.variables.set("time_spent_in_this_state", 0)
@@ -252,7 +255,6 @@ class Pet(QWidget): # main logic
 
         # pply parent window movement
         self._follow_parent_window()
-
         
         self.animator.update(dt)
         t4 = time.perf_counter()
@@ -285,7 +287,8 @@ class Pet(QWidget): # main logic
             self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
 
             if surface_data:
-                self._set_parent_window(surface_data)
+                # if not col_y: col_y = False
+                self._set_parent_window(col_x, col_y, surface_data)
 
 
         # print("position is", self.mover.pos.x, self.mover.pos.y)
@@ -315,7 +318,6 @@ class Pet(QWidget): # main logic
 
     def _follow_parent_window(self):
         if not self.parent_window_hwnd:
-            # self.mover.move_to(100, 100, MovementType.INSTANT)
             return
 
         # print("getting parent rect")
@@ -328,10 +330,35 @@ class Pet(QWidget): # main logic
         x1, y1, x2, y2 = rect
         px1, py1, px2, py2 = self.parent_window_rect_last
 
-        dx = x1 - px1
-        dy = y1 - py1
+        dx, dy = 0, 0
 
-        # Apply motion
+        # --- following general movement ---
+
+        match self.parent_surface_type:
+            case SurfaceType.TOP:
+                if (x1 - px1) == (x2 - px2): dx = x1 - px1 
+                dy = y1 - py1
+            case SurfaceType.RIGHT:
+                if (y1 - py1) == (y2 - py2): dy = y1 - py1 
+                dx = x2 - px2
+            case SurfaceType.BOTTOM:
+                if (x1 - px1) == (x2 - px2): dx = x1 - px1 
+                dy = y2 - py2
+            case SurfaceType.LEFT:
+                if (y1 - py1) == (y2 - py2): dy = y1 - py1 
+                dx = x1 - px1
+
+        # --- double checking if it deviated from actual anchor position ---
+
+        if dy == 0:
+            if self.parent_surface_type == SurfaceType.TOP: dy = y1 - self.anchor.y
+            if self.parent_surface_type == SurfaceType.BOTTOM: dy = y2 - self.anchor.y
+
+        if dx == 0:
+            if self.parent_surface_type == SurfaceType.LEFT: dx = x1 - self.anchor.x
+            if self.parent_surface_type == SurfaceType.RIGHT: dx = x2 - self.anchor.x
+
+        # Applying delta position
         if dx != 0 or dy != 0:
             self.mover.move_global(dx, dy)
 
@@ -342,10 +369,17 @@ class Pet(QWidget): # main logic
         self.state_machine.raise_flag(Flag.NOT_PARENTED_TO_WINDOW)
         self.state_machine.remove_flag(Flag.PARENTED_TO_WINDOW)
         self.parent_window_hwnd = None
+        self.parent_surface_type = None
         self.parent_window_rect_last = None
 
-    def _set_parent_window(self, surface_data):
+    def _set_parent_window(self, col_x, col_y, surface_data):
         hwnd = surface_data[0]
+
+        if col_x:  
+            self.parent_surface_type = col_x
+        else: self.parent_surface_type = col_y
+        # print("surface type:", self.parent_surface_type)
+
         if hwnd == "taskbar": return
         self.parent_window_hwnd = hwnd
         self.state_machine.pulse(Pulse.GAINED_PARENT)
@@ -427,7 +461,7 @@ class Pet(QWidget): # main logic
 
     def keyPressEvent(self, e): #doesnt work when app is in background
         if e.key() == Qt.Key.Key_F4:
-            print(f"______________________________\n\n  PET REPORT\n\nPosition: {self.anchor.x}, {self.anchor.y}\nState: {self.current_state}\nCurrent behaviour: {self.behaviour_name}\nParent window: {self.parent_window_hwnd}\n\n  ^^^.>.\n______________________________")
+            print(f"______________________________\n\n  PET REPORT\n\nPosition: {self.anchor.x}, {self.anchor.y}\nState: {self.current_state}\nCurrent behaviour: {self.behaviour_name}\nParent window: {self.parent_window_hwnd}\nParent window position: {self.parent_window_rect_last}\n\n  ^^^.>.\n______________________________")
         elif e.key() == Qt.Key.Key_L:
             print("yeah okay")
 
