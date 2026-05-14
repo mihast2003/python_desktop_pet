@@ -293,6 +293,7 @@ class Pet(QWidget): # main logic
         
         # --- if mover reached destination or collision occured - movement finished ---
         if arrived or col_x or col_y:
+            print("making mover set position cuz", arrived, col_x, col_y)
             self.mover.set_position(self.anchor.x, self.anchor.y)
             self.click_detector.release()
             self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
@@ -301,6 +302,7 @@ class Pet(QWidget): # main logic
                 # if not col_y: col_y = False
                 self._set_parent_window(col_x, col_y, surface_data)
 
+            arrived, col_x, col_y = False, False, False
 
         # print("position is", self.mover.pos.x, self.mover.pos.y)
         # print("facing is", self.facing)
@@ -309,9 +311,9 @@ class Pet(QWidget): # main logic
         self.state_machine.update(dt)
         t6 = time.perf_counter()
 
-    
         # --- SYNC PHASE ---
         self.clamp_position_to_screen()
+
         self.apply_window_position()
         t7 = time.perf_counter()
 
@@ -349,43 +351,60 @@ class Pet(QWidget): # main logic
 
         x1, y1, x2, y2 = rect
         px1, py1, px2, py2 = self.parent_window_rect_last
-
         dx, dy = 0, 0
+
+        # --- staying on windows or falling off ---
+        resize = False
+        if self.stay_on_window_when_resize:
+            if self.parent_surface_type == SurfaceType.TOP or self.parent_surface_type == SurfaceType.BOTTOM:
+                if self.anchor.x < x1 + self.hitbox_width/2:
+                    self.anchor.x = x1 + self.hitbox_width/2
+                    resize = True
+                elif self.anchor.x > x2 - self.hitbox_width/2:
+                    self.anchor.x = x2 - self.hitbox_width/2
+                    resize = True
+            elif self.parent_surface_type == SurfaceType.LEFT or self.parent_surface_type == SurfaceType.RIGHT:
+                if self.anchor.y < y1 + self.hitbox_height:
+                    self.anchor.y = y1 + self.hitbox_height
+                    resize = True
+                elif self.anchor.y > y2:
+                    self.anchor.y = y2
+                    resize = True
+
+            if resize: self.mover.set_position(self.anchor.x, self.anchor.y)  # moving to the edge when resizing
+
+        # if RENDER_CONFIG "stay_on_window_when_resize" == False pet should just fall off
+        else:
+            if self.parent_surface_type == SurfaceType.TOP or self.parent_surface_type == SurfaceType.BOTTOM:
+                if self.anchor.x <= x1 - 2 or self.anchor.x >= x2 + 2:
+                    self._clear_parent_window()
+            if self.parent_surface_type == SurfaceType.LEFT or self.parent_surface_type == SurfaceType.RIGHT:
+                if self.anchor.y <= y1 - 2 or self.anchor.y >= y2 + 2:
+                    self._clear_parent_window()
+
 
         # --- following general movement ---
         match self.parent_surface_type:
-            case SurfaceType.TOP:
-                if (x1 - px1) == (x2 - px2): dx = x1 - px1 
-                dy = y1 - py1
-            case SurfaceType.RIGHT:
-                if (y1 - py1) == (y2 - py2): dy = y1 - py1 
-                dx = x2 - px2
-            case SurfaceType.BOTTOM:
-                if (x1 - px1) == (x2 - px2): dx = x1 - px1 
-                dy = y2 - py2
             case SurfaceType.LEFT:
                 if (y1 - py1) == (y2 - py2): dy = y1 - py1 
                 dx = x1 - px1
-
-        # --- double checking if it deviated from actual anchor position ---
-        if dy == 0:
-            if self.parent_surface_type == SurfaceType.TOP: dy = y1 - self.anchor.y
-            if self.parent_surface_type == SurfaceType.BOTTOM: dy = y2 - self.anchor.y
-
-        if dx == 0:
-            if self.parent_surface_type == SurfaceType.LEFT: dx = x1 - self.anchor.x
-            if self.parent_surface_type == SurfaceType.RIGHT: dx = x2 - self.anchor.x
+                if dx == 0 and self.anchor.x != x1: dx = x1 - self.anchor.x
+            case SurfaceType.TOP:
+                if (x1 - px1) == (x2 - px2): dx = x1 - px1 
+                dy = y1 - py1
+                if dy == 0 and self.anchor.y != y1: dy = y1 - self.anchor.y
+            case SurfaceType.RIGHT:
+                if (y1 - py1) == (y2 - py2): dy = y1 - py1 
+                dx = x2 - px2
+                if dx == 0 and self.anchor.x != x2: dx = x2 - self.anchor.x
+            case SurfaceType.BOTTOM:
+                if (x1 - px1) == (x2 - px2): dx = x1 - px1 
+                dy = y2 - py2
+                if dy == 0 and self.anchor.y != y2: dy = y2 - self.anchor.y
 
         # Applying delta position
         if dx != 0 or dy != 0:
             self.mover.move_global(dx, dy)
-
-        # --- staying on windows or falling off ---
-        # if self.stay_on_window_when_resize:
-        #     self.anchor.x = min(max(x1 + self.hitbox_width/2, self.anchor.y), x2-self.hitbox_width/2)
-        #     # self.anchor.y = min(max(y1 + self.hitbox_height, self.anchor.y), y2)
-        #     print(self.anchor.x)
-        #     print(x1 + self.hitbox_width/2)
 
         self.parent_window_rect_last = rect
 
@@ -410,7 +429,7 @@ class Pet(QWidget): # main logic
         self.state_machine.pulse(Pulse.GAINED_PARENT)
         self.state_machine.raise_flag(Flag.PARENTED_TO_WINDOW)
         # self.parent_window_rect_last = self.windowsOverlay.pet_parent_window_rect   # it was causing weird behaviour when window moves
-        print("Parent window:", hwnd)
+        # print("Parent window:", hwnd)
 
     def apply_window_position(self):
         self.move(

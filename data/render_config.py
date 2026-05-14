@@ -13,7 +13,7 @@ RENDER_CONFIG = {
     "drag_offset_y": -1.4,
 
     # --- window behaviour ---
-    "stay_on_window_when_resize": True,
+    "stay_on_window_when_resize": False,
 
     # --- dragging ---
     "max_angle": 360, # max angle when dragging. >360 is free spin

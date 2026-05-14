@@ -712,7 +712,7 @@ class WindowsOverlay(QWidget):
 
             for y, x1, x2, hwnd in surfaces["top"]:
 
-                if R < x1 or L > x2:
+                if pos_x < x1 or pos_x > x2:   # i replaced R and L with pos.x because we care only about the center point
                     continue
 
                 dist = y - B
@@ -727,7 +727,7 @@ class WindowsOverlay(QWidget):
 
             for y, x1, x2, hwnd in surfaces["bottom"]:
 
-                if R < x1 or L > x2:
+                if pos_x < x1 or pos_x > x2:
                     continue
 
                 dist = y - T
