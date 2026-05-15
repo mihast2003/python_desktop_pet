@@ -1,6 +1,7 @@
 # behaviours.py
 # choose a target destination
 # choose a movement type from MovementType enum in enums.py
+#
 
 BEHAVIOURS = {
     "STATIONARY": {
@@ -20,7 +21,8 @@ BEHAVIOURS = {
             "x": {"type": "random", "min": "screen.left", "max": "screen.right"},
             "y": {"type": "current"}
         },
-        "movement": "LERP"
+        "movement": "LERP",
+        "parent_to_surfaces": {"RIGHT"},
     },
 
     "MOVE_RANDOM_X_ON_SURFACE": {
@@ -28,8 +30,11 @@ BEHAVIOURS = {
             "x": {"type": "random", "min": "surface.left", "max": "surface.right"},
             "y": {"type": "current"}
         },
-        "movement": "LERP"
+        "movement": "LERP",
+        "parent_to_surfaces": {"RIGHT"},
     },
+
+    #need to add move random Y on surface too
 
     "MOVE_RANDOM_Y": {
         "target": {
@@ -56,6 +61,7 @@ BEHAVIOURS = {
         "settings": {
             "gravity": 700,
         },
+        "parent_to_surfaces": {"TOP"},
     },
 
     "JUMP": {
@@ -63,6 +69,7 @@ BEHAVIOURS = {
             "x": {"type": "random_range", "min": "screen.left", "max": "screen.right", "range": 200},
             "y": {"type": "fixed", "to": "screen.bottom"}
         },
-        "movement": "JUMP"
+        "movement": "JUMP",
+        "parent_to_surfaces": {"TOP"},
     }
 }

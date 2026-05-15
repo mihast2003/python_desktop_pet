@@ -1,6 +1,6 @@
 import random
 from PySide6.QtWidgets import QApplication
-from engine.enums import MovementType
+from engine.enums import MovementType, SurfaceType
 from data.behaviours import BEHAVIOURS
 
 
@@ -15,17 +15,20 @@ class BehaviourResolver:
 
         movement = MovementType[cfg.get("movement", "STATIONARY")] # defaults to STATIONARY movement type
 
-        settings = cfg.get("settings", {})
+        mover_settings = cfg.get("settings", {})
+
+        parenting_cfg = cfg.get("parent_to_surfaces", set())
+        parenting_settings = self._resolve_parenting(parenting_cfg)
 
         target_cfg = cfg.get("target")
         if not target_cfg:
-            return None, None, movement, settings
+            return None, None, movement, mover_settings, parenting_settings
         
         x = self._resolve_axis("x", target_cfg["x"])
         y = self._resolve_axis("y", target_cfg["y"])
 
 
-        return x, y, movement, settings
+        return x, y, movement, mover_settings, parenting_settings
     
     def _resolve_axis(self, axis, spec):
         if spec["type"] == "current":
@@ -86,3 +89,10 @@ class BehaviourResolver:
 
         raise ValueError(f"Unknown bound: {name}")
 
+    def _resolve_parenting(self, cfg: set):
+        parenting = set()
+        
+        for surface in cfg:
+            parenting.add(SurfaceType.__members__.get(surface))
+
+        return parenting

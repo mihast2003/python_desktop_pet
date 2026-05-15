@@ -182,7 +182,8 @@ class Pet(QWidget): # main logic
         self.behaviour_name = cfg.get("behaviour", "STATIONARY")
         # print(self.behaviour_name)
 
-        target_x, target_y, type, settings = self.behaviour_resolver.resolve(self.behaviour_name)
+        target_x, target_y, type, mover_settings, parenting_settings = self.behaviour_resolver.resolve(self.behaviour_name)
+        self.surfaces_to_parent_to = parenting_settings
 
         isAbletoRotate = True if type == MovementType.DRAG else False
 
@@ -280,12 +281,15 @@ class Pet(QWidget): # main logic
         surface_data = None
 
         # --- checking for collisions and applying delta ---
-        if self.mover.movement_type != MovementType.DRAG:
+        if self.mover.movement_type != MovementType.DRAG and dx != 0:
+            print("arrived", arrived)
+            print("before", dx)
             dx, col_x, surface_data = self.windowsOverlay.collide_horizontal(self.anchor.x, self.anchor.y, dx)
+            print("after", dx)
 
         self.anchor.x += dx
 
-        if not col_x and self.mover.movement_type != MovementType.DRAG:
+        if not col_x and self.mover.movement_type != MovementType.DRAG and dy != 0:
             dy, col_y, surface_data = self.windowsOverlay.collide_vertical(self.anchor.x, self.anchor.y, dy)
             # print(dy)
         
@@ -293,6 +297,7 @@ class Pet(QWidget): # main logic
         
         # --- if mover reached destination or collision occured - movement finished ---
         if arrived or col_x or col_y:
+            print("col_x: ", col_x, "self.surfaces: ", self.surfaces_to_parent_to)
             print("making mover set position cuz", arrived, col_x, col_y)
             self.mover.set_position(self.anchor.x, self.anchor.y)
             self.click_detector.release()
@@ -300,7 +305,8 @@ class Pet(QWidget): # main logic
 
             if surface_data:
                 # if not col_y: col_y = False
-                self._set_parent_window(col_x, col_y, surface_data)
+                if col_x in self.surfaces_to_parent_to or col_y in self.surfaces_to_parent_to:
+                    self._set_parent_window(col_x, col_y, surface_data)
 
             arrived, col_x, col_y = False, False, False
 
