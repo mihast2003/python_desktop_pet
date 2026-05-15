@@ -699,7 +699,7 @@ class WindowsOverlay(QWidget):
             pos_y
         )
 
-    def collide_vertical(self, pos_x, pos_y, dy):
+    def collide_vertical(self, pos_x, pos_y, dy, collision_mask):
         L,T,R,B = self.bounds(pos_x, pos_y)
 
         best = dy
@@ -708,8 +708,7 @@ class WindowsOverlay(QWidget):
 
         surfaces = self.surfaces
 
-        if dy > 0:  # falling
-
+        if SurfaceType.TOP in collision_mask:  # moving down      # removed if dy > 0 here so now it should be possible to collide with insides of windows?
             for y, x1, x2, hwnd in surfaces["top"]:
 
                 if pos_x < x1 or pos_x > x2:   # i replaced R and L with pos.x because we care only about the center point
@@ -723,8 +722,7 @@ class WindowsOverlay(QWidget):
                     surface_data = (hwnd, y, x1, x2)
                     # print(y, x1, x2)
 
-        elif dy < 0:  # jumping
-
+        if SurfaceType.BOTTOM in collision_mask:  # moving up
             for y, x1, x2, hwnd in surfaces["bottom"]:
 
                 if pos_x < x1 or pos_x > x2:
@@ -741,7 +739,7 @@ class WindowsOverlay(QWidget):
         # print(dy, best, collision)
         return best, collision, surface_data
 
-    def collide_horizontal(self, pos_x, pos_y, dx):
+    def collide_horizontal(self, pos_x, pos_y, dx, collision_mask):
 
         L,T,R,B = self.bounds(pos_x, pos_y)
 
@@ -751,8 +749,9 @@ class WindowsOverlay(QWidget):
 
         surfaces = self.surfaces
 
-        if dx > 0:  # moving right
+        # print(f"why collision not working it should be  {SurfaceType.RIGHT in collision_mask}" )
 
+        if SurfaceType.LEFT in collision_mask:  # moving right       # removed dx > 0 (see above)
             for x, y1, y2, hwnd in surfaces["left"]:
 
                 if B < y1 or T > y2:
@@ -765,8 +764,7 @@ class WindowsOverlay(QWidget):
                     collision = SurfaceType.LEFT
                     surface_data = (hwnd, x, y1, y2)
 
-        elif dx < 0:  # moving left
-
+        if SurfaceType.RIGHT in collision_mask:  # moving left
             for x, y1, y2, hwnd in surfaces["right"]:
 
                 if B < y1 or T > y2:
@@ -782,7 +780,7 @@ class WindowsOverlay(QWidget):
         return best, collision, surface_data
 
 # --- Find nearest surface in a given direction ---
-    def get_nearest_surface(self, direction, hitbox_w, hitbox_h):
+    def get_nearest_surface(self, direction, hitbox_w, hitbox_h, collision_mask):
 
         px, py = self.pet.anchor.x, self.pet.anchor.y
 

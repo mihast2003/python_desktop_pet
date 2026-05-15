@@ -13,7 +13,7 @@ BEHAVIOURS = {
             "x": {"type": "random", "min": "screen.left", "max": "screen.right"},
             "y": {"type": "current"}
         },
-        "movement": "DRAG"
+        "movement": "DRAG",
     },
 
     "MOVE_RANDOM_X": {
@@ -22,6 +22,7 @@ BEHAVIOURS = {
             "y": {"type": "current"}
         },
         "movement": "LERP",
+        "collide_with_surfaces": "all",
         "parent_to_surfaces": {"RIGHT"},
     },
 
@@ -31,7 +32,8 @@ BEHAVIOURS = {
             "y": {"type": "current"}
         },
         "movement": "LERP",
-        "parent_to_surfaces": {"RIGHT"},
+        "collide_with_surfaces": "X",
+        "parent_to_surfaces": False,
     },
 
     #need to add move random Y on surface too
@@ -61,6 +63,7 @@ BEHAVIOURS = {
         "settings": {
             "gravity": 700,
         },
+        "collide_with_surfaces": {"TOP"},
         "parent_to_surfaces": {"TOP"},
     },
 
@@ -70,6 +73,7 @@ BEHAVIOURS = {
             "y": {"type": "fixed", "to": "screen.bottom"}
         },
         "movement": "JUMP",
+        "collide_with_surfaces": "all",
         "parent_to_surfaces": {"TOP"},
     }
 }

@@ -35,8 +35,7 @@ class Facing(Enum):
     RIGHT = auto()
 
 class SurfaceType(Enum):
-    NOT = auto()
+    LEFT = auto()
     TOP = auto()
     RIGHT = auto()
     BOTTOM = auto()
-    LEFT = auto()

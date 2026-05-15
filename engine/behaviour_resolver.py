@@ -17,18 +17,21 @@ class BehaviourResolver:
 
         mover_settings = cfg.get("settings", {})
 
+        collision_cfg = cfg.get("collide_with_surfaces", set())
+        collision_settings = self._resolve_surfaceType(collision_cfg)
+
         parenting_cfg = cfg.get("parent_to_surfaces", set())
-        parenting_settings = self._resolve_parenting(parenting_cfg)
+        parenting_settings = self._resolve_surfaceType(parenting_cfg)
 
         target_cfg = cfg.get("target")
         if not target_cfg:
-            return None, None, movement, mover_settings, parenting_settings
+            return None, None, movement, mover_settings, collision_settings, parenting_settings
         
         x = self._resolve_axis("x", target_cfg["x"])
         y = self._resolve_axis("y", target_cfg["y"])
 
 
-        return x, y, movement, mover_settings, parenting_settings
+        return x, y, movement, mover_settings, collision_settings, parenting_settings
     
     def _resolve_axis(self, axis, spec):
         if spec["type"] == "current":
@@ -89,10 +92,20 @@ class BehaviourResolver:
 
         raise ValueError(f"Unknown bound: {name}")
 
-    def _resolve_parenting(self, cfg: set):
-        parenting = set()
-        
-        for surface in cfg:
-            parenting.add(SurfaceType.__members__.get(surface))
+    def _resolve_surfaceType(self, cfg):
+        surfaces = set()
 
-        return parenting
+        if not cfg: return surfaces
+
+        if cfg in ["all", "ALL"]:
+            surfaces = surfaces.union(SurfaceType.__members__)
+        elif cfg in ["X", "x", "horizontal"]:
+            surfaces = surfaces.union([SurfaceType.LEFT, SurfaceType.RIGHT])
+        elif cfg in ["Y", "y", "vertical"]:
+            surfaces = surfaces.union([SurfaceType.TOP, SurfaceType.BOTTOM])
+        else:
+            for surface in cfg:
+                surfaces.add(SurfaceType.__members__.get(surface))
+
+        # print(surfaces)
+        return surfaces
