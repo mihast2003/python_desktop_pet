@@ -759,7 +759,7 @@ class WindowsOverlay(QWidget):
 
                 dist = x - R
 
-                if 0 <= dist < best:
+                if 0 <= dist < best:  # here it should be    if best < dist <= 0   for it to work inside-out, this is what should do next
                     best = dist
                     collision = SurfaceType.LEFT
                     surface_data = (hwnd, x, y1, y2)
