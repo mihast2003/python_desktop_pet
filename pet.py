@@ -213,7 +213,9 @@ class Pet(QWidget): # main logic
             self.mover.begin_drag(pos)
             return
 
-        self.mover.set_position(self.anchor) #type: ignore
+
+        # print("on state change", end="")
+        # self.mover.set_position(self.anchor) #type: ignore
         self.mover.move_to(target_x, target_y, type)
 
        
@@ -272,13 +274,13 @@ class Pet(QWidget): # main logic
         # surface = self.windowsOverlay.get_nearest_surface("up", hitbox_h=self.hitbox_height, hitbox_w=self.hitbox_width)
         # print(surface)
 
-        self.animator.update(dt)
-        t3 = time.perf_counter()
-
         self.windowsOverlay.update_frame()
         
-        # pply parent window movement
+        # Apply parent window movement
         self._follow_parent_window()
+        t3 = time.perf_counter()
+
+        self.animator.update(dt)
         t4 = time.perf_counter()
 
         # --- updating Mover and movement collisions ---
@@ -309,6 +311,7 @@ class Pet(QWidget): # main logic
         if arrived or col_x or col_y:
             # print("col_x: ", col_x, "self.surfaces: ", self.surfaces_to_parent_to)
             # print("making mover set position cuz", arrived, col_x, col_y)
+            print("if arrived", end="")
             self.mover.set_position(self.anchor.x, self.anchor.y)
             self.click_detector.release()
             self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)
@@ -337,13 +340,11 @@ class Pet(QWidget): # main logic
         # print(f"update windows frames takes {t3-t1}")
 
         index = self.animator.index
-
         if not self.prev_index: self.prev_index = index + 1
 
         if index != self.prev_index or self.mover.movement_type == MovementType.DRAG: 
             # print("triggering update because", index, self.prev_index)
             self.update()  # repaint
-    
         self.prev_index = index
 
     def clamp_position_to_screen(self):
@@ -377,6 +378,25 @@ class Pet(QWidget): # main logic
         px1, py1, px2, py2 = self.parent_window_rect_last
         dx, dy = 0, 0
 
+        # --- following general movement ---
+        match self.parent_surface_type:   # previously had {if dx == 0 and } but removed to better snap to windows
+            case SurfaceType.LEFT:
+                if (y1 - py1) == (y2 - py2): dy = y1 - py1 
+                dx = x1 - px1
+                if self.anchor.x != x1: dx = x1 - self.anchor.x
+            case SurfaceType.TOP:
+                if (x1 - px1) == (x2 - px2): dx = x1 - px1 
+                dy = y1 - py1
+                if self.anchor.y != y1: dy = y1 - self.anchor.y
+            case SurfaceType.RIGHT:
+                if (y1 - py1) == (y2 - py2): dy = y1 - py1 
+                dx = x2 - px2
+                if self.anchor.x != x2: dx = x2 - self.anchor.x
+            case SurfaceType.BOTTOM:
+                if (x1 - px1) == (x2 - px2): dx = x1 - px1 
+                dy = y2 - py2
+                if self.anchor.y != y2: dy = y2 - self.anchor.y
+
         # --- staying on windows or falling off ---
         resize = False
         if self.stay_on_window_when_resize:
@@ -394,8 +414,10 @@ class Pet(QWidget): # main logic
                 elif self.anchor.y > y2:
                     self.anchor.y = y2
                     resize = True
-
-            if resize: self.mover.set_position(self.anchor.x, self.anchor.y)  # moving to the edge when resizing
+            
+            if resize: 
+                print("if resize", end="")
+                self.mover.set_position(self.anchor.x, self.anchor.y)  # moving to the edge when resizing
 
         # if RENDER_CONFIG "stay_on_window_when_resize" == False pet should just fall off
         else:
@@ -406,31 +428,12 @@ class Pet(QWidget): # main logic
                 if self.anchor.y <= y1 - 2 or self.anchor.y >= y2 + 2:
                     self._clear_parent_window()
 
-
-        # --- following general movement ---
-        match self.parent_surface_type:
-            case SurfaceType.LEFT:
-                if (y1 - py1) == (y2 - py2): dy = y1 - py1 
-                dx = x1 - px1
-                if dx == 0 and self.anchor.x != x1: dx = x1 - self.anchor.x
-            case SurfaceType.TOP:
-                if (x1 - px1) == (x2 - px2): dx = x1 - px1 
-                dy = y1 - py1
-                if dy == 0 and self.anchor.y != y1: dy = y1 - self.anchor.y
-            case SurfaceType.RIGHT:
-                if (y1 - py1) == (y2 - py2): dy = y1 - py1 
-                dx = x2 - px2
-                if dx == 0 and self.anchor.x != x2: dx = x2 - self.anchor.x
-            case SurfaceType.BOTTOM:
-                if (x1 - px1) == (x2 - px2): dx = x1 - px1 
-                dy = y2 - py2
-                if dy == 0 and self.anchor.y != y2: dy = y2 - self.anchor.y
-
         # Applying global movement
         if dx != 0 or dy != 0:
             self.mover.move_global(dx, dy)
 
         self.parent_window_rect_last = rect
+
 
     def _clear_parent_window(self):
         self.state_machine.pulse(Pulse.LOST_PARENT)

@@ -30,7 +30,7 @@ class Mover:
         self.acceleration = RENDER_CONFIG.get("acceleration", 1200)
         self.max_speed = RENDER_CONFIG.get("max_speed", 700)
         self.slow_radius= RENDER_CONFIG.get("slow_radius", 120)
-        self.snap_distance= RENDER_CONFIG.get("snap_distance", 8)
+        self.snap_distance= RENDER_CONFIG.get("snap_distance", 5)
 
         self.movement_type = None
         self.active = False
