@@ -1,22 +1,37 @@
-# data/states
-# config, main data structure, dictates states, their animation, transitions between states
-# after "animation" can write overrides for "fps" or "loop"
+"""
+data/states
+config, main data structure, dictates states, their animation, transitions between states
+after "animation" can write overrides for "fps" or "loop"
 
-# tansitions is a list of dictionaries of lists.
-# "transitions": [
-#             {
-#                 "when": [ 
-#                       {"flag":"THIS_FLAG"}, 
-#                       {"var":"sitting_still_timer", "op":">", "value":10},
-#                 ],  
-#                 "to": "DRAGGING",
-#                 "chance": 1,
-#             },
-# BUT
-# "when": ["THIS_FLAG", "THAT_PULSE" ],  
-# ALSO WORKS
-# 
-#
+tansitions is a list of dictionaries of lists.
+        "transitions": [
+            {
+                "when": [ 
+                      {"flag":"THIS_FLAG"}, 
+                      {"var":"sitting_still_timer", "op":">", "value":10},
+                ],  
+                "to": "DRAGGING",
+                "chance": 1,
+            },
+BUT
+"when": ["THIS_FLAG", "THAT_PULSE" ],  
+ALSO WORKS
+
+To force other states to transition to this when some flags/pulses are met:
+        "force_transition": [
+            {
+                "when": ["DRAGGING_STARTED"],
+                "except_states": ["DRAGGING"],
+                # "transition_anim": "standing_up",
+                # "transition_anim_cfg": {
+                #     "fps": 4,
+                # },
+            }
+        ],
+"""
+
+
+
 INITIAL_STATE = {"default": "IDLE"} #MUST HAVE
 
 STATES = {
@@ -32,19 +47,14 @@ STATES = {
 
         "transitions": [
             {
-                "when": ["DRAGGING_STARTED"],  
-                "to": "DRAGGING",
-                "chance": 1,
-            },
-            {
                 "when": ["ANIMATION_END", ],
                 "to": "BLINK",
-                "chance": 0.06,
+                "chance": 0.1,
             },
             {
                 "when": [ {"pulse":"ANIMATION_END"}, ],
                 "to": "LOOKING_AROUND",
-                "chance": 0.1,
+                "chance": 0.08,
             },
             {
                 "when": [ 
@@ -157,6 +167,17 @@ STATES = {
         "settings": {
             "gravity": 5000,
         },
+
+        "force_transition": [
+            {
+                "when": ["DRAGGING_STARTED"],
+                "except_states": ["DRAGGING"],
+                # "transition_anim": "standing_up",
+                # "transition_anim_cfg": {
+                #     "fps": 4,
+                # },
+            }
+        ],
         
         "exit_when": ["DRAGGING_ENDED"],
         "exit_to": "FALLING"

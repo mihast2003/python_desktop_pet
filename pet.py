@@ -151,7 +151,6 @@ class Pet(QWidget): # main logic
 
         self.update_hitbox_size_and_drag_offset() # initial hitbox update
 
-
         # Timer for updating logic
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_logic)
@@ -170,9 +169,30 @@ class Pet(QWidget): # main logic
         cfg = STATES[state]      # gets the config for the state from states.py
         anim_name = cfg.get("animation")
 
-        movement_settings = cfg.get("settings", {})
+        self.behaviour_name = cfg.get("behaviour", "STATIONARY") # engage behaviours.py
+        # print(self.behaviour_name)
+        target_x, target_y, type, mover_settings, collision_settings, parenting_settings = self.behaviour_resolver.resolve(self.behaviour_name)
+        self.surface_to_collide_with = collision_settings
+        self.surfaces_to_parent_to = parenting_settings
 
-        if movement_settings:
+        if mover_settings: # using mover settings from behaviours first
+            acceleration = mover_settings.get("acceleration", self.mover.acceleration)
+            max_speed = mover_settings.get("max_speed", self.mover.max_speed)
+            slow_radius = mover_settings.get("slow_radius", self.mover.slow_radius)
+            snap_distance = mover_settings.get("snap_distance", self.mover.snap_distance)
+            # drag specific
+            max_angle = mover_settings.get("max_angle", self.mover.max_angle)
+            inertia = mover_settings.get("inertia", self.mover.inertia)
+            damping = mover_settings.get("damping", self.mover.damping)
+            # jump specific
+            jump_velocity = mover_settings.get("jump_velocity", self.mover.jump_velocity)
+            gravity = mover_settings.get("gravity", self.mover.gravity)
+            self.mover.set_settings(acceleration=acceleration, max_speed=max_speed, slow_radius=slow_radius, snap_distance=snap_distance, max_angle=max_angle, inertia=inertia, damping=damping, jump_velocity=jump_velocity,gravity=gravity)
+
+
+        movement_settings = cfg.get("settings", {}) # get mover settings from states.py
+
+        if movement_settings: # adding overrides from states
             acceleration = movement_settings.get("acceleration", self.mover.acceleration)
             max_speed = movement_settings.get("max_speed", self.mover.max_speed)
             slow_radius = movement_settings.get("slow_radius", self.mover.slow_radius)
@@ -187,13 +207,6 @@ class Pet(QWidget): # main logic
             self.mover.set_settings(acceleration=acceleration, max_speed=max_speed, slow_radius=slow_radius, snap_distance=snap_distance, max_angle=max_angle, inertia=inertia, damping=damping, jump_velocity=jump_velocity,gravity=gravity)
         else:
             self.mover.reset_settings()
-
-        self.behaviour_name = cfg.get("behaviour", "STATIONARY")
-        # print(self.behaviour_name)
-
-        target_x, target_y, type, mover_settings, collision_settings, parenting_settings = self.behaviour_resolver.resolve(self.behaviour_name)
-        self.surface_to_collide_with = collision_settings
-        self.surfaces_to_parent_to = parenting_settings
 
         isAbletoRotate = True if type == MovementType.DRAG else False
 
