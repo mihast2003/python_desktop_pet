@@ -99,6 +99,7 @@ class Pet(QWidget): # main logic
     
         self.variables = VariableManager(VARIABLES)
         self.animator = Animator(self)
+        self.prev_index = None
 
         self.hitbox_width = 0
         self.hitbox_height = 0
@@ -321,13 +322,21 @@ class Pet(QWidget): # main logic
         # --- SYNC PHASE ---
         self.clamp_position_to_screen()
 
-        self.apply_window_position()
+        if dx or dy:
+            self.apply_window_position()
         t7 = time.perf_counter()
 
         # print(f"update windows frames takes {t3-t1}")
 
-        self.update()  # repaint
+        index = self.animator.index
+
+        if not self.prev_index: self.prev_index = index + 1
+
+        if index != self.prev_index or self.mover.movement_type == MovementType.DRAG: 
+            # print("triggering update because", index, self.prev_index)
+            self.update()  # repaint
     
+        self.prev_index = index
 
     def clamp_position_to_screen(self):
         clamped_x = self.anchor.x
