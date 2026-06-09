@@ -439,10 +439,10 @@ class Pet(QWidget): # main logic
 
         # if RENDER_CONFIG "stay_on_window_when_resize" == False pet should just fall off
         else:
-            if not global_move_x and self.parent_surface_type == SurfaceType.TOP or self.parent_surface_type == SurfaceType.BOTTOM:
+            if not global_move_x and self.parent_surface_type in [SurfaceType.TOP, SurfaceType.BOTTOM]: # its so much more nice to read, i hope its not too bad for performance
                 if self.anchor.x <= x1 - 2 or self.anchor.x >= x2 + 2:
                     self._clear_parent_window()
-            if not global_move_y and self.parent_surface_type == SurfaceType.LEFT or self.parent_surface_type == SurfaceType.RIGHT:
+            if not global_move_y and self.parent_surface_type in [SurfaceType.LEFT, SurfaceType.RIGHT]:
                 if self.anchor.y <= y1 - 2 or self.anchor.y >= y2 + 2:
                     self._clear_parent_window()
 
