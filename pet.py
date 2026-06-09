@@ -6,6 +6,12 @@ from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtGui import QPainter, QPixmap, QPen, QColor
 from PySide6.QtCore import Qt, QTimer, QPointF
 
+import threading
+
+from ctypes import POINTER, cast
+from ctypes.wintypes import MSG
+import win32con
+
 from enum import Enum, auto
 import warnings
 
@@ -20,8 +26,8 @@ from engine.animator import Animator
 from engine.enums import Flag, Pulse, MovementType, Facing, SurfaceType
 from engine.vec2 import Vec2
 from engine.behaviour_resolver import BehaviourResolver
-# from engine.windows_detector import WindowsDetector
 from engine.windows_detector import WindowsOverlay
+from engine.hotkey_manager import HotkeyManager
 
 
 from data.variables import VARIABLES
@@ -101,6 +107,9 @@ class Pet(QWidget): # main logic
         self.animator = Animator(self)
         self.prev_index = None
 
+        self.hotkeys = HotkeyManager(self) # not doing anything for now, meh
+        # self.hotkeys.messagag()
+
         self.hitbox_width = 0
         self.hitbox_height = 0
 
@@ -134,7 +143,6 @@ class Pet(QWidget): # main logic
         self.click_detector = ClickDetector(pet=self) #initialising ClickDetector
 
         self.windowsOverlay = WindowsOverlay(self)
-
 
         self.last_mouse_pos = Vec2()
 
@@ -526,7 +534,7 @@ class Pet(QWidget): # main logic
             print(f"______________________________\n\n  PET REPORT\n\nPosition: {self.anchor.x}, {self.anchor.y}\nState: {self.current_state}\nCurrent behaviour: {self.behaviour_name}\nParent window: {self.parent_window_hwnd}\nParent window position: {self.parent_window_rect_last}\n\n  ^^^.>.\n______________________________")
         elif e.key() == Qt.Key.Key_L:
             print("yeah okay")
-
+    
     # def moveEvent(self, e):
     #     print("Move:", self.pos())
 
@@ -585,6 +593,7 @@ class Pet(QWidget): # main logic
         p.drawPixmap(-offset_x, -offset_y, frame)
 
         p.restore()
+
 
 
 if __name__ == "__main__": # QT stuff, idk idc
