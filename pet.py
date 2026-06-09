@@ -290,7 +290,7 @@ class Pet(QWidget): # main logic
         self.windowsOverlay.update_frame()
         
         # Apply parent window movement
-        self._follow_parent_window()
+        followed_parent = self._follow_parent_window()
         t3 = time.perf_counter()
 
         self.animator.update(dt)
@@ -346,7 +346,7 @@ class Pet(QWidget): # main logic
         # --- SYNC PHASE ---
         self.clamp_position_to_screen()
 
-        if dx or dy:
+        if dx or dy or followed_parent:
             self.apply_window_position()
         t7 = time.perf_counter()
 
@@ -392,26 +392,31 @@ class Pet(QWidget): # main logic
         dx, dy = 0, 0
 
         # --- following general movement ---
+        global_move_x = (x1 - px1) == (x2 - px2)
+        global_move_y = (y1 - py1) == (y2 - py2)
+
+
         match self.parent_surface_type:   # previously had {if dx == 0 and } but removed to better snap to windows
             case SurfaceType.LEFT:
-                if (y1 - py1) == (y2 - py2): dy = y1 - py1 
+                if global_move_y: dy = y1 - py1 
                 dx = x1 - px1
                 if self.anchor.x != x1: dx = x1 - self.anchor.x
             case SurfaceType.TOP:
-                if (x1 - px1) == (x2 - px2): dx = x1 - px1 
+                if global_move_x: dx = x1 - px1 
                 dy = y1 - py1
                 if self.anchor.y != y1: dy = y1 - self.anchor.y
             case SurfaceType.RIGHT:
-                if (y1 - py1) == (y2 - py2): dy = y1 - py1 
+                if global_move_y: dy = y1 - py1 
                 dx = x2 - px2
                 if self.anchor.x != x2: dx = x2 - self.anchor.x
             case SurfaceType.BOTTOM:
-                if (x1 - px1) == (x2 - px2): dx = x1 - px1 
+                if global_move_x: dx = x1 - px1 
                 dy = y2 - py2
                 if self.anchor.y != y2: dy = y2 - self.anchor.y
 
         # --- staying on windows or falling off ---
         resize = False
+
         if self.stay_on_window_when_resize:
             if self.parent_surface_type == SurfaceType.TOP or self.parent_surface_type == SurfaceType.BOTTOM:
                 if self.anchor.x < x1 + self.hitbox_width/2:
@@ -434,10 +439,10 @@ class Pet(QWidget): # main logic
 
         # if RENDER_CONFIG "stay_on_window_when_resize" == False pet should just fall off
         else:
-            if self.parent_surface_type == SurfaceType.TOP or self.parent_surface_type == SurfaceType.BOTTOM:
+            if not global_move_x and self.parent_surface_type == SurfaceType.TOP or self.parent_surface_type == SurfaceType.BOTTOM:
                 if self.anchor.x <= x1 - 2 or self.anchor.x >= x2 + 2:
                     self._clear_parent_window()
-            if self.parent_surface_type == SurfaceType.LEFT or self.parent_surface_type == SurfaceType.RIGHT:
+            if not global_move_y and self.parent_surface_type == SurfaceType.LEFT or self.parent_surface_type == SurfaceType.RIGHT:
                 if self.anchor.y <= y1 - 2 or self.anchor.y >= y2 + 2:
                     self._clear_parent_window()
 
@@ -447,6 +452,7 @@ class Pet(QWidget): # main logic
 
         self.parent_window_rect_last = rect
 
+        return resize
 
     def _clear_parent_window(self):
         self.state_machine.pulse(Pulse.LOST_PARENT)
