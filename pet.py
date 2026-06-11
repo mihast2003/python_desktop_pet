@@ -143,13 +143,6 @@ class Pet(QWidget): # main logic
         max_measurement = max(max_bounds_w, max_bounds_h)
         self.resize_keep_anchor(int(max_measurement * self.scale * 2), int(max_measurement * self.scale * 2))
 
-        anim_name = RENDER_CONFIG.get("hitbox_from_animation")
-        if anim_name not in self.animations:
-            cfg = STATES[initial_state]      # gets the config for the state from states.py
-            anim_name = cfg.get("animation")
-        frame = self.animations[anim_name]["frames"][0]
-        self.update_hitbox_size_and_drag_offset(frame=frame) # initial hitbox update
-
         self.state_machine = StateMachine(pet=self, configs=STATES, initial=initial_state) # set initial state
         self.click_detector = ClickDetector(pet=self) #initialising ClickDetector
 
@@ -157,6 +150,13 @@ class Pet(QWidget): # main logic
 
         self.drag_offset = Vec2(0,0)
         self.rotation_angle = 0
+
+        anim_name = RENDER_CONFIG.get("hitbox_from_animation")
+        if anim_name not in self.animations:
+            cfg = STATES[initial_state]      # gets the config for the state from states.py
+            anim_name = cfg.get("animation")
+        frame = self.animations[anim_name]["frames"][0]
+        self.update_hitbox_size_and_drag_offset(frame=frame) # initial hitbox update
 
         print("----- LOADING SUCCESSFUL -----")
 
