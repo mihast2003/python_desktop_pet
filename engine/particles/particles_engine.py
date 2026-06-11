@@ -27,13 +27,13 @@ class ParticleOverlayWidget(QWidget):
         super().__init__()
 
         self.setWindowFlags(
-            Qt.FramelessWindowHint |
-            Qt.WindowStaysOnTopHint |
-            Qt.Tool
+            Qt.FramelessWindowHint | #type: ignore
+            Qt.WindowStaysOnTopHint | #type: ignore
+            Qt.Tool #type: ignore
         )
 
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.setAttribute(Qt.WA_TranslucentBackground) #type: ignore
+        self.setAttribute(Qt.WA_TransparentForMouseEvents) #type: ignore
 
         screen = QApplication.primaryScreen().geometry()
         self.setGeometry(screen)
@@ -149,7 +149,7 @@ class ParticleOverlayWidget(QWidget):
 
         self.emitters.append(ParticleEmitter(particleSystem=self, name=name, cfg=cfg, hitbox_width=self.pet_hitbox_w, hitbox_height=self.pet_hitbox_h))    
 
-    def emit(self, *, pos_x, pos_y, vel_x, vel_y, acc_x, acc_y, name):
+    def emit_particle(self, *, pos_x, pos_y, vel_x, vel_y, acc_x, acc_y, name):
     
         if self.count >= self.MAX_PARTICLES:
             return
@@ -220,7 +220,7 @@ class ParticleOverlayWidget(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform, True) #type: ignore
 
         painter.save()
 
@@ -279,7 +279,7 @@ class ParticleOverlayWidget(QWidget):
             debug_text = "\n".join(lines)
 
             rect = QRect(10, 20, 300, 200)
-            painter.drawText(rect, Qt.AlignLeft | Qt.AlignTop, debug_text)
+            painter.drawText(rect, Qt.AlignLeft | Qt.AlignTop, debug_text) #type: ignore
 
 
 

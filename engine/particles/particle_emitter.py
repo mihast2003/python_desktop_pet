@@ -143,16 +143,17 @@ class ParticleEmitter:
                 pos_y = center_y + r * math.sin(theta)
             
             case EmitterShape.HITBOX:
-                center = self.particleSystem.pet.anchor - self.emitter_offset
+                center_x = self.particleSystem.pet.anchor.x - self.emitter_offset_x
+                center_y = self.particleSystem.pet.anchor.y - self.emitter_offset_y
 
                 rand_x = random.random()
                 rand_y = random.random()
 
                 border = Vec2(self.cfg.get("modify_border", (0,0))) # get proportions
-                expand = Vec2(self.hitbox.x * -border.x, self.hitbox.y * border.y) # convert to pixel distances
+                expand = Vec2(self.hitbox_x * -border.x, self.hitbox_y * border.y) # convert to pixel distances
 
-                x = center.x + ((self.hitbox.x - expand.x) * rand_x) - (self.hitbox.x - expand.x)/2
-                y = center.y - ((self.hitbox.y + expand.y) * rand_y)
+                x = center_x + ((self.hitbox_x - expand.x) * rand_x) - (self.hitbox_x - expand.x)/2
+                y = center_y - ((self.hitbox_y + expand.y) * rand_y)
 
                 hollow: bool = self.cfg.get("hollow", False)
                 if hollow:
@@ -238,7 +239,7 @@ class ParticleEmitter:
         vel_x, vel_y = vel
         acc_x, acc_y = acceleration
 
-        self.particleSystem.emit(
+        self.particleSystem.emit_particle(
             pos_x=pos_x,
             pos_y=pos_y,
             vel_x=vel_x,
