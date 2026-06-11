@@ -114,7 +114,7 @@ class Pet(QWidget): # main logic
 
         self.stay_on_window_when_resize = RENDER_CONFIG.get("stay_on_window_when_resize", False) 
         
-        self.mover = Mover(self)
+        # self.mover = Mover(self)
         self.anchor = Vec2(500, 500)
 
         self.primary_screen = QApplication.primaryScreen()
@@ -125,15 +125,16 @@ class Pet(QWidget): # main logic
         self.taskbar_top = screen.availableGeometry().bottom() # Taskbar position detection
         self.mover.set_position(init_pos.x, self.taskbar_top + init_pos.y + 1) # set initial position
 
-        self.particles = ParticleOverlayWidget(pet=self)
-        
-        self.anchor = Vec2(init_pos.x, self.taskbar_top + init_pos.y + 1)
+        # self.anchor = Vec2(init_pos.x, self.taskbar_top + init_pos.y + 1)
 
         cfg_facing = RENDER_CONFIG.get("default_facing")
         self.facing = Facing.__members__.get(cfg_facing, Facing.RIGHT)  # type: ignore # defining dacing direction
 
         self.behaviour_resolver = BehaviourResolver(self)
 
+        self.windowsOverlay = WindowsOverlay(self)
+        self.particles = ParticleOverlayWidget(pet=self)
+        
         h = screen.availableGeometry().height()
         initial_state = INITIAL_STATE.get("default", next(iter(INITIAL_STATE))) #either get the "default" from the INITIAL STATE, or the first item in the STATES dictinary
         
@@ -141,6 +142,7 @@ class Pet(QWidget): # main logic
 
         max_measurement = max(max_bounds_w, max_bounds_h)
         self.resize_keep_anchor(int(max_measurement * self.scale * 2), int(max_measurement * self.scale * 2))
+
         anim_name = RENDER_CONFIG.get("hitbox_from_animation")
         if anim_name not in self.animations:
             cfg = STATES[initial_state]      # gets the config for the state from states.py
@@ -150,8 +152,6 @@ class Pet(QWidget): # main logic
 
         self.state_machine = StateMachine(pet=self, configs=STATES, initial=initial_state) # set initial state
         self.click_detector = ClickDetector(pet=self) #initialising ClickDetector
-
-        self.windowsOverlay = WindowsOverlay(self)
 
         self.last_mouse_pos = Vec2()
 
@@ -242,7 +242,7 @@ class Pet(QWidget): # main logic
 
         # print("on state change", end="")
         # self.mover.set_position(self.anchor) #type: ignore
-        self.mover.set_position(self.anchor.x, self.anchor.y)
+        # self.mover.set_position(self.anchor.x, self.anchor.y)
         # self.mover.set_position(self.anchor.x, self.anchor.y)
         self.mover.move_to(target_x, target_y, type)
 
@@ -311,8 +311,6 @@ class Pet(QWidget): # main logic
         self.windowsOverlay.update_frame()
     
         # --- STATE / SIMULATION PHASE ---
-        self.animator.update(dt)
-        arrived = self.mover.update(dt)
         
         # Apply parent window movement
         followed_parent = self._follow_parent_window()
@@ -541,7 +539,6 @@ class Pet(QWidget): # main logic
         print("new scale", self.scale)
 
     def update_hitbox_size_and_drag_offset(self, frame):
-            
             if not frame:
                 frame = self.animator.frame()
                       
@@ -549,6 +546,7 @@ class Pet(QWidget): # main logic
             self.hitbox_height = frame.height() * self.scale
 
             self.windowsOverlay.update_hitbox(self.hitbox_width, self.hitbox_height)
+            self.particles.update_hitbox(self.hitbox_width, self.hitbox_height)
 
             # print(self.hitbox_height)
             # print(self.hitbox_width)

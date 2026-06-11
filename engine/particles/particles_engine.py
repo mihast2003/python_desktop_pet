@@ -155,6 +155,7 @@ class ParticleOverlayWidget(QWidget):
             return
         
         anim_id = self.anim_name_to_id[name]
+        
 
         i = self.count
 
@@ -185,7 +186,7 @@ class ParticleOverlayWidget(QWidget):
         self.emitters = [e for e in self.emitters if not e.done] #pruning emitters
 
         # --- PARTICLES ---
-        print("self count is ", self.count)
+        # print("self count is ", self.count) # printing particle count
         i = 0
         while i < self.count:
             if self.age[i] >= self.anim_lifetimes_by_id[self.type_id[i]]:
@@ -211,7 +212,7 @@ class ParticleOverlayWidget(QWidget):
             self.particles_by_type[emitter.name] += emitter.emitted  # shows only total emitted particles
 
 
-        print("(", self.particles_by_type["dirt"], ", ", time.perf_counter() - t0, ")")
+        print("( particles \"dirt\"", self.particles_by_type["dirt"], ", time spent", time.perf_counter() - t0, ")")
 
 
     # --- DRAWING ---
