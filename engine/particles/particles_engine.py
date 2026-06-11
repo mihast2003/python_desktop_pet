@@ -247,8 +247,8 @@ class ParticleOverlayWidget(QWidget):
             true_pos_x = x / self.scale
             true_pos_y = y / self.scale
 
-            offset_x = frame.width() / 2
-            offset_y = frame.height() / 2
+            offset_x = frame.width() / 2 * self.scale   # added multiplication by scale so true pos is actually true pos
+            offset_y = frame.height() / 2 * self.scale
 
             corner_x = int(true_pos_x - offset_x)
             corner_y = int(true_pos_y - offset_y)

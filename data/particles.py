@@ -22,7 +22,7 @@ PARTICLES = {
         },
 
         "emitter_shape": "RECTANGLE",
-        "point1": (-1, 1), "point2": (1, 1),
+        "point1": (-1, -1), "point2": (1, -1),
         "round_square": 0,    # from 0 (rectangle) to 1 (ellipse)
         "modify_border": (0.0, 0.0),
         "emitter_offset": (0, 0), 
@@ -32,11 +32,11 @@ PARTICLES = {
         "duration": 1, #duration of emission
         "rate_over_time": 10,
         "random_timing": 1, # preferrably from 0 to 1, random offset to emition intervals
-        "total_count": 100000,
+        "total_count": 100,
 
         "lifetime": 10, #lifetime of each particle
-        "start_vel": (100, 350),
-        "start_acceleration": (0, -20),
+        "start_vel": (0, 200),
+        "start_acceleration": (0, -1000),
         "start_size": 1,
     },
 
