@@ -59,6 +59,9 @@ class ParticleOverlayWidget(QWidget):
 
         self.emitters = []
 
+        self.emitters_by_type = defaultdict(int)
+        self.particles_by_type = defaultdict(int)
+
         self.MAX_PARTICLES = RENDER_CONFIG.get("max_particle_count", 1000)
         MAX_PARTICLES = self.MAX_PARTICLES
 
@@ -175,7 +178,6 @@ class ParticleOverlayWidget(QWidget):
         self.count += 1
 
     def update_logic(self, dt):
-
         t0 = time.perf_counter()
 
         # --- EMITTERS ---
@@ -213,6 +215,7 @@ class ParticleOverlayWidget(QWidget):
 
 
         print("( particles \"dirt\"", self.particles_by_type["dirt"], ", time spent", time.perf_counter() - t0, ")")
+        
 
 
     # --- DRAWING ---
@@ -227,6 +230,8 @@ class ParticleOverlayWidget(QWidget):
 
         # painter.scale(self.scale, self.scale)
 
+        print("count is", self.count)
+
         for i in range(self.count):
             x = self.pos_x[i]
             y = self.pos_y[i]
@@ -235,6 +240,7 @@ class ParticleOverlayWidget(QWidget):
             frame = get_frame(anim, self.age[i])
 
             if not frame:
+                print("frame did not load")
                 continue
 
             # draw sprite so its middle is at given possition
@@ -253,34 +259,34 @@ class ParticleOverlayWidget(QWidget):
 
             painter.drawPixmap(corner_x, corner_y, frame)
 
-            # painter.setPen(QPen(Qt.red, 3))
-            # painter.drawEllipse(true_pos_x, true_pos_y, 50, 50)
+            painter.setPen(QPen(Qt.red, 3)) #type: ignore
+            painter.drawEllipse(int(true_pos_x), int(true_pos_y), 50, 50)
 
             # print("drawing a particle at", p.pos.x(), p.pos.y())
 
             painter.restore()
 
-            # --- DEBUG TEXT ---
-            painter.setPen(QColor(255, 255, 255))
-            painter.setFont(QFont("Consolas", 10))
+        # --- DEBUG TEXT ---
+        painter.setPen(QColor(255, 255, 255))
+        painter.setFont(QFont("Consolas", 10))
 
-            lines = []
+        lines = []
 
-            for type_name, emitter_count in self.emitters_by_type.items():
-                particle_count = self.particles_by_type.get(type_name, 0)
-
-                lines.append(
-                    f'{emitter_count} emitters of type "{type_name}" – {particle_count} particles'
-                )
+        for type_name, emitter_count in self.emitters_by_type.items():
+            particle_count = self.particles_by_type.get(type_name, 0)
 
             lines.append(
-                f' \n {(self.count)} active particles, {self.MAX_PARTICLES - self.count} free particles'
+                f'{emitter_count} emitters of type "{type_name}" – {particle_count} particles'
             )
 
-            debug_text = "\n".join(lines)
+        lines.append(
+            f' \n {(self.count)} active particles, {self.MAX_PARTICLES - self.count} free particles'
+        )
 
-            rect = QRect(10, 20, 300, 200)
-            painter.drawText(rect, Qt.AlignLeft | Qt.AlignTop, debug_text) #type: ignore
+        debug_text = "\n".join(lines)
+
+        rect = QRect(10, 20, 300, 200)
+        painter.drawText(rect, Qt.AlignLeft | Qt.AlignTop, debug_text) #type: ignore
 
 
 

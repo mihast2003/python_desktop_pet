@@ -41,9 +41,9 @@ class ParticleEmitter:
         self.radius = self.cfg.get("radius", 1)
         self.hollow: bool = self.cfg.get("hollow", False)
         self.border = Vec2(self.cfg.get("modify_border", (0,0))) # get proportions
-        print("border is", self.border.x)
+        # print("border is", self.border.x)
         self.expand: Vec2 = Vec2(self.hitbox_x * self.border.x, self.hitbox_y * self.border.y / 2) # convert to pixel distances
-        print("expand is", self.expand.x)
+        # print("expand is", self.expand.x)
         self.circlage = self.cfg.get("round_square")
 
         self.start_vel = self.cfg.get("start_vel", (0, 0))

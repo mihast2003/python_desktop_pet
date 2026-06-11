@@ -294,6 +294,8 @@ class Pet(QWidget): # main logic
             self.profiler.enable()  # start profiling
 
         self.particles.update_logic(dt) #updating particles widget
+        
+        self.particles.draw() #updating particles widget
 
         # --- INPUT PHASE ---
         if self.mover.movement_type == MovementType.DRAG:
@@ -383,6 +385,7 @@ class Pet(QWidget): # main logic
             # print("triggering update because", index, self.prev_index)
             self.update()  # repaint
         self.prev_index = index
+
 
     def clamp_position_to_screen(self):
         clamped_x = self.anchor.x
@@ -528,7 +531,7 @@ class Pet(QWidget): # main logic
         first_frame = self.animations[STATES[initial_state]["animation"]]["frames"][0]
         self.pixel_ratio = (h * percentage) / first_frame.height() / self.dpi_scale
         print("screen height", h)
-        print("dirst frame h:", first_frame.height())
+        print("first frame h:", first_frame.height())
         print("pixel ratio", self.pixel_ratio)
 
         self.scale = self.pixel_ratio * self.dpi_scale
@@ -560,12 +563,10 @@ class Pet(QWidget): # main logic
             self.click_detector.press(event.globalPosition())
             self.last_mouse_pos = self._mouse_vec(event)
 
-
     def mouseMoveEvent(self, event):
         self.click_detector.move(event.globalPosition())
 
         self.last_mouse_pos = self._mouse_vec(event)
-
 
     def mouseReleaseEvent(self, event):
         self.click_detector.release()
