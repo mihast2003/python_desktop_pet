@@ -226,9 +226,9 @@ class ParticleOverlayWidget(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.SmoothPixmapTransform, True) #type: ignore
 
-        painter.save()
+        # painter.save()
 
-        # painter.scale(self.scale, self.scale)
+        painter.scale(self.scale, self.scale)
 
         # print("count is", self.count) # for debugging
 
@@ -255,9 +255,9 @@ class ParticleOverlayWidget(QWidget):
 
             painter.save()
 
-            painter.scale(self.scale, self.scale)
+            # painter.scale(self.scale, self.scale)
 
-            # painter.drawPixmap(corner_x, corner_y, frame)
+            painter.drawPixmap(corner_x, corner_y, frame)
 
             painter.setPen(QPen(Qt.red, 3)) #type: ignore
             painter.drawEllipse(int(true_pos_x), int(true_pos_y), 50, 50)
