@@ -13,12 +13,12 @@ from ctypes.wintypes import MSG
 import win32con
 
 from enum import Enum, auto
-import warnings
 
 from data.states import STATES, INITIAL_STATE
 from data.animations import ANIMATIONS
 from data.render_config import RENDER_CONFIG
 
+from engine.asset_loader import AssetLoader
 from engine.state_machine import StateMachine
 from engine.click_detector import ClickDetector
 from engine.mover import Mover
@@ -28,6 +28,9 @@ from engine.vec2 import Vec2
 from engine.behaviour_resolver import BehaviourResolver
 from engine.windows_detector import WindowsOverlay
 from engine.hotkey_manager import HotkeyManager
+from engine.particles.particles_engine import ParticleOverlayWidget
+
+import cProfile
 
 
 from data.variables import VARIABLES
@@ -37,20 +40,6 @@ LOGIC_FPS = RENDER_CONFIG.get("logic_FPS", 60) #fps of logic processes
 
 #region --- HELPERS ---
 # ANIMATION STUFF
-def load_frames(folder):  # function for loading frames, recieves a string path to a folder, returns a list of png files( converted to PixMap ) in name order
-    frames = []
-
-    files = sorted(                # get the png files
-    f for f in os.listdir(folder)
-    if f.lower().endswith(".png")
-    )
-
-    for i, filename in enumerate(files):
-        pix = QPixmap(os.path.join(folder, filename))
-
-        frames.append(pix)
-
-    return frames
 
 def scan_animation_bounds(frames):
     max_w = 0
@@ -71,12 +60,16 @@ class Pet(QWidget): # main logic
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)   # type: ignore # QT stuff idk idc
         self.setAttribute(Qt.WA_TranslucentBackground) # type: ignore
 
+        # instanciating AssetLoader
+        # self.loader = AssetLoader()
+
         # get all animations in a dictionary
         self.animations = {}
         base = os.path.dirname(os.path.abspath(__file__))
 
         max_bounds_w = 0
         max_bounds_h = 0
+        print("----- LOADING ANIMATIONS -----")
 
         for name in list(ANIMATIONS):
             cfg = ANIMATIONS[name]
@@ -84,7 +77,7 @@ class Pet(QWidget): # main logic
 
             frames = []
 
-            frames = load_frames(folder)
+            frames = AssetLoader.load_frames(folder=folder)
 
             if not frames:
                 raise RuntimeError(f"No frames found for animation '{name}'")
@@ -110,6 +103,9 @@ class Pet(QWidget): # main logic
         self.hotkeys = HotkeyManager(self) # not doing anything for now, meh
         # self.hotkeys.messagag()
 
+        self.profiler = cProfile.Profile()
+        self.not_first_time_update: bool = False
+
         self.hitbox_width = 0
         self.hitbox_height = 0
 
@@ -122,9 +118,16 @@ class Pet(QWidget): # main logic
         self.anchor = Vec2(500, 500)
 
         self.primary_screen = QApplication.primaryScreen()
+        init_pos = Vec2(RENDER_CONFIG.get("initial_position", (100, 0)))
+        
+        self.mover = Mover(self)
         screen = QApplication.primaryScreen() # Screen detection
         self.taskbar_top = screen.availableGeometry().bottom() # Taskbar position detection
-        self.mover.set_position(100, self.taskbar_top + 1) # set initial position
+        self.mover.set_position(init_pos.x, self.taskbar_top + init_pos.y + 1) # set initial position
+
+        self.particles = ParticleOverlayWidget(pet=self)
+        
+        self.anchor = Vec2(init_pos.x, self.taskbar_top + init_pos.y + 1)
 
         cfg_facing = RENDER_CONFIG.get("default_facing")
         self.facing = Facing.__members__.get(cfg_facing, Facing.RIGHT)  # type: ignore # defining dacing direction
@@ -138,6 +141,12 @@ class Pet(QWidget): # main logic
 
         max_measurement = max(max_bounds_w, max_bounds_h)
         self.resize_keep_anchor(int(max_measurement * self.scale * 2), int(max_measurement * self.scale * 2))
+        anim_name = RENDER_CONFIG.get("hitbox_from_animation")
+        if anim_name not in self.animations:
+            cfg = STATES[initial_state]      # gets the config for the state from states.py
+            anim_name = cfg.get("animation")
+        frame = self.animations[anim_name]["frames"][0]
+        self.update_hitbox_size_and_drag_offset(frame=frame) # initial hitbox update
 
         self.state_machine = StateMachine(pet=self, configs=STATES, initial=initial_state) # set initial state
         self.click_detector = ClickDetector(pet=self) #initialising ClickDetector
@@ -149,7 +158,7 @@ class Pet(QWidget): # main logic
         self.drag_offset = Vec2(0,0)
         self.rotation_angle = 0
 
-        self.update_hitbox_size_and_drag_offset() # initial hitbox update
+        print("----- LOADING SUCCESSFUL -----")
 
         # Timer for updating logic
         self.timer = QTimer()
@@ -163,6 +172,10 @@ class Pet(QWidget): # main logic
         if self.parent_window_hwnd:
             print(f"Position: {self.anchor.x}, {self.anchor.y}\nState: {self.current_state}\nParent window: {self.parent_window_hwnd}\nParent window position: {self.parent_window_rect_last}")
         
+
+        self.particles.raise_() #might remove later if not needed
+        self.particles.start_emitting("dirt")   
+
         self.variables.set("times_clicked_this_state", 0)
         self.variables.set("time_spent_in_this_state", 0)
 
@@ -229,6 +242,8 @@ class Pet(QWidget): # main logic
 
         # print("on state change", end="")
         # self.mover.set_position(self.anchor) #type: ignore
+        self.mover.set_position(self.anchor.x, self.anchor.y)
+        # self.mover.set_position(self.anchor.x, self.anchor.y)
         self.mover.move_to(target_x, target_y, type)
 
        
@@ -273,6 +288,12 @@ class Pet(QWidget): # main logic
 
         t0 = time.perf_counter()
 
+        if self.not_first_time_update:
+            self.profiler.disable()  # start profiling
+            self.profiler.enable()  # start profiling
+
+        self.particles.update_logic(dt) #updating particles widget
+
         # --- INPUT PHASE ---
         if self.mover.movement_type == MovementType.DRAG:
             self.mover.update_drag_target(self.last_mouse_pos, dt)
@@ -288,6 +309,10 @@ class Pet(QWidget): # main logic
         # print(surface)
 
         self.windowsOverlay.update_frame()
+    
+        # --- STATE / SIMULATION PHASE ---
+        self.animator.update(dt)
+        arrived = self.mover.update(dt)
         
         # Apply parent window movement
         followed_parent = self._follow_parent_window()
@@ -509,13 +534,16 @@ class Pet(QWidget): # main logic
 
         self.scale = self.pixel_ratio * self.dpi_scale
 
+        self.particles.update_dpi_and_scale(self.scale)
+        self.particles.update_taskbar_position(self.taskbar_top)
+
         print("screen dpi", self.dpi_scale)
         print("new scale", self.scale)
 
-    def update_hitbox_size_and_drag_offset(self):
-            frame = self.animator.frame()
+    def update_hitbox_size_and_drag_offset(self, frame):
+            
             if not frame:
-                return
+                frame = self.animator.frame()
                       
             self.hitbox_width = frame.width() * self.scale
             self.hitbox_height = frame.height() * self.scale
@@ -623,4 +651,5 @@ if __name__ == "__main__": # QT stuff, idk idc
     pet = Pet()
     # pet.move(300, 900)
     pet.show()
+    pet.particles.raise_()  # particles above
     sys.exit(app.exec())

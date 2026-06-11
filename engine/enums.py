@@ -39,3 +39,15 @@ class SurfaceType(Enum):
     TOP = auto()
     RIGHT = auto()
     BOTTOM = auto()
+
+class EmitterType(Enum):
+    BURST = auto()
+    CONTINUOUS = auto()
+
+
+class EmitterShape(Enum):
+    DOT = auto()
+    LINE = auto()
+    CIRCLE = auto()
+    HITBOX = auto()
+    RECTANGLE = auto()
