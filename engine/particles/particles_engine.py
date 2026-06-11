@@ -214,7 +214,7 @@ class ParticleOverlayWidget(QWidget):
             self.particles_by_type[emitter.name] += emitter.emitted  # shows only total emitted particles
 
 
-        print("( particles \"dirt\"", self.particles_by_type["dirt"], ", time spent", time.perf_counter() - t0, ")")
+        # print("( particles \"dirt\"", self.particles_by_type["dirt"], ", time spent", time.perf_counter() - t0, ")") # for debugging
         
 
 
@@ -230,7 +230,7 @@ class ParticleOverlayWidget(QWidget):
 
         # painter.scale(self.scale, self.scale)
 
-        print("count is", self.count)
+        # print("count is", self.count) # for debugging
 
         for i in range(self.count):
             x = self.pos_x[i]
@@ -257,7 +257,7 @@ class ParticleOverlayWidget(QWidget):
 
             painter.scale(self.scale, self.scale)
 
-            painter.drawPixmap(corner_x, corner_y, frame)
+            # painter.drawPixmap(corner_x, corner_y, frame)
 
             painter.setPen(QPen(Qt.red, 3)) #type: ignore
             painter.drawEllipse(int(true_pos_x), int(true_pos_y), 50, 50)
