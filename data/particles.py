@@ -17,7 +17,7 @@ PARTICLES = {
         "folder": "particles/dirt",
         "fps": 2,
         "loop": False,
-        "holds": {
+        "holds": { # holds dont work
             2: 1,
         },
 
@@ -29,15 +29,15 @@ PARTICLES = {
         "hollow": False,
         "emit_bottom": True,
 
-        "duration": 1, #duration of emission
-        "rate_over_time": 10,
-        "random_timing": 1, # preferrably from 0 to 1, random offset to emition intervals
-        "total_count": 100,
+        "duration": 0.3, #duration of emission
+        "rate_over_time": 200,
+        "random_timing": 0.8, # preferrably from 0 to 1, random offset to emition intervals
+        "total_count": 300,
 
-        "lifetime": 10, #lifetime of each particle
+        "lifetime": 2, #lifetime of each particle
         "start_vel": (0, 200),
         "start_acceleration": (0, -1000),
-        "start_size": 1,
+        "start_size": 0.8,
     },
 
     "sleep_zzz": {
@@ -49,7 +49,7 @@ PARTICLES = {
         "emitter_offset": (1, 1),
         "duration": 0.5,
         "rate_over_time": 1,
-        "start_vel": 1,
-        "start_size": 1,
+        "start_vel": (0, 200),
+        "start_size": 1, 
     },
 }

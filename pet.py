@@ -28,7 +28,7 @@ from engine.vec2 import Vec2
 from engine.behaviour_resolver import BehaviourResolver
 from engine.windows_detector import WindowsOverlay
 from engine.hotkey_manager import HotkeyManager
-from engine.particles.particles_engine import ParticleOverlayWidget
+from engine.particles.particles_engine_openGL import ParticleOverlayWidget
 
 import cProfile
 
@@ -77,7 +77,7 @@ class Pet(QWidget): # main logic
 
             frames = []
 
-            frames = AssetLoader.load_frames(folder=folder)
+            frames = AssetLoader.load_QPixmap_frames(folder=folder)
 
             if not frames:
                 raise RuntimeError(f"No frames found for animation '{name}'")

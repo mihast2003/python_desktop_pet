@@ -187,7 +187,6 @@ class OpenGLWidget(QOpenGLWidget):
         frame_width = 1.0 / 6.0
 
         for p in self.particles:
-
             frame_id = max(0, min(5, int(p["frame"])))
 
             x = p["x"]

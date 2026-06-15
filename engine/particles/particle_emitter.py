@@ -20,7 +20,7 @@ class ParticleEmitter:
         self.time = 0.0
         self.emitted = 0
         self.elapsed = 0
-        self.done = False
+        self.done_emitting = False
 
         shape = cfg.get("emitter_shape")
         self.emitter_shape = EmitterShape.__members__.get(shape, EmitterShape.DOT)
@@ -56,7 +56,7 @@ class ParticleEmitter:
 
 
     def update(self, dt):
-        if self.done:
+        if self.done_emitting:
             return
 
         # math to determine how many particles to emit
@@ -82,8 +82,8 @@ class ParticleEmitter:
 
 
         if self.emitted >= self.total_count or self.time >= self.duration:
-            self.done = True
-            print("done")
+            self.done_emitting = True
+            # print("done")
 
     def spawn_particle(self):
         # randomize vel, lifetime, etc
@@ -163,7 +163,6 @@ class ParticleEmitter:
                 pos_y = y
 
             case EmitterShape.RECTANGLE:
-
                 # corner1 = self.particleSystem.pet.anchor + Vec2(-self.hitbox_x/2 -expand.x, +expand.y) - self.emitter_offset
                 corner1 = Vec2(anchor_x - hitbox_x/2 - expand.x - emitter_offset_x, anchor_y + expand.y - emitter_offset_y)
 
@@ -239,6 +238,8 @@ class ParticleEmitter:
         vel_x, vel_y = vel
         acc_x, acc_y = acceleration
 
+        size = self.start_size
+
         self.particleSystem.emit_particle(
             pos_x=pos_x,
             pos_y=pos_y,
@@ -246,5 +247,6 @@ class ParticleEmitter:
             vel_y=vel_y,
             acc_x=acc_x,
             acc_y=acc_y,
-            name=self.name
+            name=self.name,
+            size = size,
         )
