@@ -21,8 +21,8 @@ PARTICLES = {
             2: 1,
         },
 
-        "emitter_shape": "RECTANGLE",
-        "point1": (-1, -1), "point2": (1, -1),
+        "emitter_shape": "LINE",
+        "point1": (-0.5, 0), "point2": (0.5, 0),
         "round_square": 0,    # from 0 (rectangle) to 1 (ellipse)
         "modify_border": (0.0, 0.0),
         "emitter_offset": (0, 0), 
@@ -35,9 +35,9 @@ PARTICLES = {
         "total_count": 300,
 
         "lifetime": 3, #lifetime of each particle
-        "start_vel": (0, 400),
+        "start_vel": (0, 500),
         "start_acceleration": (0, -2500),
-        "start_size": 0.4,
+        "start_size": 0.6,
     },
 
     "sleep_zzz": {

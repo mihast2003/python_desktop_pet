@@ -115,7 +115,7 @@ class ParticleEmitter:
             case EmitterShape.LINE:
                 point1 = Vec2(self.cfg.get("point1"))
                 point2 = Vec2(self.cfg.get("point2"))
-                if not point1 and not point2:
+                if not point1 or not point2:
                     print("NO POINTS TO FORM A LINE, CHECK CONFIG")
 
                 t = random.random()
