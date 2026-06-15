@@ -29,15 +29,15 @@ PARTICLES = {
         "hollow": False,
         "emit_bottom": True,
 
-        "duration": 0.3, #duration of emission
+        "duration": 0.1, #duration of emission
         "rate_over_time": 200,
-        "random_timing": 0.8, # preferrably from 0 to 1, random offset to emition intervals
+        "random_timing": 1, # preferrably from 0 to 1, random offset to emition intervals
         "total_count": 300,
 
-        "lifetime": 2, #lifetime of each particle
-        "start_vel": (0, 200),
-        "start_acceleration": (0, -1000),
-        "start_size": 0.8,
+        "lifetime": 3, #lifetime of each particle
+        "start_vel": (0, 400),
+        "start_acceleration": (0, -2500),
+        "start_size": 0.4,
     },
 
     "sleep_zzz": {

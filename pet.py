@@ -173,9 +173,8 @@ class Pet(QWidget): # main logic
         if self.parent_window_hwnd:
             print(f"Position: {self.anchor.x}, {self.anchor.y}\nState: {self.current_state}\nParent window: {self.parent_window_hwnd}\nParent window position: {self.parent_window_rect_last}")
         
-
-        self.particles.raise_() #might remove later if not needed
-        self.particles.start_emitting("dirt")   
+        # self.particles.raise_() #might remove later if not needed
+        # self.particles.start_emitting("dirt")   
 
         self.variables.set("times_clicked_this_state", 0)
         self.variables.set("time_spent_in_this_state", 0)
@@ -249,6 +248,10 @@ class Pet(QWidget): # main logic
 
        
     def on_state_exit(self, state): #just does nothing when the state is done
+        print("exiting state", state)
+        if state == "FALLING":
+            self.particles.raise_() #might remove later if not needed
+            self.particles.start_emitting("dirt") 
         pass
 
     def play_animation(self, anim_name, cfg, isTransitionAnimation = False, isAbletoRotate = False):

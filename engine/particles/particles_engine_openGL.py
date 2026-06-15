@@ -297,7 +297,7 @@ class ParticleOverlayWidget(QOpenGLWidget):
             x = (x_px / self.width()) * 2.0 - 1.0
             y = 1.0 - (y_px / self.height()) * 2.0
 
-            size = 0.02 * self.size_p[i] # size not implemented yet
+            size = 0.02 * self.size_p[i]
 
             sx = size
             sy = size * self.aspect
