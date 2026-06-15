@@ -6,9 +6,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 INPUT = PROJECT_ROOT / "assets" / "particles"
 
 OUT_DIR = Path(__file__).resolve().parent
-
-OUT_ATLAS = OUT_DIR / "atlas.png"
-OUT_META = OUT_DIR / "atlas.py"
+OUT_DIR = OUT_DIR / "atlas" 
+OUT_DIR.mkdir(exist_ok=True)
 
 rows = []
 
@@ -60,10 +59,10 @@ for name, frames, imgs in rows:
     y += row_h
 
 # 4. Save outputs
-atlas.save(OUT_ATLAS)
+atlas.save(OUT_DIR / "atlas.png")
 
-with open(OUT_META, "w") as f:
+with open(OUT_DIR / "atlas.py", "w") as f:
     f.write("ATLAS = ")
     f.write(repr(meta))
 
-print("Done:", OUT_ATLAS, OUT_META)
+print("Done:")
