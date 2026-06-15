@@ -14,7 +14,7 @@ a bit of syntax:
 
 PARTICLES = {
     "dirt": {
-        "folder": "particles/dirt",
+        "folder": "assets/particles/dirt",
         "fps": 2,
         "loop": False,
         "holds": { # holds dont work
@@ -41,7 +41,7 @@ PARTICLES = {
     },
 
     "sleep_zzz": {
-        "folder": "particles/sleep_zzz",
+        "folder": "assets/particles/sleep_zzz",
         "fps": 6,
         "loop": True,
 

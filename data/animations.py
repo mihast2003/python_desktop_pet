@@ -5,13 +5,13 @@
 
 ANIMATIONS = {
     "idle": {
-        "folder": "animations/idle",
+        "folder": "assets/animations/idle",
         "fps": 8,
         "loop": True,
     },
 
     "blink": {
-        "folder": "animations/blink",
+        "folder": "assets/animations/blink",
         "fps": 8,
         "loop": False,
         "holds": {
@@ -20,13 +20,13 @@ ANIMATIONS = {
     },
 
     "roll": {
-        "folder": "animations/roll",
+        "folder": "assets/animations/roll",
         "fps": 12,
         "loop": True,
     },
 
     "look_around": {
-        "folder": "animations/look_around",
+        "folder": "assets/animations/look_around",
         "fps": 8,
         "loop": True,
         "holds": {
@@ -36,27 +36,27 @@ ANIMATIONS = {
     },
 
     "held_by_the_nose": {
-        "folder": "animations/held_by_the_nose",
+        "folder": "assets/animations/held_by_the_nose",
         "fps": 12,
         "loop": True,
     },
 
     "grow": {
-        "folder": "animations/grow",
+        "folder": "assets/animations/grow",
         "fps": 12,
         "loop": False,
         "times_to_loop": 3,
     },
 
     "standing_up": {
-        "folder": "animations/standing_up",
+        "folder": "assets/animations/standing_up",
         "fps": 12,
         "loop": False,
         "times_to_loop": 1,
     },
 
     "trollface": {
-        "folder": "animations/trollface",
+        "folder": "assets/animations/trollface",
         "fps": 60,
         "loop": False,
         "holds": {
