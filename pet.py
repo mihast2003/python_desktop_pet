@@ -173,17 +173,28 @@ class Pet(QWidget): # main logic
         if self.parent_window_hwnd:
             print(f"Position: {self.anchor.x}, {self.anchor.y}\nState: {self.current_state}\nParent window: {self.parent_window_hwnd}\nParent window position: {self.parent_window_rect_last}")
         
-        # self.particles.raise_() #might remove later if not needed
-        # self.particles.start_emitting("dirt")   
-
         self.variables.set("times_clicked_this_state", 0)
         self.variables.set("time_spent_in_this_state", 0)
 
         cfg = STATES[state]      # gets the config for the state from states.py
         anim_name = cfg.get("animation")
 
-        self.behaviour_name = cfg.get("behaviour", "STATIONARY") # engage behaviours.py
+        next_behaviour = cfg.get("behaviour", "STATIONARY") # engage behaviours.py
+        self.resolve_behavior(next_behaviour, cfg)
+
+        isAbletoRotate = True if self.mover.movement_type == MovementType.DRAG else False
+        self.play_animation(anim_name=anim_name, cfg=cfg, isAbletoRotate=isAbletoRotate)
+
+       
+    def on_state_exit(self, state): #just does nothing when the state is done
+        print("exiting state", state)
+        if state == "FALLING":
+            self.emit_particles("dirt") 
+        pass
+
+    def resolve_behavior(self, behaviour, cfg):
         # print(self.behaviour_name)
+        self.behaviour_name = behaviour
         target_x, target_y, type, mover_settings, collision_settings, parenting_settings = self.behaviour_resolver.resolve(self.behaviour_name)
         self.surface_to_collide_with = collision_settings
         self.surfaces_to_parent_to = parenting_settings
@@ -201,7 +212,6 @@ class Pet(QWidget): # main logic
             jump_velocity = mover_settings.get("jump_velocity", self.mover.jump_velocity)
             gravity = mover_settings.get("gravity", self.mover.gravity)
             self.mover.set_settings(acceleration=acceleration, max_speed=max_speed, slow_radius=slow_radius, snap_distance=snap_distance, max_angle=max_angle, inertia=inertia, damping=damping, jump_velocity=jump_velocity,gravity=gravity)
-
 
         movement_settings = cfg.get("settings", {}) # get mover settings from states.py
 
@@ -221,10 +231,6 @@ class Pet(QWidget): # main logic
         else:
             self.mover.reset_settings()
 
-        isAbletoRotate = True if type == MovementType.DRAG else False
-
-        self.play_animation(anim_name=anim_name, cfg=cfg, isAbletoRotate=isAbletoRotate)
-
         if type == MovementType.STATIONARY: # hardcoded doing nothing for stationary
             return
 
@@ -239,20 +245,12 @@ class Pet(QWidget): # main logic
             self.mover.begin_drag(pos)
             return
 
-
         # print("on state change", end="")
-        # self.mover.set_position(self.anchor) #type: ignore
-        # self.mover.set_position(self.anchor.x, self.anchor.y)
-        # self.mover.set_position(self.anchor.x, self.anchor.y)
         self.mover.move_to(target_x, target_y, type)
 
-       
-    def on_state_exit(self, state): #just does nothing when the state is done
-        print("exiting state", state)
-        if state == "FALLING":
-            self.particles.raise_() #might remove later if not needed
-            self.particles.start_emitting("dirt") 
-        pass
+    def emit_particles(self, name):
+        self.particles.raise_() # raises particles above pet
+        self.particles.start_emitting(name) 
 
     def play_animation(self, anim_name, cfg, isTransitionAnimation = False, isAbletoRotate = False):
         anim_name = anim_name
