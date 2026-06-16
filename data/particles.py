@@ -15,7 +15,7 @@ a bit of syntax:
 PARTICLES = {
     "dirt": {
         "folder": "assets/particles/dirt",
-        "fps": 2,
+        "fps": 4,
         "loop": False,
         "holds": { # holds dont work
             2: 1,
@@ -30,14 +30,14 @@ PARTICLES = {
         "emit_bottom": True,
 
         "duration": 0.1, #duration of emission
-        "rate_over_time": 200,
+        "rate_over_time": 100,
         "random_timing": 1, # preferrably from 0 to 1, random offset to emition intervals
         "total_count": 300,
 
         "lifetime": 3, #lifetime of each particle
         "start_vel": (0, 500),
         "start_acceleration": (0, -2500),
-        "start_size": 0.6,
+        "start_size": 0.4,
     },
 
     "sleep_zzz": {
@@ -47,8 +47,8 @@ PARTICLES = {
 
         "emitter_shape": "DOT",
         "emitter_offset": (1, 1),
-        "duration": 0.5,
-        "rate_over_time": 1,
+        "duration": 1,
+        "rate_over_time": 100,
         "start_vel": (0, 200),
         "start_size": 1, 
     },

@@ -159,7 +159,7 @@ class Pet(QWidget): # main logic
         self.state_machine = StateMachine(pet=self, configs=STATES, initial=initial_state) # set initial state
         self.click_detector = ClickDetector(pet=self) #initialising ClickDetector
 
-        print("----- LOADING SUCCESSFUL -----")
+        print("----- LOADING SUCCESSFUL -----\n")
 
         # Timer for updating logic
         self.timer = QTimer()

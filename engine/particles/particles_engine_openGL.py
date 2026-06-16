@@ -4,12 +4,17 @@ from PySide6.QtGui import QColor, QPainter, QPen, QFont
 from PySide6.QtWidgets import QWidget, QApplication, QLabel
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
+import json
+
+from pathlib import Path
+
 from engine.asset_loader import AssetLoader
 from engine.enums import EmitterShape
 from engine.vec2 import Vec2
 
 from engine.particles.particle_emitter import ParticleEmitter
 from engine.particles.particle import Particle
+from engine.particles.atlas_generator import AtlasGenerator
 
 from OpenGL.GL import * #type: ignore
 
@@ -34,9 +39,9 @@ def get_frame_index(anim, age):
     frame_index = int(age * anim["fps"])
 
     if anim["loop"]:
-        frame_index %= len(anim["frames"])
+        frame_index %= anim["frame_count"]
     else:
-        frame_index = min(frame_index, len(anim["frames"]) - 1)
+        frame_index = min(frame_index, anim["frame_count"] - 1)
 
     return frame_index
 
@@ -119,20 +124,21 @@ class ParticleOverlayWidget(QOpenGLWidget):
         #for references
         self.anim_name_to_id = {}
 
-        current_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # we go back three folders
-        base = os.path.dirname(current_folder)
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # we go back three folders
+        base = os.path.dirname(project_root)
 
-        print("----- LOADING PARTICLES -----")
+
+
+        print("\n----- LOADING PARTICLES -----")
 
         for name in list(PARTICLES):
             cfg = PARTICLES[name]
             folder = os.path.join(base, cfg["folder"])
 
-            frames = []
+            folder = Path(folder)
+            frame_count = len(list(folder.glob("*.png")))
 
-            frames = AssetLoader.load_QPixmap_frames(folder=folder)
-
-            if not frames:
+            if not frame_count:
                 raise RuntimeError(f"No frames found for animation '{name}'")
             
             #registring animations for reference by id
@@ -141,7 +147,7 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
             # precompute lifetime once
             lifetime = (
-                len(frames) / cfg["fps"]
+                frame_count / cfg["fps"]
                 if not cfg["loop"]
                 else 1e9)  # effectively infinite
             
@@ -149,13 +155,47 @@ class ParticleOverlayWidget(QOpenGLWidget):
             self.anim_lifetimes_by_id[anim_id] = lifetime
             
             self.animations[anim_id] = { # we enter them by id to then reference by id
-                "frames": frames,
+                "name": name,
+                "frame_count": frame_count,
                 "fps": cfg["fps"],
                 "loop": cfg["loop"],
                 "holds": cfg.get("holds", {}), # holds are not implemented yet
                 "times_to_loop": cfg.get("times_to_loop", 1),
             }
-            print(f"[PARTICLES LOADED] {name}: {len(frames)} frames")
+
+            print(f"[PARTICLES LOADED] {name}: {frame_count} frames")
+
+        # generating particle texture atlas
+        print("Generating atlas:")
+        atlas_generator = AtlasGenerator()
+        atlas_generator._generate_atlas()
+
+        # loading atlas texure
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        atlas_path = "atlas\\atlas.png"
+        config_path = "atlas\\atlas.json"
+        full_atlas_path = os.path.join(base_dir, atlas_path)
+        full_config_path = os.path.join(base_dir, config_path)
+
+        # getting texture atlas
+        print("Getting atlas.png from the folder:", full_atlas_path)
+
+        self.atlas_texture = AssetLoader.load_openGL_texture(full_atlas_path)
+
+        if self.atlas_texture: print("  Success!")
+        else: raise RuntimeError(f"  No atlas.png found at '{full_atlas_path}'")
+
+        # getting json config
+        print("Getting atlas.json from the folder:", full_config_path)
+
+        with open(full_config_path) as f:
+            self.atlas_config = json.load(f)
+
+        if self.atlas_config: print("  Success!")
+        else: raise RuntimeError(f"No atlas.json found at '{full_config_path}'")
+
+        print("----- PARTICLES LOADED -----\n")
+
 
     def update_dpi_and_scale(self, new_scale):
         self.scale = new_scale
@@ -205,7 +245,6 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
         self.count += 1
 
-
     def update_logic(self, dt):
         t0 = time.perf_counter()
 
@@ -250,7 +289,6 @@ class ParticleOverlayWidget(QOpenGLWidget):
     def draw(self):
         self.update()  # triggers paintGL
 
-
     def initializeGL(self):
         # print("START TEST")
         glClearColor(0, 0, 0, 0)
@@ -259,14 +297,6 @@ class ParticleOverlayWidget(QOpenGLWidget):
         glBlendFunc(GL_SRC_ALPHA, GL_ONE)
 
         glEnable(GL_TEXTURE_2D)
-
-        # загрузка текстуры-атласа
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        path = "stars_atlas.png"
-        full_path = os.path.join(base_dir, path)
-        self.atlas_texture = AssetLoader.load_openGL_texture(full_path)
-
-        # print("TEXTURES LOADED:", len(self.textures))
 
     def resizeGL(self, w, h):
         glViewport(0, 0, w, h)
@@ -284,25 +314,29 @@ class ParticleOverlayWidget(QOpenGLWidget):
         vertices = []
         texcoords = []
 
-        # делим нашу текстуру-атлас и выбираем нужный кадр
-        frame_width = 1.0 / 6.0
-
         for i in range(self.count):
             anim = self.animations[self.type_id[i]]
             frame_id = get_frame_index(anim, self.age[i]) # not needed
 
+            name = anim["name"]
+            particle_data = self.atlas_config["particles"][name]
+            frame_data = particle_data["frames"][frame_id]
+
             x_px = self.pos_x[i]
             y_px = self.pos_y[i]
 
+            # conversion from pixels to -1 to 1 (OpenGL coordinates)
             x = (x_px / self.width()) * 2.0 - 1.0
             y = 1.0 - (y_px / self.height()) * 2.0
 
             size = 0.02 * self.size_p[i]
 
+            frame_aspect_ratio = frame_data["w"] / frame_data["h"] # optimisation: should precompute aspect ratios
+ 
             sx = size
-            sy = size * self.aspect
+            sy = size * self.aspect * frame_aspect_ratio
 
-            # скип партиклов за пределами экрана
+            # skipping if whole quad would be outside of screen
             if (
                 x + sx < -1.0 or
                 x - sx > 1.0 or
@@ -313,6 +347,8 @@ class ParticleOverlayWidget(QOpenGLWidget):
                 continue
 
             drawn_particles += 1
+
+            # creating the quad
             vertices.extend([
                 x - sx, y - sy,
                 x + sx, y - sy,
@@ -320,14 +356,21 @@ class ParticleOverlayWidget(QOpenGLWidget):
                 x - sx, y + sy,
             ])
 
-            u0 = frame_id * frame_width
-            u1 = u0 + frame_width
+            # getting uv from the atlas
+            atlas_w = self.atlas_config["atlas_width"]
+            atlas_h = self.atlas_config["atlas_height"]
+
+            u0 = frame_data["x"] / atlas_w
+            u1 = (frame_data["x"] + frame_data["w"]) / atlas_w
+
+            v0 = 1.0 - ((particle_data["y"] + frame_data["h"]) / atlas_h)
+            v1 = 1.0 - (particle_data["y"] / atlas_h)
 
             texcoords.extend([
-                u0, 0.0,
-                u1, 0.0,
-                u1, 1.0,
-                u0, 1.0,
+                u0, v0,
+                u1, v0,
+                u1, v1,
+                u0, v1,
             ])
 
         # end of loop. now we draw

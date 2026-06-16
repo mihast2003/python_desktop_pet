@@ -1,5 +1,6 @@
 from PIL import Image
 from pathlib import Path
+import json
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -11,58 +12,90 @@ OUT_DIR.mkdir(exist_ok=True)
 
 rows = []
 
-# 1. Load all folders
-for folder in sorted(INPUT.iterdir()):
-    if not folder.is_dir():
-        continue
+class AtlasGenerator():
+    def __init__(self) -> None:
+        pass
+        
+    def _generate_atlas(self):
+        """
+        Generates a png texture atlas and a config file.
+        """
+        atlas_file = OUT_DIR / "atlas.png"
+        config_file = OUT_DIR / "atlas.json"
 
-    frames = sorted(folder.glob("*.png"))
-    imgs = [Image.open(f).convert("RGBA") for f in frames]
+        #check if source pngs have been modified and if not - return
+        if atlas_file.exists() and config_file.exists():
+            atlas_time = atlas_file.stat().st_mtime
 
-    if not imgs:
-        continue
+            newest_source = max(
+                f.stat().st_mtime
+                for folder in INPUT.iterdir()
+                if folder.is_dir()
+                for f in folder.glob("*.png")
+            )
 
-    rows.append((folder.name, frames, imgs))
+            if atlas_time >= newest_source:
+                print("  Atlas up to date")
+                return
+            
+        print("  Generating...")
 
-# 2. Compute atlas size
-atlas_w = max(sum(img.width for img in imgs) for _, _, imgs in rows)
-atlas_h = sum(max(img.height for img in imgs) for _, _, imgs in rows)
+        # 1. Load all folders
+        for folder in sorted(INPUT.iterdir()):
+            if not folder.is_dir():
+                continue
 
-atlas = Image.new("RGBA", (atlas_w, atlas_h))
+            frames = sorted(folder.glob("*.png"))
+            imgs = [Image.open(f).convert("RGBA") for f in frames]
 
-meta = {}
-y = 0
+            if not imgs:
+                continue
 
-# 3. Build atlas
-for name, frames, imgs in rows:
-    x = 0
-    row_h = max(img.height for img in imgs)
+            rows.append((folder.name, frames, imgs))
 
-    meta[name] = {
-        "y": y,
-        "height": row_h,
-        "frames": []
-    }
+        # 2. Compute atlas size
+        atlas_w = max(sum(img.width for img in imgs) for _, _, imgs in rows)
+        atlas_h = sum(max(img.height for img in imgs) for _, _, imgs in rows)
 
-    for f, img in zip(frames, imgs):
-        atlas.paste(img, (x, y))
+        atlas = Image.new("RGBA", (atlas_w, atlas_h))
 
-        meta[name]["frames"].append({
-            "file": f.name,
-            "x": x,
-            "w": img.width,
-            "h": img.height
-        })
+        meta = {
+            "atlas_width": atlas_w,
+            "atlas_height": atlas_h,
+            "particles": {}
+        }
 
-        x += img.width
+        y = 0
 
-    y += row_h
+        # 3. Build atlas
+        for name, frames, imgs in rows:
+            x = 0
+            row_h = max(img.height for img in imgs)
 
-# 4. Save outputs
-atlas.save(OUT_DIR / "atlas.png")
+            meta["particles"][name] = {
+                "y": y,
+                "height": row_h,
+                "frames": []
+            }
 
-with open(OUT_DIR / "atlas.py", "w") as f:
-    f.write("ATLAS = ")
-    f.write(repr(meta))
+            for f, img in zip(frames, imgs):
+                atlas.paste(img, (x, y))
 
-print("Done:")
+                meta["particles"][name]["frames"].append({
+                    "file": f.name,
+                    "x": x,
+                    "w": img.width,
+                    "h": img.height
+                })
+
+                x += img.width
+
+            y += row_h
+
+        # 4. Save outputs
+        atlas.save(OUT_DIR / "atlas.png")
+
+        with open(OUT_DIR / "atlas.json", "w") as f:
+            json.dump(meta, f, indent=4)
+
+        print("Atlas generated.")
