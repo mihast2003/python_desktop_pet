@@ -28,6 +28,8 @@ from numba import njit
 
 import ctypes
 
+import cProfile
+
 
 def get_frame_index(anim, age):
     """
@@ -248,6 +250,8 @@ class ParticleOverlayWidget(QOpenGLWidget):
     def update_logic(self, dt):
         t0 = time.perf_counter()
 
+        # if not self.emitters: return
+
         # --- EMITTERS ---
         for emitter in self.emitters:
             emitter.update(dt) # updating all emitters
@@ -256,6 +260,8 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
         # --- PARTICLES ---
         # print("self count is ", self.count) # printing particle count
+
+        if not self.count: return
 
         i = 0
         while i < self.count:
@@ -287,6 +293,8 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
     # --- DRAWING ---
     def draw(self):
+        if not self.count: return
+        print("count:", self.count)
         self.update()  # triggers paintGL
 
     def initializeGL(self):
@@ -304,6 +312,7 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
 
     def paintGL(self):
+        t0 = time.perf_counter()
         glClear(GL_COLOR_BUFFER_BIT)
         
         # дебаг штука
@@ -316,7 +325,7 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
         for i in range(self.count):
             anim = self.animations[self.type_id[i]]
-            frame_id = get_frame_index(anim, self.age[i]) # not needed
+            frame_id = get_frame_index(anim, self.age[i])
 
             name = anim["name"]
             particle_data = self.atlas_config["particles"][name]
@@ -375,6 +384,8 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
         # end of loop. now we draw
 
+        t1 = time.perf_counter()
+
         if not vertices:
             return
         
@@ -397,18 +408,22 @@ class ParticleOverlayWidget(QOpenGLWidget):
         glDisableClientState(GL_TEXTURE_COORD_ARRAY)
 
         # подсчёт партиклов для дебага
-        self.debug_counter += 1
+        # self.debug_counter += 1
 
-        if self.debug_counter >= 60:
-            self.debug_counter = 0
+        # if self.debug_counter >= 60:
+        #     self.debug_counter = 0
 
-            print(
-                f"Total: {total_particles} | "
-                f"Drawn: {drawn_particles} | "
-                f"Culled: {culled_particles}"
-            )
+        #     print(
+        #         f"Total: {total_particles} | "
+        #         f"Drawn: {drawn_particles} | "
+        #         f"Culled: {culled_particles}"
+        #     )
 
         glBindTexture(GL_TEXTURE_2D, 0)
+
+        t2 = time.perf_counter()
+
+        print(f"For i in particle_count: {t1-t0}, Drawing: {t2-t1}")
 
         # --- DEBUG TEXT ---
         return  # if you want to debug particle coint - dont return

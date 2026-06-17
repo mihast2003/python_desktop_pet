@@ -36,7 +36,11 @@ import cProfile
 from data.variables import VARIABLES
 from engine.variable_manager import VariableManager
 
-LOGIC_FPS = RENDER_CONFIG.get("logic_FPS", 60) #fps of logic processes
+LOGIC_FPS = RENDER_CONFIG.get("pet_logic_FPS", 30) #fps of logic processes
+# DRAW_FPS = RENDER_CONFIG.get("pet_draw_FPS", 30) # not needed because it depends on the animation, might add later?
+
+PARTICLE_LOGIC_FPS = RENDER_CONFIG.get("particles_logic_FPS", 30)
+PARTICLE_DRAW_FPS = RENDER_CONFIG.get("particles_draw_FPS", 30)
 
 #region --- HELPERS ---
 # ANIMATION STUFF
@@ -105,6 +109,7 @@ class Pet(QWidget): # main logic
 
         self.profiler = cProfile.Profile()
         self.not_first_time_update: bool = False
+        self.start_debugging = False
 
         self.hitbox_width = 0
         self.hitbox_height = 0
@@ -134,6 +139,8 @@ class Pet(QWidget): # main logic
 
         self.windowsOverlay = WindowsOverlay(self)
         self.particles = ParticleOverlayWidget(pet=self)
+        self.particle_logic_acc = 0
+        self.particle_draw_acc = 0
         
         h = screen.availableGeometry().height()
         initial_state = INITIAL_STATE.get("default", next(iter(INITIAL_STATE))) #either get the "default" from the INITIAL STATE, or the first item in the STATES dictinary
@@ -285,18 +292,14 @@ class Pet(QWidget): # main logic
         p = event.globalPosition()
         return Vec2(p.x(), p.y())
     
+
     def update_logic(self):  # UPDATE LOGIC
         dt = 1 / LOGIC_FPS
 
-        t0 = time.perf_counter()
-
-        if self.not_first_time_update:
-            self.profiler.disable()  # start profiling
+        if self.start_debugging:
+            self.profiler.disable()
             self.profiler.enable()  # start profiling
-
-        self.particles.update_logic(dt) #updating particles widget
         
-        self.particles.draw() #updating particles widget
 
         # --- INPUT PHASE ---
         if self.mover.movement_type == MovementType.DRAG:
@@ -377,8 +380,7 @@ class Pet(QWidget): # main logic
             self.apply_window_position()
         t7 = time.perf_counter()
 
-        # print(f"update windows frames takes {t3-t1}")
-
+        # checking if next frame is not the same as current and updating then
         index = self.animator.index
         if not self.prev_index: self.prev_index = index + 1
 
@@ -387,6 +389,31 @@ class Pet(QWidget): # main logic
             self.update()  # repaint
         self.prev_index = index
 
+        # --- UPDATING PARTICLES ---
+        t8 = time.perf_counter()
+        self.particle_logic_acc += dt
+        self.particle_draw_acc += dt
+
+        if self.particle_logic_acc >= 1 / PARTICLE_LOGIC_FPS:
+            self.particle_logic_acc -= 1 / PARTICLE_LOGIC_FPS
+            self.particles.update_logic(1 / PARTICLE_LOGIC_FPS)
+
+        t9 = time.perf_counter()
+
+        if self.particle_draw_acc >= 1 / PARTICLE_DRAW_FPS:
+            self.particle_draw_acc -= 1 / PARTICLE_DRAW_FPS
+            self.particles.draw()
+
+        t10 = time.perf_counter()
+        # print(f"Particle update: {t1-t0}\nParticles draw: {t2-t1}")
+
+        # self.particles.update_logic(dt) #updating particles widget
+        # self.particles.draw() #updating particles widget
+
+
+        # print(f"update windows frames takes {t3-t1}")
+        self.profiler.disable()  # stop profiling
+        self.profiler.dump_stats("test.prof")
 
     def clamp_position_to_screen(self):
         clamped_x = self.anchor.x
@@ -585,6 +612,7 @@ class Pet(QWidget): # main logic
             print(f"______________________________\n\n  PET REPORT\n\nPosition: {self.anchor.x}, {self.anchor.y}\nState: {self.current_state}\nCurrent behaviour: {self.behaviour_name}\nParent window: {self.parent_window_hwnd}\nParent window position: {self.parent_window_rect_last}\n\n  ^^^.>.\n______________________________")
         elif e.key() == Qt.Key.Key_L:
             print("yeah okay")
+            self.start_debugging = True
     
     # def moveEvent(self, e):
     #     print("Move:", self.pos())
