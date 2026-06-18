@@ -191,8 +191,9 @@ STATES = {
                 "when": [ {"pulse":"ANIMATION_END"}, {"var":"time_spent_in_this_state", "op":">", "value":300}],
                 "to": "IDLE",
                 "chance": 1,
+                "transition_animation": "waking_up_after_sleep",
                 "on_transition": [
-                    {"var": "sleepiness", "op": "=", "value": -200},
+                    {"var": "sleepiness", "op": "=", "value": -300},
                 ],
             },
         ],
