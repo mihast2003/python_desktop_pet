@@ -51,11 +51,12 @@ class StateMachine:
         # print("state machine. result:", result)
         # print("state_machine next state is: ", next_state)
 
-        self.state.clear_pulses()  # IMPORTANT
+        self.state.clear_pulses()
 
         
     def queue_transition(self, next_state, anim, cfg):      
         self.pet.on_state_exit(self.state.current_state_name)
+        self.state._apply_on_exit()
 
         self.pending_state = next_state
         self.pending_transition_anim = anim
@@ -65,6 +66,9 @@ class StateMachine:
         # if transition animation then play it
         if self.pending_transition_anim:
             # print("state_machine: animation queued")
+            if type(self.pending_transition_cfg) != dict:
+                raise ValueError(f"Excuse me, you messed up the config for transition animation: {self.pending_transition_anim}")
+
             self.pet.play_animation(
                 self.pending_transition_anim,
                 cfg=self.pending_transition_cfg,
@@ -94,5 +98,5 @@ class StateMachine:
         self.remove_flag(Flag.MOVEMENT_FINISHED)
         self.state.current_state_name = next_state
         self.state.config = self.configs[next_state]
-        self.state._apply_on_enter()
         self.pet.on_state_enter(next_state)
+        self.state._apply_on_enter()

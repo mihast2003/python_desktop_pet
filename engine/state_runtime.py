@@ -23,14 +23,14 @@ class StateRuntime:
                 exception_states = t.get("except_states")
                 to = state
                 chance = t.get("chance", 1)
-                trans_anim = t.get("transition_anim")
-                trans_anim_cfg = t.get("transition_anim_cfg")
+                trans_anim = t.get("transition_animationation")
+                trans_anim_cfg = t.get("transition_animationation_cfg")
 
                 # print(conditions)
                 # print(to)
                 # print(chance)
 
-                self.all_forced_transitions[to] = {"conditions": conditions, "except_states": exception_states, "chance": chance, "transition_anim": trans_anim, "transition_anim_cfg": trans_anim_cfg}
+                self.all_forced_transitions[to] = {"conditions": conditions, "except_states": exception_states, "chance": chance, "transition_animationation": trans_anim, "transition_animationation_cfg": trans_anim_cfg}
 
         # print(self.all_forced_transitions)
 
@@ -61,8 +61,16 @@ class StateRuntime:
         self.pulses.clear()
         
     
-    def _apply_on_enter(self):
+    def _apply_on_enter(self):  # called from state machine on enter
         for cmd in self.config.get("on_enter", []):
+            self._execute_command(cmd)
+
+    def _apply_on_transition(self, cmds): # called when a transition occured successfully
+        for cmd in cmds:
+            self._execute_command(cmd)
+
+    def _apply_on_exit(self): # called from state machine on exit
+        for cmd in self.config.get("on_exit", []):
             self._execute_command(cmd)
 
     def _execute_command(self, cmd):
@@ -125,8 +133,8 @@ class StateRuntime:
 
                 return (
                     state,  # return the destination state
-                    force_trans.get("transition_anim", None),  # may be None
-                    force_trans.get("transition_anim_cfg", {})
+                    force_trans.get("transition_animation", None),  # may be None
+                    force_trans.get("transition_animation_cfg", {})
                 )        
 
 
@@ -141,10 +149,14 @@ class StateRuntime:
             if all(self._check_condition(c) for c in conditions) and random.random() <= chance:  # all() returns true if all iterable conditions inside are true
                 # print("chance of this was: ", chance)
                 # print("state_runtime detected transition to:", t["to"])
+                commands_on_transition = t.get("on_transition", []) # getting commands with variables executed on specific transitions
+                self._apply_on_transition(commands_on_transition)
+                print("cmds:", commands_on_transition)
+
                 return (
                     t["to"],  # return the destination state
-                    t.get("transition_anim", None),  # may be None
-                    t.get("transition_anim_cfg", {})
+                    t.get("transition_animation", None),  # may be None
+                    t.get("transition_animation_cfg", {})
                 )
             
         exit_conditions = self.config.get("exit_when")

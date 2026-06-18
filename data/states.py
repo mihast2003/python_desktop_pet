@@ -22,8 +22,8 @@ To force other states to transition to this when some flags/pulses are met:
             {
                 "when": ["DRAGGING_STARTED"],
                 "except_states": ["DRAGGING"],
-                # "transition_anim": "standing_up",
-                # "transition_anim_cfg": {
+                # "transition_animation": "standing_up",
+                # "transition_animation_cfg": {
                 #     "fps": 4,
                 # },
             }
@@ -47,6 +47,11 @@ STATES = {
 
         "transitions": [
             {
+                "when": [ "ANIMATION_END", {"var":"sleepiness", "op":">", "value":30}],
+                "to": "BLINK",
+                "chance": 0.3
+            },
+            {
                 "when": ["ANIMATION_END", ],
                 "to": "BLINK",
                 "chance": 0.1,
@@ -54,7 +59,7 @@ STATES = {
             {
                 "when": [ {"pulse":"ANIMATION_END"}, ],
                 "to": "LOOKING_AROUND",
-                "chance": 0.08,
+                "chance": 0.03,
             },
             {
                 "when": [ 
@@ -95,9 +100,9 @@ STATES = {
                 "to": "DRAGGING",
             },
             {
-                "when": [ {"pulse":"ANIMATION_END"}, ],
+                "when": [ {"pulse":"ANIMATION_END"}, {"var":"sleepiness", "op":">", "value":60}],
                 "to": "DOZING_OFF",
-                "chance": 0.9
+                "chance": 0.6
             },
             {
                 "when": [ {"pulse":"ANIMATION_END"}, ],
@@ -112,9 +117,83 @@ STATES = {
 
         "transitions": [
             {
+                "when": [ "ANIMATION_END", {"var":"sleepiness", "op":">", "value":100}],
+                "to": "SLEEPING",
+                "transition_animation": "falling_asleep",
+                "transition_animation_cfg": {
+                    "fps": 8, 
+                },
+                "chance": 0.5,
+            },
+            {
+                "when": [ {"pulse":"ANIMATION_END"}, {"var":"sleepiness", "op":">", "value":60}],
+                "to": "DOZED_OFF",
+                "chance": 1,
+            },
+            {
                 "when": [ {"pulse":"ANIMATION_END"}, ],
                 "to": "IDLE",
-                "transition_anim": "waking_up"
+                "transition_animation": "waking_up",
+                "transition_animation_cfg": {
+                    "fps": 7, 
+                }
+            },
+        ],
+
+    },
+
+    "DOZED_OFF": {
+        "animation": "dozed_off",
+
+        "transitions": [
+            {
+                "when": [{"pulse":"CLICK"},],
+                "to": "IDLE",
+                "chance": 0.7,
+                "transition_animation": "waking_up",
+                "transition_animation_cfg": {
+                    "fps": 9, 
+                },
+                "on_transition": [
+                    {"var": "sleepiness", "op": "-=", "value": 5},
+                ]
+            },
+            {
+                "when": [ "ANIMATION_END", {"var":"sleepiness", "op":">", "value":80}],
+                "to": "SLEEPING",
+                "transition_animation": "falling_asleep",
+                "transition_animation_cfg": {
+                    "fps": 8, 
+                },
+                "chance": 0.8,
+            },
+            {
+                "when": [{"pulse":"ANIMATION_END"}, {"var":"time_spent_in_this_state", "op":">", "value":30} ],
+                "to": "IDLE",
+                "chance": 0.2,
+                "transition_animation": "waking_up",
+                "transition_animation_cfg": {
+                    "fps": 6, 
+                },
+                "on_transition": [
+                    {"var": "sleepiness", "op": "=", "value": 0},
+                ],
+            },
+        ],
+
+    },
+
+    "SLEEPING": {
+        "animation": "sleeping",
+
+        "transitions": [
+            {
+                "when": [ {"pulse":"ANIMATION_END"}, {"var":"time_spent_in_this_state", "op":">", "value":300}],
+                "to": "IDLE",
+                "chance": 1,
+                "on_transition": [
+                    {"var": "sleepiness", "op": "=", "value": -200},
+                ],
             },
         ],
 
@@ -190,8 +269,8 @@ STATES = {
             {
                 "when": ["DRAGGING_STARTED"],
                 "except_states": ["DRAGGING"],
-                # "transition_anim": "standing_up",
-                # "transition_anim_cfg": {
+                # "transition_animation": "standing_up",
+                # "transition_animation_cfg": {
                 #     "fps": 4,
                 # },
             }
@@ -209,8 +288,8 @@ STATES = {
             {
                 "when": ["LOST_PARENT"],
                 "except_states": ["DRAGGING"],
-                # "transition_anim": "standing_up",
-                # "transition_anim_cfg": {
+                # "transition_animation": "standing_up",
+                # "transition_animation_cfg": {
                 #     "fps": 4,
                 # },
             }
@@ -220,8 +299,8 @@ STATES = {
             {
                 "when": ["MOVEMENT_FINISHED",],
                 "to": "IDLE",
-                "transition_anim": "standing_up",
-                "transition_anim_cfg": {
+                "transition_animation": "standing_up",
+                "transition_animation_cfg": {
                     "fps": 12,
                 },
             }
@@ -257,8 +336,8 @@ STATES = {
                     {"var": "times_clicked_this_state", "op": ">=", "value": 3}
                     ],
                 "to": "IDLE",
-                "transition_anim": "trollface",
-                "transition_anim_cfg": {
+                "transition_animation": "trollface",
+                "transition_animation_cfg": {
                     "fps": 10,
                 }
             }

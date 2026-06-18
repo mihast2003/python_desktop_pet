@@ -174,7 +174,7 @@ class Pet(QWidget): # main logic
         self.timer.start(1000 // LOGIC_FPS)
 
 
-    def on_state_enter(self, state): #called in state_machine when entering a new state
+    def on_state_enter(self, state): # called in state_machine when entering a new state
         print("STATE:", state)
         self.current_state = state
         if self.parent_window_hwnd:
@@ -193,7 +193,8 @@ class Pet(QWidget): # main logic
         self.play_animation(anim_name=anim_name, cfg=cfg, isAbletoRotate=isAbletoRotate)
 
        
-    def on_state_exit(self, state): #just does nothing when the state is done
+    def on_state_exit(self, state): # called in state_machine when exiting a state
+        cfg = STATES[state]
         print("exiting state", state)
         if state == "FALLING":
             self.emit_particles("dirt") 

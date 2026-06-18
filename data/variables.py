@@ -9,7 +9,7 @@ VARIABLES = {
         "rate": 1.0
     }, 
 
-    "sleep_timer": {
+    "sleepiness": {
         "value": 0.0,
         "rate": 1.0
     },
