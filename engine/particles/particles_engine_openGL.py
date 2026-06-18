@@ -293,8 +293,6 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
     # --- DRAWING ---
     def draw(self):
-        if not self.count: return
-        print("count:", self.count)
         self.update()  # triggers paintGL
 
     def initializeGL(self):
@@ -314,6 +312,9 @@ class ParticleOverlayWidget(QOpenGLWidget):
     def paintGL(self):
         t0 = time.perf_counter()
         glClear(GL_COLOR_BUFFER_BIT)
+
+        if not self.count: return
+        print("count:", self.count)
         
         # дебаг штука
         total_particles = self.count
