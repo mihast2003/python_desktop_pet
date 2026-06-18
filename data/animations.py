@@ -63,4 +63,26 @@ ANIMATIONS = {
             1: 10,
         }
     },
+
+    "dozing_off": {
+        "folder": "assets/animations/dozing_off",
+        "fps": 4,
+        "loop": False,
+        "holds": {
+            3: 2,
+            4: 2,
+        }
+    },
+
+    "dozed_off": {
+        "folder": "assets/animations/dozed_off",
+        "fps": 6,
+        "loop": True,
+    },
+
+    "waking_up": {
+        "folder": "assets/animations/TRANSITIONS/waking_up",
+        "fps": 8,
+        "loop": False,
+    },
 }

@@ -96,7 +96,25 @@ STATES = {
             },
             {
                 "when": [ {"pulse":"ANIMATION_END"}, ],
+                "to": "DOZING_OFF",
+                "chance": 0.9
+            },
+            {
+                "when": [ {"pulse":"ANIMATION_END"}, ],
                 "to": "IDLE"
+            },
+        ],
+
+    },
+
+    "DOZING_OFF": {
+        "animation": "dozing_off",
+
+        "transitions": [
+            {
+                "when": [ {"pulse":"ANIMATION_END"}, ],
+                "to": "IDLE",
+                "transition_anim": "waking_up"
             },
         ],
 
