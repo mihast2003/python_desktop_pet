@@ -188,7 +188,7 @@ STATES = {
 
         "transitions": [
             {
-                "when": [ {"pulse":"ANIMATION_END"}, {"var":"time_spent_in_this_state", "op":">", "value":300}],
+                "when": [ {"pulse":"ANIMATION_END"}, {"var":"time_spent_in_this_state", "op":">", "value":10}],
                 "to": "IDLE",
                 "chance": 1,
                 "transition_animation": "waking_up_after_sleep",

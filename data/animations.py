@@ -106,5 +106,11 @@ ANIMATIONS = {
         "folder": "assets/animations/TRANSITIONS/waking_up_after_sleep",
         "fps": 8,
         "loop": False,
+        "holds": {
+            1: 2,
+            5: 2,
+            6: 2,
+            7: 2,
+        }
     },
 }
