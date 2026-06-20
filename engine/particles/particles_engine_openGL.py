@@ -54,6 +54,7 @@ class ParticleOverlayWidget(QOpenGLWidget):
         super().__init__()
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.setAutoFillBackground(False)
 
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
@@ -304,6 +305,12 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
         glEnable(GL_TEXTURE_2D)
 
+        print("Alpha buffer size:", self.context().format().alphaBufferSize())
+
+        print(glGetString(GL_VENDOR))
+        print(glGetString(GL_RENDERER))
+        print(glGetString(GL_VERSION))
+
     def resizeGL(self, w, h):
         glViewport(0, 0, w, h)
         self.aspect = w / h
@@ -311,6 +318,7 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
     def paintGL(self):
         t0 = time.perf_counter()
+        glClearColor(0, 0, 0, 0)
         glClear(GL_COLOR_BUFFER_BIT)
 
         if not self.count: return

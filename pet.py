@@ -1,6 +1,4 @@
 # Main script with pet behavior: physics, drawing sprites, retrieving data
-
-
 import sys, os, random, time, math
 from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtGui import QPainter, QPixmap, QPen, QColor
@@ -62,7 +60,8 @@ class Pet(QWidget): # main logic
         super().__init__()
 
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)   # type: ignore # QT stuff idk idc
-        self.setAttribute(Qt.WA_TranslucentBackground) # type: ignore
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
 
         # instanciating AssetLoader
         # self.loader = AssetLoader()
@@ -495,10 +494,10 @@ class Pet(QWidget): # main logic
 
         # if RENDER_CONFIG "stay_on_window_when_resize" == False pet should just fall off
         else:
-            if not global_move_x and self.parent_surface_type in [SurfaceType.TOP, SurfaceType.BOTTOM]: # its so much more nice to read, i hope its not too bad for performance
+            if not global_move_x and self.parent_surface_type in (SurfaceType.TOP, SurfaceType.BOTTOM): # its so much more nice to read, i hope its not too bad for performance
                 if self.anchor.x <= x1 - 2 or self.anchor.x >= x2 + 2:
                     self._clear_parent_window()
-            if not global_move_y and self.parent_surface_type in [SurfaceType.LEFT, SurfaceType.RIGHT]:
+            if not global_move_y and self.parent_surface_type in (SurfaceType.LEFT, SurfaceType.RIGHT):
                 if self.anchor.y <= y1 - 2 or self.anchor.y >= y2 + 2:
                     self._clear_parent_window()
 
