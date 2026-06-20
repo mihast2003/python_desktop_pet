@@ -68,10 +68,14 @@ class ParticleOverlayWidget(QOpenGLWidget):
         screen = QApplication.primaryScreen().geometry()
         self.setGeometry(screen)
 
+        # transparency debugging, delete later
+        print("native:", self.testAttribute(Qt.WidgetAttribute.WA_NativeWindow))
+        print(hex(ctypes.windll.user32.GetWindowLongW(int(self.winId()), -20)))
+
         # Make window fully windows click-through
-        hwnd = int(self.winId())
-        extended_style = ctypes.windll.user32.GetWindowLongW(hwnd, -20)
-        ctypes.windll.user32.SetWindowLongW(hwnd, -20, extended_style | 0x80000 | 0x20)
+        # hwnd = int(self.winId())
+        # extended_style = ctypes.windll.user32.GetWindowLongW(hwnd, -20)
+        # ctypes.windll.user32.SetWindowLongW(hwnd, -20, extended_style | 0x80000 | 0x20)
 
         # Create dummy data with FINAL types
         dummy_positions = np.zeros(1000, dtype=np.float32)
