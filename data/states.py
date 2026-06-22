@@ -334,7 +334,7 @@ STATES = {
             {
                 "when": [ 
                     "CLICK", 
-                    {"var": "times_clicked_this_state", "op": ">=", "value": 3}
+                    {"var": "times_clicked_this_state", "op": ">=", "value": 1}
                     ],
                 "to": "IDLE",
                 "transition_animation": "trollface",
