@@ -351,8 +351,8 @@ class ParticleOverlayWidget(QOpenGLWidget):
         glClearColor(0, 0, 0, 0)
         glClear(GL_COLOR_BUFFER_BIT)
 
-        if not self.count: return
-        print("count:", self.count)
+        # if not self.count: return
+        # print("count:", self.count)
         
         # дебаг штука
         total_particles = self.count
@@ -363,12 +363,16 @@ class ParticleOverlayWidget(QOpenGLWidget):
         texcoords = []
 
         for i in range(self.count):
-            anim = self.animations[self.type_id[i]]
+            particle_id = self.type_id[i]
+            anim = self.animations[particle_id]
             frame_id = get_frame_index(anim, self.age[i])
 
-            name = anim["name"]
-            particle_data = self.atlas_config["particles"][name]
-            frame_data = particle_data["frames"][frame_id]
+            # particle_data = self.atlas_lookup[particle_id]
+            frame_data = self.frame_lookup[particle_id][frame_id]
+
+            # name = anim["name"]
+            # particle_data = self.atlas_config["particles"][name]
+            # frame_data = particle_data["frames"][frame_id]
 
             x_px = self.pos_x[i]
             y_px = self.pos_y[i]
@@ -379,7 +383,8 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
             size = 0.02 * self.size_p[i]
 
-            frame_aspect_ratio = frame_data["w"] / frame_data["h"] # optimisation: should precompute aspect ratios
+            # frame_aspect_ratio = frame_data["w"] / frame_data["h"] # optimisation: should precompute aspect ratios
+            frame_aspect_ratio = self.aspect_ratio_by_id[particle_id]
  
             sx = size
             sy = size * self.aspect * frame_aspect_ratio
@@ -405,14 +410,20 @@ class ParticleOverlayWidget(QOpenGLWidget):
             ])
 
             # getting uv from the atlas
-            atlas_w = self.atlas_config["atlas_width"]
-            atlas_h = self.atlas_config["atlas_height"]
+            # atlas_w = self.atlas_config["atlas_width"]
+            # atlas_h = self.atlas_config["atlas_height"]
 
-            u0 = frame_data["x"] / atlas_w
-            u1 = (frame_data["x"] + frame_data["w"]) / atlas_w
+            # u0 = frame_data["x"] / atlas_w
+            # u1 = (frame_data["x"] + frame_data["w"]) / atlas_w
 
-            v0 = 1.0 - ((particle_data["y"] + frame_data["h"]) / atlas_h)
-            v1 = 1.0 - (particle_data["y"] / atlas_h)
+            # v0 = 1.0 - ((particle_data["y"] + frame_data["h"]) / atlas_h)
+            # v1 = 1.0 - (particle_data["y"] / atlas_h)
+
+            u0 = frame_data["u0"]
+            u1 = frame_data["u1"]
+
+            v0 = frame_data["v0"]
+            v1 = frame_data["v1"]
 
             texcoords.extend([
                 u0, v0,
