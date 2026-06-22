@@ -28,6 +28,9 @@ To force other states to transition to this when some flags/pulses are met:
                 # },
             }
         ],
+
+Particles stuff:
+
 """
 
 
@@ -41,7 +44,7 @@ STATES = {
 
         "behaviour": "STATIONARY",
 
-        "on_enter": [
+        "variables_on_enter": [
             {"var": "times_clicked", "op": "=", "value": 0},
         ],
 
@@ -154,7 +157,7 @@ STATES = {
                 "transition_animation_cfg": {
                     "fps": 9, 
                 },
-                "on_transition": [
+                "variables_on_transition": [
                     {"var": "sleepiness", "op": "-=", "value": 5},
                 ]
             },
@@ -175,7 +178,7 @@ STATES = {
                 "transition_animation_cfg": {
                     "fps": 6, 
                 },
-                "on_transition": [
+                "variables_on_transition": [
                     {"var": "sleepiness", "op": "=", "value": 0},
                 ],
             },
@@ -192,12 +195,11 @@ STATES = {
                 "to": "IDLE",
                 "chance": 1,
                 "transition_animation": "waking_up_after_sleep",
-                "on_transition": [
+                "variables_on_transition": [
                     {"var": "sleepiness", "op": "=", "value": -300},
                 ],
             },
         ],
-
     },
 
     "LOOKING_AROUND": {
@@ -224,7 +226,7 @@ STATES = {
         #     "gravity": 700,
         # },
 
-        "on_enter": [
+        "variables_on_enter": [
             {"var": "sitting_still_timer", "op": "=", "value": 0},
         ],
         
@@ -243,7 +245,7 @@ STATES = {
         "animation": "roll",
         "behaviour": "JUMP",
 
-        "on_enter": [
+        "variables_on_enter": [
             {"var": "sitting_still_timer", "op": "=", "value": 0},
         ],
         
@@ -314,7 +316,7 @@ STATES = {
         "animation": "grow",
         "times_to_loop": 5,
         "behaviour": "STATIONARY",
-        "on_enter": [
+        "variables_on_enter": [
             {"var": "worrying_meter", "op": "=", "value": 0},
         ],
         "transitions":[

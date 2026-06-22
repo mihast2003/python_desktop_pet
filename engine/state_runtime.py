@@ -5,7 +5,8 @@ import random
 from engine.enums import Flag, Pulse
 
 class StateRuntime:
-    def __init__(self, current_state_name, config, all_configs, variables):
+    def __init__(self, pet, current_state_name, config, all_configs, variables):
+        self.pet = pet
         self.current_state_name = current_state_name
         self.config = config
         self.all_configs = all_configs
@@ -62,16 +63,27 @@ class StateRuntime:
         
     
     def _apply_on_enter(self):  # called from state machine on enter
-        for cmd in self.config.get("on_enter", []):
+        for cmd in self.config.get("variables_on_enter", []):
             self._execute_command(cmd)
+        for part in self.config.get("particles_on_enter", []):
+            self._emit_particles(part)
 
-    def _apply_on_transition(self, cmds): # called when a transition occured successfully
-        for cmd in cmds:
-            self._execute_command(cmd)
+    def _apply_on_transition(self, var_cmds, part_cmds): # called when a transition occured successfully
+        for v_cmd in var_cmds:
+            self._execute_command(v_cmd)
+        for p_cmd in part_cmds:
+            self._emit_particles(p_cmd)
 
     def _apply_on_exit(self): # called from state machine on exit
-        for cmd in self.config.get("on_exit", []):
+        for cmd in self.config.get("variables_on_exit", []):
             self._execute_command(cmd)
+        for part in self.config.get("particles_on_exit", []):
+            self._emit_particles(part)
+
+    def _emit_particles(self, particle_cmd):
+        if "emit" in particle_cmd:
+            print("emitting")
+            name = particle_cmd["name"]
 
     def _execute_command(self, cmd):
         if "var" in cmd:
@@ -114,7 +126,7 @@ class StateRuntime:
 
 
     def handle_events(self):
-        # print(f"state_runtime: handling events, {self.flags}, {self.pulses}")
+        # print(f"state_runtime: handling events: Flags: ", self.flags, " Pulses: ", self.pulses)
 
         # --- Checking for forced transitions ---
         for state in self.all_forced_transitions:
@@ -137,10 +149,8 @@ class StateRuntime:
                     force_trans.get("transition_animation_cfg", {})
                 )        
 
-
         # --- Normal transitions now ---
         transitions = self.config.get("transitions", [])
-        # print("handling events: Flags: ", self.flags, " Pulses: ", self.pulses)
 
         for t in transitions:  # handling all "transitions" in configs
             conditions = t["when"]
@@ -149,8 +159,9 @@ class StateRuntime:
             if all(self._check_condition(c) for c in conditions) and random.random() <= chance:  # all() returns true if all iterable conditions inside are true
                 # print("chance of this was: ", chance)
                 # print("state_runtime detected transition to:", t["to"])
-                commands_on_transition = t.get("on_transition", []) # getting commands with variables executed on specific transitions
-                self._apply_on_transition(commands_on_transition)
+                commands_on_transition = t.get("variables_on_transition", []) # getting commands with variables executed on specific transitions
+                particles_on_transition = t.get("particles_on_transition", [])
+                self._apply_on_transition(commands_on_transition, particles_on_transition)
                 print("cmds:", commands_on_transition)
 
                 return (
