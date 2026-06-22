@@ -134,6 +134,7 @@ class ParticleOverlayWidget(QOpenGLWidget):
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # we go back three folders
         base = os.path.dirname(project_root)
 
+        self.aspect_ratio_by_id = []
 
 
         print("\n----- LOADING PARTICLES -----")
@@ -201,7 +202,32 @@ class ParticleOverlayWidget(QOpenGLWidget):
         if self.atlas_config: print("  Success!")
         else: raise RuntimeError(f"No atlas.json found at '{full_config_path}'")
 
+        self.window_width = self.width()
+        self.window_height = self.height()
+
+        # --- loading particle information into memory for fast access ---
+        print("----- loading particles into memory -----")
+
+        self.atlas_lookup = []
+        self.frame_lookup = []
+        self.aspect_ratio_by_id = []
+
+        for particle_name in self.atlas_config["particles"]:
+            print("heee", particle_name)
+            particle_data = self.atlas_config["particles"][particle_name]
+
+            self.atlas_lookup.append(particle_data)
+
+            self.aspect_ratio_by_id.append(self.atlas_config["particles"][particle_name]["aspect_ratio"])
+
+            self.frame_lookup.append(
+                particle_data["frames"]
+            )
+
         print("----- PARTICLES LOADED -----\n")
+        print("atlas lookup", self.atlas_lookup[0])
+        print("frame lookup", self.frame_lookup[0])
+        print("aspect_ratio_by_id", self.aspect_ratio_by_id[0])
 
 
     def update_dpi_and_scale(self, new_scale):
@@ -348,8 +374,8 @@ class ParticleOverlayWidget(QOpenGLWidget):
             y_px = self.pos_y[i]
 
             # conversion from pixels to -1 to 1 (OpenGL coordinates)
-            x = (x_px / self.width()) * 2.0 - 1.0
-            y = 1.0 - (y_px / self.height()) * 2.0
+            x = (x_px / self.window_width) * 2.0 - 1.0
+            y = 1.0 - (y_px / self.window_height) * 2.0
 
             size = 0.02 * self.size_p[i]
 

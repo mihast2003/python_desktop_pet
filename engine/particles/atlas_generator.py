@@ -59,6 +59,7 @@ class AtlasGenerator():
 
         atlas = Image.new("RGBA", (atlas_w, atlas_h))
 
+        # whole atlas information
         meta = {
             "atlas_width": atlas_w,
             "atlas_height": atlas_h,
@@ -67,7 +68,7 @@ class AtlasGenerator():
 
         y = 0
 
-        # 3. Build atlas
+        # 3. Build atlas (per particle type information)
         for name, frames, imgs in rows:
             x = 0
             row_h = max(img.height for img in imgs)
@@ -75,7 +76,9 @@ class AtlasGenerator():
             meta["particles"][name] = {
                 "y": y,
                 "height": row_h,
-                "frames": []
+                "frame_count": len(imgs),
+                "aspect_ratio": imgs[0].width / imgs[0].height,
+                "frames": [],
             }
 
             for f, img in zip(frames, imgs):
@@ -85,7 +88,13 @@ class AtlasGenerator():
                     "file": f.name,
                     "x": x,
                     "w": img.width,
-                    "h": img.height
+                    "h": img.height,
+
+                    "u0": x / atlas_w,
+                    "u1": (x + img.width) / atlas_w,
+
+                    "v0": 1.0 - ((y + img.height) / atlas_h),
+                    "v1": 1.0 - (y / atlas_h),
                 })
 
                 x += img.width
