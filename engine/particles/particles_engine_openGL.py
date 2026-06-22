@@ -327,7 +327,7 @@ class ParticleOverlayWidget(QOpenGLWidget):
         self.update()  # triggers paintGL
 
     def initializeGL(self):
-        # print("START TEST")
+        # print("initialiseGL")
         glClearColor(0, 0, 0, 0)
 
         glEnable(GL_BLEND)
@@ -366,7 +366,6 @@ class ParticleOverlayWidget(QOpenGLWidget):
             particle_id = self.type_id[i]
             anim_data = self.animations[particle_id]
             frame_id = get_frame_index(anim_data, self.age[i])
-
             # particle_data = self.atlas_lookup[particle_id]
             frame_data = self.frame_lookup[particle_id][frame_id]
 
@@ -378,7 +377,6 @@ class ParticleOverlayWidget(QOpenGLWidget):
             y = 1.0 - (y_px / self.window_height) * 2.0
 
             size = 0.02 * self.size_p[i]
-
             frame_aspect_ratio = self.aspect_ratio_by_id[particle_id]
  
             sx = size
