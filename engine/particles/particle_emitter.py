@@ -35,7 +35,7 @@ class ParticleEmitter:
         self.lifetime = self.cfg.get("lifetime", 1)
         self.rate = self.cfg.get("rate_over_time", 1)
         self.random_timing = self.cfg.get("random_timing", 0)
-        self.total_count = self.cfg.get("total_count", 0)
+        self.total_count = self.cfg.get("total_count", 1000)
         self.duration = self.cfg.get("duration", 1)  
         self.start_size =  self.cfg.get("start_size", 1)
         self.radius = self.cfg.get("radius", 1)

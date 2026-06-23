@@ -2,6 +2,7 @@ from PIL import Image
 from pathlib import Path
 import json
 
+from data.particles import ASSETS
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 INPUT = PROJECT_ROOT / "assets" / "particles"
@@ -40,10 +41,10 @@ class AtlasGenerator():
             
         print("  Generating...")
 
-        # 1. Load all folders
-        for folder in sorted(INPUT.iterdir()):
-            if not folder.is_dir():
-                continue
+        # Load assets
+        for asset_name, asset_path in ASSETS.items():
+            folder = INPUT / asset_path
+            print("getting assets from", folder)
 
             frames = sorted(folder.glob("*.png"))
             imgs = [Image.open(f).convert("RGBA") for f in frames]
@@ -51,7 +52,20 @@ class AtlasGenerator():
             if not imgs:
                 continue
 
-            rows.append((folder.name, frames, imgs))
+            rows.append((asset_name, frames, imgs))
+
+        # 1. Load all folders
+        # for folder in sorted(INPUT.iterdir()):
+        #     if not folder.is_dir():
+        #         continue
+
+        #     frames = sorted(folder.glob("*.png"))
+        #     imgs = [Image.open(f).convert("RGBA") for f in frames]
+
+        #     if not imgs:
+        #         continue
+
+        #     rows.append((folder.name, frames, imgs))
 
         # 2. Compute atlas size
         atlas_w = max(sum(img.width for img in imgs) for _, _, imgs in rows)
@@ -63,30 +77,30 @@ class AtlasGenerator():
         meta = {
             "atlas_width": atlas_w,
             "atlas_height": atlas_h,
-            "particles": {}
+            "assets": {}
         }
 
         y = 0
 
         # 3. Build atlas (per particle type information)
-        for name, frames, imgs in rows:
+        for asset_name, frames, imgs in rows:
             x = 0
             row_h = max(img.height for img in imgs)
 
-            meta["particles"][name] = {
+            meta["assets"][asset_name] = {
                 "y": y,
                 "height": row_h,
                 "frame_count": len(imgs),
                 "aspect_ratio": imgs[0].width / imgs[0].height,
-                "frames": [],
+                "frames": []
             }
 
             for f, img in zip(frames, imgs):
                 atlas.paste(img, (x, y))
 
-                meta["particles"][name]["frames"].append({
+                meta["assets"][asset_name]["frames"].append({
                     "file": f.name,
-                    "x": x,
+
                     "w": img.width,
                     "h": img.height,
 

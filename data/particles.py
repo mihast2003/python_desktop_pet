@@ -12,9 +12,14 @@ a bit of syntax:
 
 """
 
+ASSETS = { # continuing from asset/particles/
+    "dirt": "dirt",
+    "sleep_zzz": "sleep_zzz",
+}
+
 PARTICLES = {
     "dirt": {
-        "folder": "assets/particles/dirt",
+        "asset": "dirt",
         "fps": 4,
         "loop": False,
         "holds": { # holds dont work
@@ -40,16 +45,46 @@ PARTICLES = {
         "start_size": 0.4,
     },
 
-    "sleep_zzz": {
-        "folder": "assets/particles/sleep_zzz",
+    "single_z": {
+        "asset": "sleep_zzz",
         "fps": 6,
         "loop": True,
 
-        "emitter_shape": "DOT",
-        "emitter_offset": (1, 1),
+        "emitter_shape": "CIRCLE",
+        "radius": 2,
+        "hollow": False,
         "duration": 1,
-        "rate_over_time": 100,
-        "start_vel": (0, 200),
-        "start_size": 1, 
+        "rate_over_time": 1,
+        "start_vel": (0, 150),
+        "start_size": 0.6, 
+    },
+
+    "sleep_z": {
+        "asset": "sleep_zzz",
+        "fps": 6,
+        "loop": True,
+
+        "emitter_shape": "CIRCLE",
+        "radius": 0.5,
+        "hollow": False,
+        "duration": 1,
+        "rate_over_time": 0.6,
+        "random_timing": 1,
+        "start_vel": (0, 150),
+        "start_size": 0.5, 
+    },
+
+    "sleep_zzz": {
+        "asset": "sleep_zzz",
+        "fps": 6,
+        "loop": True,
+
+        "emitter_shape": "CIRCLE",
+        "radius": 0.5,
+        "duration": 1,
+        "rate_over_time": 2,
+        "random_timing": 1,
+        "start_vel": (0, 150),
+        "start_size": 0.5, 
     },
 }

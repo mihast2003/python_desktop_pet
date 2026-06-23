@@ -61,10 +61,6 @@ STATES = {
             {"var": "times_clicked", "op": "=", "value": 0},
         ],
 
-        "constant_particles": [
-            {"emit": "dirt"}
-        ],
-
         "conditional_particles": [
             {"when": ["CLICK"],
              "emit": "dirt",
@@ -171,6 +167,15 @@ STATES = {
     "DOZED_OFF": {
         "animation": "dozed_off",
 
+        "constant_particles": [
+            {"emit": "sleep_z"}
+        ],
+
+        "conditional_particles": [
+            {"when": ["CLICK"],
+            "emit": "single_z"}
+        ],
+
         "transitions": [
             {
                 "when": [{"pulse":"CLICK"},],
@@ -211,6 +216,10 @@ STATES = {
 
     "SLEEPING": {
         "animation": "sleeping",
+
+        "constant_particles": [
+            {"emit": "sleep_zzz"}
+        ],
 
         "transitions": [
             {

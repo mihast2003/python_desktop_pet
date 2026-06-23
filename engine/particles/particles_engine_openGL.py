@@ -19,7 +19,7 @@ from engine.particles.atlas_generator import AtlasGenerator
 from OpenGL.GL import * #type: ignore
 
 from data.render_config import RENDER_CONFIG
-from data.particles import PARTICLES
+from data.particles import PARTICLES, ASSETS
 
 from collections import defaultdict
 
@@ -126,7 +126,7 @@ class ParticleOverlayWidget(QOpenGLWidget):
         self.show()
 
         # get all particle animations in a dictionary
-        self.animations = {}
+        self.animations = []
 
         #for references
         self.anim_name_to_id = {}
@@ -141,10 +141,11 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
         for name in list(PARTICLES):
             cfg = PARTICLES[name]
-            folder = os.path.join(base, cfg["folder"])
+            asset = os.path.join(base, os.path.join("assets/particles", cfg["asset"]))
+            # folder = os.path.join(base, cfg["asset"])
 
-            folder = Path(folder)
-            frame_count = len(list(folder.glob("*.png")))
+            # asset = Path(asset)
+            frame_count = len(list(Path(asset).glob("*.png")))
 
             if not frame_count:
                 raise RuntimeError(f"No frames found for animation '{name}'")
@@ -162,16 +163,17 @@ class ParticleOverlayWidget(QOpenGLWidget):
             #store lifetime for each particle type by id
             self.anim_lifetimes_by_id[anim_id] = lifetime
             
-            self.animations[anim_id] = { # we enter them by id to then reference by id
+            self.animations.append({ # we enter them by id to then reference by id
                 "name": name,
+                "asset":cfg["asset"],
                 "frame_count": frame_count,
                 "fps": cfg["fps"],
                 "loop": cfg["loop"],
                 "holds": cfg.get("holds", {}), # holds are not implemented yet
                 "times_to_loop": cfg.get("times_to_loop", 1),
-            }
+            })
 
-            print(f"[PARTICLES LOADED] {name}: {frame_count} frames")
+            print(f"[PARTICLES LOADED] {name}: {frame_count} frames, asset: {cfg["asset"]}")
 
         # generating particle texture atlas
         print("Generating atlas:")
@@ -208,26 +210,38 @@ class ParticleOverlayWidget(QOpenGLWidget):
         # --- loading particle information into memory for fast access ---
         print("----- loading particles into memory -----")
 
-        self.atlas_lookup = []
-        self.frame_lookup = []
-        self.aspect_ratio_by_id = []
+        self.atlas_lookup = [] # id = full information from the atlas about a particle
+        self.frame_lookup = [] # id = which asset lookup to look in
 
-        for particle_name in self.atlas_config["particles"]:
-            print("heee", particle_name)
-            particle_data = self.atlas_config["particles"][particle_name]
+        for asset_name in self.atlas_config["assets"]:
+            print("heee", asset_name)
+            particle_data = self.atlas_config["assets"][asset_name]
 
             self.atlas_lookup.append(particle_data)
+            self.frame_lookup.append(particle_data["frames"])
 
-            self.aspect_ratio_by_id.append(self.atlas_config["particles"][particle_name]["aspect_ratio"])
+        self.asset_ids = {} # assigning each name is ASSETS an id ("dirt": 0, "smoke": 1)
+        for i, name in enumerate(ASSETS.keys()):
+            self.asset_ids[name] = i
 
-            self.frame_lookup.append(
-                particle_data["frames"]
+        self.asset_lookup = [] # id = which asset to use from the atlas
+        self.aspect_ratio_by_id = [] # id = aspect ratio
+
+        for anim in self.animations:
+            asset_name = anim["asset"]
+
+            self.aspect_ratio_by_id.append(self.atlas_config["assets"][asset_name]["aspect_ratio"])
+
+            self.asset_lookup.append(
+                self.asset_ids[asset_name]
             )
 
         print("----- PARTICLES LOADED -----\n")
-        print("atlas lookup", self.atlas_lookup[0])
-        print("frame lookup", self.frame_lookup[0])
-        print("aspect_ratio_by_id", self.aspect_ratio_by_id[0])
+        # print("atlas lookup", self.atlas_lookup)
+        print("frame lookup", self.frame_lookup)
+        print("assets ids", self.asset_ids)
+        print("assets lookup", self.asset_lookup)
+        print("aspect_ratio_by_id", self.aspect_ratio_by_id)
 
 
     def update_dpi_and_scale(self, new_scale):
@@ -255,13 +269,15 @@ class ParticleOverlayWidget(QOpenGLWidget):
             print("No particle named ", name, " found")
             raise Exception("PARTICLE", name, "NOT FOUND")  #no idea what this does will add user notification that error occured
 
-        # print("adding emitter", name)
 
-        print("ACNHOCRR FROM PARTICLEGL", self.pet.anchor)
+        # print("ACNHOCRR FROM PARTICLEGL", self.pet.anchor)
 
         # making the emitter continuous
         if constant:
             cfg["duration"] = 1e9
+            cfg["total_count"] = 1e9
+        
+        print(f"Adding emitter:\n   Name: {name}, \n   cfg: {cfg}")
 
         new_emitter = ParticleEmitter(particleSystem=self, name=name, cfg=cfg, hitbox_width=self.pet_hitbox_w, hitbox_height=self.pet_hitbox_h)
 
@@ -384,7 +400,7 @@ class ParticleOverlayWidget(QOpenGLWidget):
             anim_data = self.animations[particle_id]
             frame_id = get_frame_index(anim_data, self.age[i])
             # particle_data = self.atlas_lookup[particle_id]
-            frame_data = self.frame_lookup[particle_id][frame_id]
+            frame_data = self.frame_lookup[self.asset_lookup[particle_id]][frame_id]
 
             x_px = self.pos_x[i]
             y_px = self.pos_y[i]
