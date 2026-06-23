@@ -31,7 +31,7 @@ PARTICLES = {
 
         "duration": 0.1, #duration of emission
         "rate_over_time": 100,
-        "random_timing": 1, # preferrably from 0 to 1, random offset to emition intervals
+        "random_timing": 1, # preferrably from 0 to 1, random offset to emittion intervals
         "total_count": 300,
 
         "lifetime": 3, #lifetime of each particle

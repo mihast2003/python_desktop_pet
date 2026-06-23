@@ -119,7 +119,7 @@ class Pet(QWidget): # main logic
         self.stay_on_window_when_resize = RENDER_CONFIG.get("stay_on_window_when_resize", False) 
         
         # self.mover = Mover(self)
-        self.anchor = Vec2(500, 500)
+        # self.anchor = Vec2(500, 500)
 
         self.primary_screen = QApplication.primaryScreen()
         init_pos = Vec2(RENDER_CONFIG.get("initial_position", (100, 0)))
@@ -128,8 +128,9 @@ class Pet(QWidget): # main logic
         screen = QApplication.primaryScreen() # Screen detection
         self.taskbar_top = screen.availableGeometry().bottom() # Taskbar position detection
         self.mover.set_position(init_pos.x, self.taskbar_top + init_pos.y + 1) # set initial position
+        self.anchor = Vec2(init_pos.x, self.taskbar_top + init_pos.y + 1)
 
-        # self.anchor = Vec2(init_pos.x, self.taskbar_top + init_pos.y + 1)
+        print("ACNHOCRR", self.anchor)
 
         cfg_facing = RENDER_CONFIG.get("default_facing")
         self.facing = Facing.__members__.get(cfg_facing, Facing.RIGHT)  # type: ignore # defining dacing direction
@@ -137,7 +138,7 @@ class Pet(QWidget): # main logic
         self.behaviour_resolver = BehaviourResolver(self)
 
         self.windowsOverlay = WindowsOverlay(self)
-        self.particles = ParticleOverlayWidget(pet=self)
+        self.particle_engine = ParticleOverlayWidget(pet=self)
         self.particle_logic_acc = 0
         self.particle_draw_acc = 0
         
@@ -146,9 +147,11 @@ class Pet(QWidget): # main logic
         
         self.update_dpi_and_scale(h=h, initial_state=initial_state)
 
+        print("ACNHOCRR 222", self.anchor)
         max_measurement = max(max_bounds_w, max_bounds_h)
         self.resize_keep_anchor(int(max_measurement * self.scale * 2), int(max_measurement * self.scale * 2))
 
+        print("ACNHOCRR 333", self.anchor)
 
         self.last_mouse_pos = Vec2()
 
@@ -256,8 +259,8 @@ class Pet(QWidget): # main logic
         self.mover.move_to(target_x, target_y, type)
 
     def emit_particles(self, name):
-        self.particles.raise_() # raises particles above pet
-        self.particles.start_emitting(name) 
+        self.particle_engine.raise_() # raises particles above pet
+        self.particle_engine.start_emitting(name, False) 
 
     def play_animation(self, anim_name, cfg, isTransitionAnimation = False, isAbletoRotate = False):
         anim_name = anim_name
@@ -396,13 +399,13 @@ class Pet(QWidget): # main logic
 
         if self.particle_logic_acc >= 1 / PARTICLE_LOGIC_FPS:
             self.particle_logic_acc -= 1 / PARTICLE_LOGIC_FPS
-            self.particles.update_logic(1 / PARTICLE_LOGIC_FPS)
+            self.particle_engine.update_logic(1 / PARTICLE_LOGIC_FPS)
 
         t9 = time.perf_counter()
 
         if self.particle_draw_acc >= 1 / PARTICLE_DRAW_FPS:
             self.particle_draw_acc -= 1 / PARTICLE_DRAW_FPS
-            self.particles.draw()
+            self.particle_engine.draw()
 
         t10 = time.perf_counter()
         # print(f"Particle update: {t1-t0}\nParticles draw: {t2-t1}")
@@ -543,9 +546,9 @@ class Pet(QWidget): # main logic
         old_w = self.width()
         old_h = self.height()
 
-        # world-space anchor (bottom-middle)
-        self.anchor.x = old_pos.x() + old_w // 2
-        self.anchor.y = old_pos.y() + old_h
+        # world-space anchor (bottom-middle)  # was it something useful? i commented out because it messed up anchor position when initialising
+        # self.anchor.x = old_pos.x + old_w // 2
+        # self.anchor.y = old_pos.y + old_h
 
         new_x = self.anchor.x - new_w // 2
         new_y = self.anchor.y - new_h
@@ -564,8 +567,8 @@ class Pet(QWidget): # main logic
 
         self.scale = self.pixel_ratio * self.dpi_scale
 
-        self.particles.update_dpi_and_scale(self.scale)
-        self.particles.update_taskbar_position(self.taskbar_top)
+        self.particle_engine.update_dpi_and_scale(self.scale)
+        self.particle_engine.update_taskbar_position(self.taskbar_top)
 
         print("screen dpi", self.dpi_scale)
         print("new scale", self.scale)
@@ -578,7 +581,7 @@ class Pet(QWidget): # main logic
             self.hitbox_height = frame.height() * self.scale
 
             self.windowsOverlay.update_hitbox(self.hitbox_width, self.hitbox_height)
-            self.particles.update_hitbox(self.hitbox_width, self.hitbox_height)
+            self.particle_engine.update_hitbox(self.hitbox_width, self.hitbox_height)
 
             # print(self.hitbox_height)
             # print(self.hitbox_width)
@@ -680,5 +683,5 @@ if __name__ == "__main__": # QT stuff, idk idc
     pet = Pet()
     # pet.move(300, 900)
     pet.show()
-    pet.particles.raise_()  # particles above
+    pet.particle_engine.raise_()  # particles above
     sys.exit(app.exec())

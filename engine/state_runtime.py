@@ -38,6 +38,9 @@ class StateRuntime:
         self.flags = set()
         self.pulses = set()
 
+        #particle stuff
+        self.constant_emitters = []
+
     # flags
     def raise_flag(self, flag: Flag):
         if flag == Flag.DRAGGING and not flag in self.flags:  # special check for sending a pulse dragging started when dragging flag is raised
@@ -67,6 +70,8 @@ class StateRuntime:
             self._execute_command(cmd)
         for part in self.config.get("particles_on_enter", []):
             self._emit_particles(part)
+        for c_part in self.config.get("constant_particles", []):
+            self._emit_particles(c_part, True)
 
     def _apply_on_transition(self, var_cmds, part_cmds): # called when a transition occured successfully
         for v_cmd in var_cmds:
@@ -80,10 +85,19 @@ class StateRuntime:
         for part in self.config.get("particles_on_exit", []):
             self._emit_particles(part)
 
-    def _emit_particles(self, particle_cmd):
+        for emitter in self.constant_emitters:
+            emitter.done_emitting = True
+        self.constant_emitters.clear()
+
+
+    def _emit_particles(self, particle_cmd, constant = False):
         if "emit" in particle_cmd:
             print("emitting")
-            name = particle_cmd["name"]
+            name = particle_cmd["emit"]
+            self.pet.particle_engine.raise_()
+            emitter = self.pet.particle_engine.start_emitting(name, constant)
+            if constant:
+                self.constant_emitters.append(emitter)
 
     def _execute_command(self, cmd):
         if "var" in cmd:
@@ -127,6 +141,16 @@ class StateRuntime:
 
     def handle_events(self):
         # print(f"state_runtime: handling events: Flags: ", self.flags, " Pulses: ", self.pulses)
+
+        # handling conditional particle commands
+        particle_commands = self.config.get("conditional_particles", [])
+
+        for p in particle_commands:
+            conditions = p["when"]
+            chance = p.get("chance", 1)
+            if all(self._check_condition(c) for c in conditions) and random.random() <= chance:
+                self._emit_particles(p)
+
 
         # --- Checking for forced transitions ---
         for state in self.all_forced_transitions:

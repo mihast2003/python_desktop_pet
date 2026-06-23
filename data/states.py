@@ -48,6 +48,16 @@ STATES = {
             {"var": "times_clicked", "op": "=", "value": 0},
         ],
 
+        "constant_particles": [
+            {"emit": "dirt"}
+        ],
+
+        "conditional_particles": [
+            {"when": ["CLICK"],
+             "emit": "dirt",
+            },
+        ],
+
         "transitions": [
             {
                 "when": [ "ANIMATION_END", {"var":"sleepiness", "op":">", "value":30}],

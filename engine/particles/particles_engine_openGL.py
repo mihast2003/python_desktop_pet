@@ -241,7 +241,14 @@ class ParticleOverlayWidget(QOpenGLWidget):
         self.taskbar = taskbar
 
 
-    def start_emitting(self, name):
+    def start_emitting(self, name, constant):
+        """
+        Instanciates an ParticleEmitter for a given name
+
+        Returns the emitter
+        
+        :param name: name of the particle as stated in config particles.py
+        """
         cfg = PARTICLES.get(name)
 
         if not cfg:
@@ -250,7 +257,17 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
         # print("adding emitter", name)
 
-        self.emitters.append(ParticleEmitter(particleSystem=self, name=name, cfg=cfg, hitbox_width=self.pet_hitbox_w, hitbox_height=self.pet_hitbox_h))    
+        print("ACNHOCRR FROM PARTICLEGL", self.pet.anchor)
+
+        # making the emitter continuous
+        if constant:
+            cfg["duration"] = 1e9
+
+        new_emitter = ParticleEmitter(particleSystem=self, name=name, cfg=cfg, hitbox_width=self.pet_hitbox_w, hitbox_height=self.pet_hitbox_h)
+
+        self.emitters.append(new_emitter)
+
+        return new_emitter
 
 
     def emit_particle(self, *, pos_x, pos_y, vel_x, vel_y, acc_x, acc_y, name, size):
