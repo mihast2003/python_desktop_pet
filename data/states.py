@@ -30,7 +30,20 @@ To force other states to transition to this when some flags/pulses are met:
         ],
 
 Particles stuff:
+In states can add conditional and constant particles, besides "particles_on_enter" and "particles_on_exit"
+    "constant_particles": [
+                {"emit": "dirt"}
+            ],
+    "conditional_particles": [
+                {"when": ["CLICK"],
+                "emit": "dirt",
+                },
+            ],
 
+In transitions: [] can add particles now
+    "particles_on_transition": [
+                {"emit": "dirt"},
+            ],
 """
 
 
