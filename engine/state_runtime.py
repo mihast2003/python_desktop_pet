@@ -186,7 +186,7 @@ class StateRuntime:
                 commands_on_transition = t.get("variables_on_transition", []) # getting commands with variables executed on specific transitions
                 particles_on_transition = t.get("particles_on_transition", [])
                 self._apply_on_transition(commands_on_transition, particles_on_transition)
-                print("cmds:", commands_on_transition)
+                # print("cmds:", commands_on_transition)
 
                 return (
                     t["to"],  # return the destination state

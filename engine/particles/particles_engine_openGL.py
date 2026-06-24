@@ -86,8 +86,15 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
         update_particles(dt, np.uint32(1000), dummy_positions, dummy_positions, dummy_vels, dummy_vels, dummy_vels, dummy_vels, dummy_positions, dummy_id, dummy_alive, np.float32(1351))
 
+        self.window_width = self.width()
+        self.window_height = self.height()
+
+        self.primary_screen = QApplication.primaryScreen()
+
         self.pet = pet
         self.taskbar_top = self.pet.taskbar_top
+        self.taskbar_ndc_y = 1.0 - ((self.taskbar_top / self.primary_screen.geometry().height()) * 2.0)
+        print("task y ndc" ,self.taskbar_ndc_y)
 
         self.debug_counter = 0 # for debugging
 
@@ -203,9 +210,6 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
         if self.atlas_config: print("  Success!")
         else: raise RuntimeError(f"No atlas.json found at '{full_config_path}'")
-
-        self.window_width = self.width()
-        self.window_height = self.height()
 
         # --- loading particle information into memory for fast access ---
         print("----- loading particles into memory -----")
@@ -398,12 +402,22 @@ class ParticleOverlayWidget(QOpenGLWidget):
         for i in range(self.count):
             particle_id = self.type_id[i]
             anim_data = self.animations[particle_id]
-            frame_id = get_frame_index(anim_data, self.age[i])
+            # frame_id = get_frame_index(anim_data, self.age[i])
+
+            # instead of using get_frame_index function (trying for optimisation)
+            frame_id = int(self.age[i] * anim_data["fps"])
+            if anim_data["loop"]:
+                frame_id %= anim_data["frame_count"]
+            else:
+                frame_id = min(frame_id, anim_data["frame_count"] - 1)
+
             # particle_data = self.atlas_lookup[particle_id]
             frame_data = self.frame_lookup[self.asset_lookup[particle_id]][frame_id]
 
             x_px = self.pos_x[i]
             y_px = self.pos_y[i]
+
+            # print(f"part pos {x_px}, {y_px}")
 
             # conversion from pixels to -1 to 1 (OpenGL coordinates)
             x = (x_px / self.window_width) * 2.0 - 1.0
@@ -416,10 +430,11 @@ class ParticleOverlayWidget(QOpenGLWidget):
             sy = size * self.aspect * frame_aspect_ratio
 
             # skipping if whole quad would be outside of screen
+            # To-do: add taskbar position as the lower boundary instead of screen border
             if (
                 x + sx < -1.0 or
                 x - sx > 1.0 or
-                y + sy < -1.0 or
+                y < self.taskbar_ndc_y or  # it was:   y + sy < -1.0  before (for the bottom of the screen)
                 y - sy > 1.0
             ):
                 culled_particles += 1
@@ -537,7 +552,7 @@ def update_particles(
         pos_y[i] += vel_y[i] * dt
 
         # kill conditions
-        if not alive[i] or pos_y[i] > taskbar_top:
+        if not alive[i]: # or pos_y[i] > taskbar_top:  # commented out because it was weird
             last = count - 1
             pos_x[i] = pos_x[last]
             pos_y[i] = pos_y[last]
@@ -548,6 +563,7 @@ def update_particles(
             age[i] = age[last]
             type_id[i] = type_id[last]
             count -= 1
+            # print(f"killing a particl cuz {alive[i]} or {pos_y[i]} > {taskbar_top}")
         else:
             i += 1
     return count

@@ -177,7 +177,7 @@ class Pet(QWidget): # main logic
 
 
     def on_state_enter(self, state): # called in state_machine when entering a new state
-        print("STATE:", state)
+        # print("STATE:", state)
         self.current_state = state
         if self.parent_window_hwnd:
             print(f"Position: {self.anchor.x}, {self.anchor.y}\nState: {self.current_state}\nParent window: {self.parent_window_hwnd}\nParent window position: {self.parent_window_rect_last}")
@@ -197,7 +197,7 @@ class Pet(QWidget): # main logic
        
     def on_state_exit(self, state): # called in state_machine when exiting a state
         cfg = STATES[state]
-        print("exiting state", state)
+        # print("exiting state", state)
         if state == "FALLING":
             self.emit_particles("dirt") 
         pass

@@ -20,29 +20,39 @@ ASSETS = { # continuing from asset/particles/
 PARTICLES = {
     "dirt": {
         "asset": "dirt",
-        "fps": 4,
+        "fps": 6,
         "loop": False,
         "holds": { # holds dont work
-            2: 1,
+            3: 6,
         },
 
         "emitter_shape": "LINE",
-        "point1": (-0.5, 0), "point2": (0.5, 0),
-        "round_square": 0,    # from 0 (rectangle) to 1 (ellipse)
-        "modify_border": (0.0, 0.0),
-        "emitter_offset": (0, 0), 
+        "point1": (-0.5, -0),
+        "point2": (0.5, -0),
+        "round_square": {"constant": 0},    # from 0 (rectangle) to 1 (ellipse)
+        
+        "modify_border": (
+            {"constant": 0}, 
+            {"constant": 0}
+            ),
+
+        "emitter_offset": (
+            {"constant": 0}, 
+            {"constant": 0},
+            ), 
+
         "hollow": False,
         "emit_bottom": True,
 
-        "duration": 0.1, #duration of emission
-        "rate_over_time": 100,
-        "random_timing": 1, # preferrably from 0 to 1, random offset to emittion intervals
-        "total_count": 300,
+        "duration": {"constant": 0.2}, #duration of emission
+        "rate_over_time": {"constant": 100},
+        "random_timing": {"constant": 0.5}, # preferrably from 0 to 1, random offset to emittion intervals
+        "total_count": {"constant": 300},
 
-        "lifetime": 3, #lifetime of each particle
-        "start_vel": (0, 500),
-        "start_acceleration": (0, -2500),
-        "start_size": 0.4,
+        "lifetime": {"constant": 2}, #lifetime of each particle
+        "start_vel": ({"constant": 0}, {"random_range": (300, 500)}),
+        "start_acceleration": ({"constant": 0}, {"constant": -2500}),
+        "start_size": {"constant": 0.4},
     },
 
     "single_z": {
