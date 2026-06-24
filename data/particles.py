@@ -44,9 +44,9 @@ PARTICLES = {
         "hollow": False,
         "emit_bottom": True,
 
-        "duration": {"constant": 0.2}, #duration of emission
+        "duration": {"constant": 0.1}, #duration of emission
         "rate_over_time": {"constant": 100},
-        "random_timing": {"constant": 0.5}, # preferrably from 0 to 1, random offset to emittion intervals
+        "random_timing": {"constant": 1}, # preferrably from 0 to 1, random offset to emittion intervals
         "total_count": {"constant": 300},
 
         "lifetime": {"constant": 2}, #lifetime of each particle

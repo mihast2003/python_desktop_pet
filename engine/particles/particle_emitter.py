@@ -73,6 +73,7 @@ class ParticleEmitter:
         self.emitted = 0
         self.elapsed = 0
         self.done_emitting = False
+        self.next_emit_time = 0.0
 
         shape = cfg.get("emitter_shape")
         self.emitter_shape = EmitterShape.__members__.get(shape, EmitterShape.DOT)
@@ -118,36 +119,33 @@ class ParticleEmitter:
         self.emit_left = self.cfg.get("emit_left", True)
         self.emit_right = self.cfg.get("emit_right", True)
 
-
     def update(self, dt):
-        if self.done_emitting:
-            return
-
-        # math to determine how many particles to emit
-        emit_interval = 1.0 / self.rate.get()
-
-        if self.random_timing.get() != 0:
-            jitter = random.random() * emit_interval * self.random_timing.get()
-            emit_interval += jitter - emit_interval/2
-
+        if self.done_emitting: return
 
         self.time += dt
-        self.elapsed += dt
 
-        # print("elapsed", self.elapsed)
-
-        # emitting those particles
-        count = int(self.elapsed / emit_interval)
-        print(f"Count is {count}")
-        for _ in range(count):
+        while self.time >= self.next_emit_time:
             self.spawn_particle()
             self.emitted += 1
 
-        self.elapsed %= emit_interval
+            self.next_emit_time += self.get_emit_interval()
+
+            if self.emitted >= self.total_count.get():
+                break
 
         if self.emitted >= self.total_count.get() or self.time >= self.duration.get():
+            # print(f"ParticleEmitter is done because {self.emitted} >= {self.total_count.get()} or {self.time} >= {self.duration.get()}")
             self.done_emitting = True
-            print(f"ParticleEmitter is done because {self.emitted} >= {self.total_count.get()} or {self.time} >= {self.duration.get()}")
+
+    def get_emit_interval(self):
+        interval = 1.0 / self.rate.get()
+
+        if self.random_timing.get():
+            jitter = (random.random() - 0.5) * interval * self.random_timing.get()
+            interval += jitter
+
+        return max(0.00001, interval)
+
 
     def spawn_particle(self):
         # randomize vel, lifetime, etc
