@@ -29,9 +29,14 @@ BEHAVIOURS = {
     "FALLING": {
         "target": {
             "x": {"type": "current"},
-            "y": {"type": "fixed", "var": 5}
+            "y": {"type": "fixed", "to": "screen.bottom"}
         },
-        "movement": "",
+        "movement": "ACCELERATE",
+        "settings": {
+            "gravity": 700,
+        },
+        "collide_with_surfaces": {"TOP"},
+        "parent_to_surfaces": {"TOP"},
     },
 
 }

@@ -75,9 +75,23 @@ STATES = {
 
         "transitions": [
             {
-                "when": [ "ANIMATION_END", {"var":"sleepiness", "op":">", "value":300}],
-                "to": "BLINK",
-                "chance": 0.3
+                "when": [ "DRAGGING_ENDED"],
+                "to": "FALLING",
+            },
+            
+        ],
+    },
+
+    "FALLING": {
+        "animation": "fall",
+        "fps": 6,
+
+        "behaviour": "FALLING",
+
+        "transitions": [
+            {
+                "when": [ "MOVEMENT_FINISHED"],
+                "to": "IDLE",
             },
             
         ],

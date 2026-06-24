@@ -198,8 +198,6 @@ class Pet(QWidget): # main logic
     def on_state_exit(self, state): # called in state_machine when exiting a state
         cfg = STATES[state]
         # print("exiting state", state)
-        if state == "FALLING":
-            self.emit_particles("dirt") 
         pass
 
     def resolve_behavior(self, behaviour, cfg):
