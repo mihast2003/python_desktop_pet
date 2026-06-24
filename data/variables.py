@@ -13,12 +13,4 @@ VARIABLES = {
         "value": 0.0,
         "rate": 1.0
     },
-    "sitting_still_timer": {
-        "value": 0.0,
-        "rate": 1.0
-    },
-    "worrying_meter": {
-        "value": 0,
-        "rate": 2,
-    }
 }

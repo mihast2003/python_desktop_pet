@@ -12,7 +12,7 @@ RENDER_CONFIG = {
     "default_loop_option": False,  # True or False, will animations loop or now unless stated otherwise
 
     "drag_offset_x": 0,
-    "drag_offset_y": -1.4,
+    "drag_offset_y": -0.9,
 
 
     # --- particles---

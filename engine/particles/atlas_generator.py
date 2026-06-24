@@ -21,6 +21,7 @@ class AtlasGenerator():
         """
         Generates a png texture atlas and a config file.
         """
+        return
         atlas_file = OUT_DIR / "atlas.png"
         config_file = OUT_DIR / "atlas.json"
 

@@ -26,54 +26,12 @@ BEHAVIOURS = {
         "parent_to_surfaces": {"RIGHT"},
     },
 
-    "MOVE_RANDOM_X_ON_SURFACE": {
-        "target": {
-            "x": {"type": "random", "min": "surface.left", "max": "surface.right"},
-            "y": {"type": "current"}
-        },
-        "movement": "LERP",
-        "collide_with_surfaces": "X",
-        "parent_to_surfaces": False,
-    },
-
-    #need to add move random Y on surface too
-
-    "MOVE_RANDOM_Y": {
+    "FALLING": {
         "target": {
             "x": {"type": "current"},
-            "y": {"type": "random", "min": "screen.top", "max": "screen.bottom"}
+            "y": {"type": "fixed", "var": 5}
         },
-        "movement": "LERP"
+        "movement": "",
     },
 
-    "MOVE_RANDOM_XY": {
-        "target": {
-            "x": {"type": "random", "min": "screen.left", "max": "screen.right"},
-            "y": {"type": "random", "min": "screen.top", "max": "screen.bottom"}
-        },
-        "movement": "LERP"
-    },
-
-    "FALL": {
-        "target": {
-            "x": {"type": "current"},
-            "y": {"type": "fixed", "to": "screen.bottom"}
-        },
-        "movement": "ACCELERATE",
-        "settings": {
-            "gravity": 700,
-        },
-        "collide_with_surfaces": {"TOP"},
-        "parent_to_surfaces": {"TOP"},
-    },
-
-    "JUMP": {
-        "target": {
-            "x": {"type": "random_range", "min": "screen.left", "max": "screen.right", "range": 200},
-            "y": {"type": "fixed", "to": "screen.bottom"}
-        },
-        "movement": "JUMP",
-        "collide_with_surfaces": "all",
-        "parent_to_surfaces": {"TOP"},
-    }
 }
