@@ -599,6 +599,8 @@ class WindowsOverlay(QWidget):
 
         t1 = time.perf_counter()
 
+        parent_hwnd = self.pet.parent_window_hwnd
+
         # appending taskbar as a rect for collisions
         rects["taskbar"] = (
             self.screen_geom.left(),
@@ -609,6 +611,9 @@ class WindowsOverlay(QWidget):
 
         for hwnd in self.windows:
             if hwnd == "taskbar": continue
+            if hwnd == parent_hwnd: 
+                rects[parent_hwnd] = self.pet.parent_window_rect
+                continue
             try:
                 print("UPDATING GETTING EXTENDED FRAME BOUNDSSS", hwnd)
                 rect = get_extended_frame_bounds(hwnd)
@@ -634,12 +639,9 @@ class WindowsOverlay(QWidget):
         self.rebuild_surfaces(segs)
         t3 = time.perf_counter()
 
-        parent_hwnd = self.pet.parent_window_hwnd
-        if parent_hwnd:
-            if not is_window_real(parent_hwnd) or parent_hwnd not in self.windows:
-                self.pet._clear_parent_window()
-            else:
-                self.pet_parent_window_rect = rects[parent_hwnd]
+        # if parent_hwnd:
+        #     if not is_window_real(parent_hwnd) or parent_hwnd not in self.windows:
+        #         self.pet._clear_parent_window()
                 
         if DEBUG:
             # print a summary for the top few windows
@@ -678,14 +680,19 @@ class WindowsOverlay(QWidget):
                 self.surfaces["right"].append((R, y1, y2, hwnd))
 
 # --- Get rect of a window by hwnd ---
-    def update_window_by_hwnd(self, hwnd):
+    def update_parent_window(self, hwnd):
+        """
+        Returns the rect of the window with provided hwnd
+        """
         rect = None
         try:
-            rect = get_extended_frame_bounds(hwnd)
+            if is_window_real(hwnd) and hwnd in self.windows:
+                rect = get_extended_frame_bounds(hwnd)
             # print("rect:", rect)
-            if not rect: return
+            if not rect: 
+                self.pet._clear_parent_window()
         except Exception:
-            pass
+            self.pet._clear_parent_window()
         
         
         if not rect: return

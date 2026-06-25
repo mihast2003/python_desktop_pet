@@ -303,14 +303,14 @@ class Pet(QWidget): # main logic
         # print(surface)
 
         # self.windowsOverlay.update_frame() # experimenting with automatic windows hook updates instead of 60 fps
-        rect = None
+        self.parent_window_rect = None
         if self.parent_window_hwnd:
-            rect = self.windowsOverlay.update_window_by_hwnd(self.parent_window_hwnd)
+            self.parent_window_rect = self.windowsOverlay.update_parent_window(self.parent_window_hwnd)
     
         # --- STATE / SIMULATION PHASE ---
         
         # Apply parent window movement
-        followed_parent = self._follow_parent_window(rect)
+        followed_parent = self._follow_parent_window(self.parent_window_rect)
         t3 = time.perf_counter()
 
         self.animator.update(dt)
