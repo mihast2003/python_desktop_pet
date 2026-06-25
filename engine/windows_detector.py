@@ -168,7 +168,7 @@ def is_maximized(hwnd):
 
 def is_window_real(hwnd):
     """
-    Return True if this hwnd is a "real" user window your pet can interact with.
+    Returns True if this hwnd is a "real" user window pet can interact with.
     Filters out:
         - Tool windows
         - Taskbar, desktop, worker windows
@@ -187,23 +187,14 @@ def is_window_real(hwnd):
         if not (style & win32con.WS_OVERLAPPEDWINDOW):
             return False
         
-        if not win32gui.IsWindowVisible(hwnd):
-            return False
-        
-        # Skip tiny or zero-size windows
-        rect = get_extended_frame_bounds(hwnd)
-        if not rect:
-            return False
-        L, T, R, B = rect
-        if R - L < 50 or B - T < 50:
-            return False
-
         exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
 
         # Skip tool windows
         if exstyle & win32con.WS_EX_TOOLWINDOW:
             return False
-            
+        
+        if not win32gui.IsWindowVisible(hwnd):
+            return False
         
         # Ignore cloaked windows (UWP / modern app hidden windows)
         if is_window_cloaked(hwnd):
@@ -225,6 +216,14 @@ def is_window_real(hwnd):
         if style & win32con.WS_POPUP and not style & win32con.WS_OVERLAPPEDWINDOW:
             return False
 
+        # Skip tiny or zero-size windows
+        rect = get_extended_frame_bounds(hwnd)
+        if not rect:
+            return False
+        L, T, R, B = rect
+        if R - L < 50 or B - T < 50:
+            return False
+        
         # If it passed all checks, it's probably a real window
         return True
 
@@ -300,16 +299,7 @@ def is_real_app(hwnd):
         if not (style & win32con.WS_OVERLAPPEDWINDOW):
             # print("style is weird")
             return False
-        
-        # Size
-        rect = get_extended_frame_bounds(hwnd)
-        if not rect:
-            # print("no rect")
-            return False
-        L, T, R, B = rect
-        if R - L < 50 or B - T < 50:
-            # print("too small")
-            return False
+    
 
         exstyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
         
@@ -354,6 +344,16 @@ def is_real_app(hwnd):
             # print("weird classname")
             return False
 
+        # Size
+        rect = get_extended_frame_bounds(hwnd)
+        if not rect:
+            # print("no rect")
+            return False
+        L, T, R, B = rect
+        if R - L < 50 or B - T < 50:
+            # print("too small")
+            return False
+        
         return True
 
     except Exception:
