@@ -281,7 +281,7 @@ class ParticleOverlayWidget(QOpenGLWidget):
             cfg["duration"] = 1e9
             cfg["total_count"] = 1e9
         
-        print(f"Adding emitter:\n   Name: {name}, \n   cfg: {cfg}")
+        # print(f"Adding emitter:\n   Name: {name}, \n   cfg: {cfg}")
 
         new_emitter = ParticleEmitter(particleSystem=self, name=name, cfg=cfg, hitbox_width=self.pet_hitbox_w, hitbox_height=self.pet_hitbox_h)
 
@@ -506,7 +506,7 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
         t2 = time.perf_counter()
 
-        print(f"For i in particle_count: {t1-t0}, Drawing: {t2-t1}")
+        # print(f"For i in particle_count: {t1-t0}, Drawing: {t2-t1}")
 
         # --- DEBUG TEXT ---
         return  # if you want to debug particle coint - dont return

@@ -34,7 +34,7 @@ class StateMachine:
     def update(self, dt):    # state logic runs here
         # HANDLING EVENTS
         result = self.state.handle_global_events()
-        print("state_machine update", result)
+        # print("state_machine update", result)
 
         if not result and not self.in_transition:
             result = self.state.handle_events()  # sends event to state_runtime.py expecting two strings (next state and animation name)

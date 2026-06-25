@@ -152,7 +152,7 @@ class StateRuntime:
             chance = force_trans.get("chance", 1)
 
             if all(self._check_condition(c) for c in conditions) and random.random() <= chance:  # all() returns true if all iterable conditions inside are true
-                print("-- Forced transition --", conditions)
+                # print("-- Forced transition --", conditions)
 
                 return (
                     state,  # return the destination state

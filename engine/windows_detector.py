@@ -63,7 +63,7 @@ def schedule_update():
         update_timer.start()
 
 def run_update():
-    print("---------- window list update ----------------")
+    # print("---------- window list update ----------------")
     global needs_window_list_update
 
     if needs_window_list_update:
@@ -615,7 +615,7 @@ class WindowsOverlay(QWidget):
                 rects[parent_hwnd] = self.pet.parent_window_rect
                 continue
             try:
-                print("UPDATING GETTING EXTENDED FRAME BOUNDSSS", hwnd)
+                # print("UPDATING GETTING EXTENDED FRAME BOUNDSSS", hwnd)
                 rect = get_extended_frame_bounds(hwnd)
                 if not rect: return
                 
