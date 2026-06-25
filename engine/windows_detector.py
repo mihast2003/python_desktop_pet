@@ -31,6 +31,8 @@ DEBUG = False
 #region HOOKS IF WINDOW APPEAR/DISAPPEAR
 user32 = ctypes.windll.user32
 
+needs_window_list_update = False
+
 # Callback for window events
 WinEventProcType = ctypes.WINFUNCTYPE(
     None,
@@ -44,14 +46,16 @@ WinEventProcType = ctypes.WINFUNCTYPE(
 )
 
 def win_event_callback(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime):
+    global needs_window_list_update
     # Only top-level windows
     if idObject != win32con.OBJID_WINDOW or windows_detector == None:
         return
     
+    if event != win32con.EVENT_OBJECT_LOCATIONCHANGE:
+        needs_window_list_update = True
+    
     # print("Hook went off")
     schedule_update()
-
-
 
 def schedule_update():
     # print("schedule_update")
@@ -60,7 +64,12 @@ def schedule_update():
 
 def run_update():
     print("---------- window list update ----------------")
-    windows_detector.update_window_list()
+    global needs_window_list_update
+
+    if needs_window_list_update:
+        windows_detector.update_window_list()
+        needs_window_list_update = False
+
     windows_detector.update_frame()
 
 update_timer = QTimer()
@@ -75,7 +84,7 @@ WinEventProc = WinEventProcType(win_event_callback)
 UPDATE_EVENTS = [
     win32con.EVENT_OBJECT_SHOW,
     win32con.EVENT_OBJECT_HIDE,
-    # win32con.EVENT_OBJECT_LOCATIONCHANGE,
+    win32con.EVENT_OBJECT_LOCATIONCHANGE,
     win32con.EVENT_SYSTEM_FOREGROUND,
     win32con.EVENT_SYSTEM_MINIMIZESTART,
     win32con.EVENT_SYSTEM_MINIMIZEEND,
@@ -245,7 +254,7 @@ def get_windows_in_zorder(excluded_hwnd):
 
     while hwnd:
         window = hwnd
-        hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT)
+        hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT) # immediately setting up the next iteration (window - current hwnd, and hwnd = next hwnd)
         try:
             if window not in excluded_hwnd and is_window_real(window):
                 if is_fullscreen(window):
@@ -555,7 +564,7 @@ class WindowsOverlay(QWidget):
         # cached data
         self.windows = []   # top-first
         self.active_apps = {}   # top-first
-        self.rects = {}     # hwnd -> rect physical
+
         self.segments = {}  # hwnd -> clipped segments computed in physical pixels
         self.surfaces = {
             "top": [],     # floors
@@ -586,7 +595,7 @@ class WindowsOverlay(QWidget):
 
     def update_frame(self):
         # update rects for current cached windows
-        rects = {}
+        rects = {} # hwnd -> rect physical
 
         t1 = time.perf_counter()
 
@@ -599,7 +608,9 @@ class WindowsOverlay(QWidget):
         )
 
         for hwnd in self.windows:
+            if hwnd == "taskbar": continue
             try:
+                print("UPDATING GETTING EXTENDED FRAME BOUNDSSS", hwnd)
                 rect = get_extended_frame_bounds(hwnd)
                 if not rect: return
                 
@@ -614,10 +625,8 @@ class WindowsOverlay(QWidget):
         t2 = time.perf_counter()
         # print(f"Time for getting rects: {t2 - t1}")
 
-        self.rects = rects
-
         # recompute clipped border segments in physical pixels
-        segs = compute_visible_segments(self.windows, self.rects)
+        segs = compute_visible_segments(self.windows, rects)
         # print(f"Time for computing visible segments: {t3 - t2}")
 
         self.segments = segs
@@ -627,17 +636,18 @@ class WindowsOverlay(QWidget):
 
         parent_hwnd = self.pet.parent_window_hwnd
         if parent_hwnd:
-            self.pet_parent_window_rect = self.update_window_by_hwnd(parent_hwnd)
-            if not is_window_real(parent_hwnd) or parent_hwnd not in self.windows:  #checks if window is real OR if not fully obstructed
+            if not is_window_real(parent_hwnd) or parent_hwnd not in self.windows:
                 self.pet._clear_parent_window()
+            else:
+                self.pet_parent_window_rect = rects[parent_hwnd]
                 
         if DEBUG:
             # print a summary for the top few windows
             topn = min(6, len(self.windows))
-            print(f"[frame] rects={len(self.rects)}, segs={len(self.segments)} (top {topn}):")
+            print(f"[frame] rects={len(rects)}, segs={len(self.segments)} (top {topn}):")
             for i, hwnd in enumerate(self.windows[:topn]):
                 title = win32gui.GetWindowText(hwnd)
-                rect = self.rects.get(hwnd)
+                rect = rects.get(hwnd)
                 seg = self.segments.get(hwnd)
                 print(f"  {i}: hwnd={hwnd} title={repr(title)} rect={rect} segs_top={len(seg['top']) if seg else 0}")
 

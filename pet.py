@@ -302,12 +302,15 @@ class Pet(QWidget): # main logic
         # surface = self.windowsOverlay.get_nearest_surface("up", hitbox_h=self.hitbox_height, hitbox_w=self.hitbox_width)
         # print(surface)
 
-        self.windowsOverlay.update_frame()
+        # self.windowsOverlay.update_frame() # experimenting with automatic windows hook updates instead of 60 fps
+        rect = None
+        if self.parent_window_hwnd:
+            rect = self.windowsOverlay.update_window_by_hwnd(self.parent_window_hwnd)
     
         # --- STATE / SIMULATION PHASE ---
         
         # Apply parent window movement
-        followed_parent = self._follow_parent_window()
+        followed_parent = self._follow_parent_window(rect)
         t3 = time.perf_counter()
 
         self.animator.update(dt)
@@ -416,12 +419,14 @@ class Pet(QWidget): # main logic
         self.anchor.x = clamped_x
         self.anchor.y = clamped_y
 
-    def _follow_parent_window(self):
+    def _follow_parent_window(self, rect):
         if not self.parent_window_hwnd:
             return
 
         # print("getting parent rect")
-        rect = self.windowsOverlay.pet_parent_window_rect
+
+        # rect = self.windowsOverlay.pet_parent_window_rect
+
         if not rect or not self.parent_window_rect_last:
             self.parent_window_rect_last = rect
             return
