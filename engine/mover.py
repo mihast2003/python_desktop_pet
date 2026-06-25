@@ -2,6 +2,7 @@ from engine.enums import Flag, Pulse, MovementType, Facing
 from engine.vec2 import Vec2
 import math
 
+
 from data.render_config import RENDER_CONFIG
 
 class Mover:
@@ -74,10 +75,10 @@ class Mover:
         self.target.y += dy
 
     def move_to(self, x, y, movement_type: MovementType):
+        self.active = True
         if self.vel == None: return
         self.target = Vec2(x, y)
         self.movement_type = movement_type
-        self.active = True
 
         if x < self.pos.x:
             self.pet.facing = Facing.LEFT
@@ -93,7 +94,6 @@ class Mover:
             self.pos.y -= 1 
             self.vel.y = -self.jump_velocity
             self.pet._clear_parent_window()
-
 
         # print(pet.facing)
 
@@ -112,8 +112,8 @@ class Mover:
             case MovementType.LINEAR:
                 return self._update_linear(dt)
 
-            case MovementType.ACCELERATE:
-                return self._update_accelerating(dt)
+            case MovementType.ACCELERATION:
+                return self._update_acceleration(dt)
 
             case MovementType.LERP:
                 return self._update_lerp(dt)
@@ -135,7 +135,7 @@ class Mover:
 
         return False
 
-    def _update_accelerating(self, dt):
+    def _update_acceleration(self, dt):
         direction = (self.target - self.pos).normalized()
         self.vel += direction * self.acceleration * dt
 
@@ -203,10 +203,10 @@ class Mover:
         return False
     
     def begin_drag(self, mouse_pos: Vec2):
+        self.active = True
         self.movement_type = MovementType.DRAG
         self.pos = mouse_pos - self.drag_offset # initial snapping to cursor movement
-        print ("SNAP")
-        self.active = True
+        # print ("SNAP")
         self.vel = Vec2()
 
     def update_drag_target(self, mouse_pos: Vec2, dt):

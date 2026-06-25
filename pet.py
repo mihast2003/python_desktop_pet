@@ -31,7 +31,6 @@ from engine.particles.particles_engine_openGL import ParticleOverlayWidget
 import cProfile
 
 
-from data.variables import VARIABLES
 from engine.variable_manager import VariableManager
 
 LOGIC_FPS = RENDER_CONFIG.get("pet_logic_FPS", 30) #fps of logic processes
@@ -63,16 +62,13 @@ class Pet(QWidget): # main logic
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
 
-        # instanciating AssetLoader
-        # self.loader = AssetLoader()
-
+        print("----- LOADING ANIMATIONS -----")
         # get all animations in a dictionary
         self.animations = {}
         base = os.path.dirname(os.path.abspath(__file__))
 
         max_bounds_w = 0
         max_bounds_h = 0
-        print("----- LOADING ANIMATIONS -----")
 
         for name in list(ANIMATIONS):
             cfg = ANIMATIONS[name]
@@ -94,12 +90,12 @@ class Pet(QWidget): # main logic
                 "fps": cfg["fps"],
                 "loop": cfg["loop"],
                 "holds": cfg.get("holds", {}),
-                "bounds": scan_animation_bounds(frames),
+                "bounds": (bounds_w, bounds_h),
                 "times_to_loop": cfg.get("times_to_loop", 1)
             }
             print(f"[ANIM LOAD] {name}: {len(frames)} frames")
     
-        self.variables = VariableManager(VARIABLES)
+        self.variables = VariableManager()
         self.animator = Animator(self)
         self.prev_index = None
 
@@ -117,23 +113,20 @@ class Pet(QWidget): # main logic
         self.parent_window_rect_last = None
 
         self.stay_on_window_when_resize = RENDER_CONFIG.get("stay_on_window_when_resize", False) 
-        
-        # self.mover = Mover(self)
-        # self.anchor = Vec2(500, 500)
 
         self.primary_screen = QApplication.primaryScreen()
         init_pos = Vec2(RENDER_CONFIG.get("initial_position", (100, 0)))
         
         self.mover = Mover(self)
-        screen = QApplication.primaryScreen() # Screen detection
-        self.taskbar_top = screen.availableGeometry().bottom() # Taskbar position detection
+        self.primary_screen = QApplication.primaryScreen() # Screen detection
+        self.taskbar_top = self.primary_screen.availableGeometry().bottom() # Taskbar position detection
         self.mover.set_position(init_pos.x, self.taskbar_top + init_pos.y + 1) # set initial position
         self.anchor = Vec2(init_pos.x, self.taskbar_top + init_pos.y + 1)
 
-        print("ACNHOCRR", self.anchor)
+        # print("ACNHOCRR", self.anchor)
 
         cfg_facing = RENDER_CONFIG.get("default_facing")
-        self.facing = Facing.__members__.get(cfg_facing, Facing.RIGHT)  # type: ignore # defining dacing direction
+        self.facing = Facing.__members__.get(cfg_facing, Facing.RIGHT) # type: ignore  # defining facing direction
 
         self.behaviour_resolver = BehaviourResolver(self)
 
@@ -142,22 +135,22 @@ class Pet(QWidget): # main logic
         self.particle_logic_acc = 0
         self.particle_draw_acc = 0
         
-        h = screen.availableGeometry().height()
         initial_state = INITIAL_STATE.get("default", next(iter(INITIAL_STATE))) #either get the "default" from the INITIAL STATE, or the first item in the STATES dictinary
         
+        h = self.primary_screen.availableGeometry().height()
         self.update_dpi_and_scale(h=h, initial_state=initial_state)
 
-        print("ACNHOCRR 222", self.anchor)
+        # print("ACNHOCRR 222", self.anchor)
         max_measurement = max(max_bounds_w, max_bounds_h)
         self.resize_keep_anchor(int(max_measurement * self.scale * 2), int(max_measurement * self.scale * 2))
 
-        print("ACNHOCRR 333", self.anchor)
+        # print("ACNHOCRR 333", self.anchor)
 
         self.last_mouse_pos = Vec2()
 
         self.drag_offset = Vec2(0,0)
         self.rotation_angle = 0
-
+        
         anim_name = RENDER_CONFIG.get("hitbox_from_animation")
         if anim_name not in self.animations:
             cfg = STATES[initial_state]      # gets the config for the state from states.py
@@ -166,7 +159,7 @@ class Pet(QWidget): # main logic
         self.update_hitbox_size_and_drag_offset(frame=frame) # initial hitbox update
 
         self.state_machine = StateMachine(pet=self, configs=STATES, initial=initial_state) # set initial state
-        self.click_detector = ClickDetector(pet=self) #initialising ClickDetector
+        self.click_detector = ClickDetector(pet=self)
 
         print("----- LOADING SUCCESSFUL -----\n")
 
@@ -186,20 +179,20 @@ class Pet(QWidget): # main logic
         self.variables.set("time_spent_in_this_state", 0)
 
         cfg = STATES[state]      # gets the config for the state from states.py
-        anim_name = cfg.get("animation")
 
         next_behaviour = cfg.get("behaviour", "STATIONARY") # engage behaviours.py
         self.resolve_behavior(next_behaviour, cfg)
 
-        isAbletoRotate = True if self.mover.movement_type == MovementType.DRAG else False
-        self.play_animation(anim_name=anim_name, cfg=cfg, isAbletoRotate=isAbletoRotate)
+        anim_name = cfg.get("animation")
+        # isAbletoRotate = True if self.mover.movement_type == MovementType.DRAG else False   # not used anymore but maybe later
+        self.play_animation(anim_name=anim_name, cfg=cfg)
 
        
     def on_state_exit(self, state): # called in state_machine when exiting a state
         cfg = STATES[state]
         # print("exiting state", state)
-        if state == "FALLING":
-            self.emit_particles("dirt") 
+        # if state == "FALLING":
+        #     self.emit_particles("dirt") 
         pass
 
     def resolve_behavior(self, behaviour, cfg):
@@ -262,7 +255,7 @@ class Pet(QWidget): # main logic
         self.particle_engine.raise_() # raises particles above pet
         self.particle_engine.start_emitting(name, False) 
 
-    def play_animation(self, anim_name, cfg, isTransitionAnimation = False, isAbletoRotate = False):
+    def play_animation(self, anim_name, cfg, isTransitionAnimation = False):
         anim_name = anim_name
 
         if anim_name not in ANIMATIONS:
@@ -277,24 +270,15 @@ class Pet(QWidget): # main logic
         times_to_loop = cfg.get("times_to_loop", anim_cfg.get("times_to_loop", 1))
         holds = cfg.get("holds", anim_cfg.get("holds", {}))  # safestate, will default to empty directory
 
-        bounds_w, bounds_h = self.animations[anim_name]["bounds"]
+        # bounds_w, bounds_h = self.animations[anim_name]["bounds"]  # not used yet but its there if needed
 
-        # if not isAbletoRotate:
-        #     self.resize_keep_anchor(int(bounds_w * self.scale), int(bounds_h * self.scale))
-        # else: 
-        #     self.resize_keep_anchor(int(bounds_h * self.scale * 2), int(bounds_h * self.scale * 2))
-
-        if isTransitionAnimation: 
+        if isTransitionAnimation:
             loop = False  #if receiving a transition animation, looping is disabled
             # print("transition animation playing")
 
         # print("starting animation", anim_name, " Frame count:", len(frames), " loop:", loop, " times to loop:", times_to_loop, " holds:", holds)
-        self.animator.set(frames=frames, fps=fps, loop=loop, times_to_loop=times_to_loop, holds=holds) #sets animation in animator
+        self.animator.set(frames=frames, fps=fps, loop=loop, times_to_loop=times_to_loop, holds=holds) # sets animation in animator
 
-    def _mouse_vec(self, event):   #helper function for converting Qt points to Vec2
-        p = event.globalPosition()
-        return Vec2(p.x(), p.y())
-    
 
     def update_logic(self):  # UPDATE LOGIC
         dt = 1 / LOGIC_FPS
@@ -303,11 +287,11 @@ class Pet(QWidget): # main logic
             self.profiler.disable()
             self.profiler.enable()  # start profiling
         
-
         # --- INPUT PHASE ---
         if self.mover.movement_type == MovementType.DRAG:
             self.mover.update_drag_target(self.last_mouse_pos, dt)
-            self._clear_parent_window()
+            if self.parent_window_hwnd:
+                self._clear_parent_window()
     
         self.click_detector.update()
         self.variables.update(dt)
@@ -330,7 +314,7 @@ class Pet(QWidget): # main logic
         t4 = time.perf_counter()
 
         # --- updating Mover and movement collisions ---
-        arrived = self.mover.update(dt)
+        arrived = self.mover.update(dt) # getting theoretical movement from mover.py
         
         dx = self.mover.pos.x - self.anchor.x
         dy = self.mover.pos.y - self.anchor.y
@@ -377,7 +361,7 @@ class Pet(QWidget): # main logic
         t6 = time.perf_counter()
 
         # --- SYNC PHASE ---
-        self.clamp_position_to_screen()
+        self._clamp_position_to_screen()
 
         if dx or dy or followed_parent:
             self.apply_window_position()
@@ -410,22 +394,18 @@ class Pet(QWidget): # main logic
         t10 = time.perf_counter()
         # print(f"Particle update: {t1-t0}\nParticles draw: {t2-t1}")
 
-        # self.particles.update_logic(dt) #updating particles widget
-        # self.particles.draw() #updating particles widget
-
-
         # print(f"update windows frames takes {t3-t1}")
         self.profiler.disable()  # stop profiling
         self.profiler.dump_stats("test.prof")
 
-    def clamp_position_to_screen(self):
-        clamped_x = self.anchor.x
+    def _clamp_position_to_screen(self):
+        # clamped_x = self.anchor.x
         clamped_x = min(self.primary_screen.availableGeometry().width() - self.hitbox_width / 2, max(self.anchor.x, self.hitbox_width / 2))
 
-        clamped_y = self.anchor.y
+        # clamped_y = self.anchor.y
         clamped_y = min(self.primary_screen.geometry().bottom(), max(self.anchor.y, self.hitbox_height))
 
-        if self.anchor.y < self.hitbox_height:
+        if self.anchor.y < self.hitbox_height:  # if going above the screen - clear parent window
             self._clear_parent_window()
 
         dx = clamped_x - self.anchor.x
@@ -433,7 +413,8 @@ class Pet(QWidget): # main logic
 
         self.mover.move_global(dx,dy)
 
-        self.anchor = Vec2(clamped_x, clamped_y)
+        self.anchor.x = clamped_x
+        self.anchor.y = clamped_y
 
     def _follow_parent_window(self):
         if not self.parent_window_hwnd:
@@ -492,7 +473,7 @@ class Pet(QWidget): # main logic
                     resize = True
             
             if resize: 
-                print("if resize", end="")
+                # print("if resize", end="")
                 self.mover.set_position(self.anchor.x, self.anchor.y)  # moving to the edge when resizing
 
         # if RENDER_CONFIG "stay_on_window_when_resize" == False pet should just fall off
@@ -532,7 +513,7 @@ class Pet(QWidget): # main logic
         self.parent_window_hwnd = hwnd
         self.state_machine.pulse(Pulse.GAINED_PARENT)
         self.state_machine.raise_flag(Flag.PARENTED_TO_WINDOW)
-        # self.parent_window_rect_last = self.windowsOverlay.pet_parent_window_rect   # it was causing weird behaviour when window moves
+        self.state_machine.remove_flag(Flag.NOT_PARENTED_TO_WINDOW)
         # print("Parent window:", hwnd)
 
     def apply_window_position(self):
@@ -542,17 +523,12 @@ class Pet(QWidget): # main logic
         )
 
     def resize_keep_anchor(self, new_w, new_h):
-        old_pos = self.pos()
-        old_w = self.width()
-        old_h = self.height()
-
+        # old_pos = self.pos()
+        # old_w = self.width()
+        # old_h = self.height()
         # world-space anchor (bottom-middle)  # was it something useful? i commented out because it messed up anchor position when initialising
-        # self.anchor.x = old_pos.x + old_w // 2
-        # self.anchor.y = old_pos.y + old_h
-
         new_x = self.anchor.x - new_w // 2
         new_y = self.anchor.y - new_h
-
         self.setGeometry(new_x, new_y, new_w, new_h)
     
     def update_dpi_and_scale(self, h, initial_state):
@@ -591,13 +567,14 @@ class Pet(QWidget): # main logic
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton: # type: ignore
-            self.click_detector.press(event.globalPosition())
-            self.last_mouse_pos = self._mouse_vec(event)
+            p = event.globalPosition()
+            self.click_detector.press(p)
+            self.last_mouse_pos =  Vec2(p.x(), p.y())
 
     def mouseMoveEvent(self, event):
-        self.click_detector.move(event.globalPosition())
-
-        self.last_mouse_pos = self._mouse_vec(event)
+        p = event.globalPosition()
+        self.click_detector.move(p)
+        self.last_mouse_pos =  Vec2(p.x(), p.y())
 
     def mouseReleaseEvent(self, event):
         self.click_detector.release()
@@ -614,7 +591,7 @@ class Pet(QWidget): # main logic
         if e.key() == Qt.Key.Key_F4:
             print(f"______________________________\n\n  PET REPORT\n\nPosition: {self.anchor.x}, {self.anchor.y}\nState: {self.current_state}\nCurrent behaviour: {self.behaviour_name}\nParent window: {self.parent_window_hwnd}\nParent window position: {self.parent_window_rect_last}\n\n  ^^^.>.\n______________________________")
         elif e.key() == Qt.Key.Key_L:
-            print("yeah okay")
+            print("Start debugging")
             self.start_debugging = True
     
     # def moveEvent(self, e):
@@ -624,14 +601,14 @@ class Pet(QWidget): # main logic
     #     print("Resize:", self.size())
 
     def paintEvent(self, e): #draws the frame reveived from Animator 
+        frame = self.animator.frame()
+        if not frame:
+            return
+        
         p = QPainter(self)
         p.setRenderHint(QPainter.SmoothPixmapTransform, True) # pyright: ignore[reportAttributeAccessIssue]
 
         # p.fillRect(self.rect(), QColor(80, 80, 80))  # dark gray
-
-        frame = self.animator.frame()
-        if not frame:
-            return
 
         # draw sprite so its bottom-middle is at (self.x, self.y)
         anchor_x = self.width() / 2
@@ -646,14 +623,11 @@ class Pet(QWidget): # main logic
         if self.facing == Facing.LEFT:
             sx *= -1
 
-        # p.scale(sx, self.scale)
-
         p.translate(anchor_x, anchor_y)
 
         # draws pets hitbox, pretty neat (says there are problems but works anyway)
         # p.setPen(QPen(Qt.red, 3))
         # p.drawRect(-self.hitbox_width/2, -self.hitbox_height, self.hitbox_width, self.hitbox_height)
-        
 
         # p.setPen(QPen(Qt.green, 6))
         # p.drawEllipse(QPointF(0, 0), 2, 2)
@@ -681,7 +655,6 @@ class Pet(QWidget): # main logic
 if __name__ == "__main__": # QT stuff, idk idc
     app = QApplication(sys.argv)
     pet = Pet()
-    # pet.move(300, 900)
     pet.show()
     pet.particle_engine.raise_()  # particles above
     sys.exit(app.exec())

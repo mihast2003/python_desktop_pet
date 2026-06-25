@@ -183,9 +183,15 @@ class StateRuntime:
             if all(self._check_condition(c) for c in conditions) and random.random() <= chance:  # all() returns true if all iterable conditions inside are true
                 # print("chance of this was: ", chance)
                 # print("state_runtime detected transition to:", t["to"])
-                commands_on_transition = t.get("variables_on_transition", []) # getting commands with variables executed on specific transitions
+                variables_on_transition = t.get("variables_on_transition", []) # getting commands with variables executed on specific transitions
                 particles_on_transition = t.get("particles_on_transition", [])
-                self._apply_on_transition(commands_on_transition, particles_on_transition)
+
+                if isinstance(variables_on_transition, dict):
+                    variables_on_transition = [variables_on_transition]
+                if isinstance(particles_on_transition, dict):
+                    particles_on_transition = [particles_on_transition]
+                
+                self._apply_on_transition(variables_on_transition, particles_on_transition)
                 # print("cmds:", commands_on_transition)
 
                 return (

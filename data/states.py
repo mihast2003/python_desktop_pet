@@ -338,6 +338,7 @@ STATES = {
                 "transition_animation_cfg": {
                     "fps": 12,
                 },
+                "particles_on_transition": [{"emit": "dirt"}],
             }
         ],
         "exit_when": ["MOVEMENT_FINISHED"],

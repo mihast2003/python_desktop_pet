@@ -5,7 +5,6 @@ from typing import cast
 from typing import Generic, TypeVar
 
 from engine.vec2 import Vec2
-from engine.particles.particle import Particle
 
 from engine.enums import EmitterShape
 

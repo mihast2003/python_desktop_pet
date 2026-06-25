@@ -13,7 +13,6 @@ from engine.enums import EmitterShape
 from engine.vec2 import Vec2
 
 from engine.particles.particle_emitter import ParticleEmitter
-from engine.particles.particle import Particle
 from engine.particles.atlas_generator import AtlasGenerator
 
 from OpenGL.GL import * #type: ignore
@@ -84,7 +83,7 @@ class ParticleOverlayWidget(QOpenGLWidget):
         dummy_alive = np.zeros(1000, dtype=np.bool)
         dt = np.float32(0.016)
 
-        update_particles(dt, np.uint32(1000), dummy_positions, dummy_positions, dummy_vels, dummy_vels, dummy_vels, dummy_vels, dummy_positions, dummy_id, dummy_alive, np.float32(1351))
+        update_particles(dt, np.uint32(1000), dummy_positions, dummy_positions, dummy_vels, dummy_vels, dummy_vels, dummy_vels, dummy_positions, dummy_id, dummy_alive)
 
         self.window_width = self.width()
         self.window_height = self.height()
@@ -266,6 +265,7 @@ class ParticleOverlayWidget(QOpenGLWidget):
         Returns the emitter
         
         :param name: name of the particle as stated in config particles.py
+        :param constant: whether or not an emitter should have infinite duration (used for constant particles)
         """
         cfg = PARTICLES.get(name)
 
@@ -331,6 +331,7 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
         if not self.count: return
 
+        # pruning particles for if they are dead
         i = 0
         while i < self.count:
             if self.age[i] >= self.anim_lifetimes_by_id[self.type_id[i]]:
@@ -344,8 +345,8 @@ class ParticleOverlayWidget(QOpenGLWidget):
             self.vel_x, self.vel_y,
             self.acc_x, self.acc_y,
             self.age, self.type_id,
-            self.alive,
-            np.float32(self.taskbar_top))
+            self.alive
+            )
         
         # -- DEBUGGING TEXT --
         self.emitters_by_type = defaultdict(int)
@@ -542,7 +543,7 @@ def update_particles(
     acc_x, acc_y,
     age, type_id,
     alive,
-    taskbar_top):
+    ):
     i = 0
     while i < count:
         age[i] += dt

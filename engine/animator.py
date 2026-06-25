@@ -12,7 +12,14 @@ class Animator:  # contains different animation functions
 
         self.pet = pet
 
-    def set(self, frames, fps, loop, times_to_loop, holds=None): #sets the animatios. receives a list of PixMap (frames), int (fps) and a bool(loop)
+    def set(self, frames, fps, loop, times_to_loop, holds=None):
+        """
+        Sets the animation up
+        
+        :param frames: list of PixMap frames
+        :param loop: True or False
+        :param times_to_loop: How many times to loop animation before Flag.ANIMATIONG_FINISHED is raised
+        """
         self.frames = frames
         self.fps = fps if fps > 0 else 0.001
         self.loop = loop
@@ -59,5 +66,8 @@ class Animator:  # contains different animation functions
     def hold_for(self, index):
         return self.holds.get(index + 1, 1)
 
-    def frame(self): #returns a single frame which should be displayed at the moment
+    def frame(self):
+        """
+        Returns a single frame which should be displayed at the moment
+        """
         return self.frames[self.index]

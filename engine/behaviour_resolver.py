@@ -11,7 +11,7 @@ class BehaviourResolver:
     def resolve(self, behaviour_name):
         cfg = BEHAVIOURS.get(behaviour_name)
         if not cfg:
-            raise ValueError(f"Unknown behaviour: {behaviour_name}")
+            raise ValueError(f"Unknown behaviour: {behaviour_name}, check data/behaviours.py")
 
         movement = MovementType[cfg.get("movement", "STATIONARY")] # defaults to STATIONARY movement type
 
@@ -30,9 +30,9 @@ class BehaviourResolver:
         x = self._resolve_axis("x", target_cfg["x"])
         y = self._resolve_axis("y", target_cfg["y"])
 
-
         return x, y, movement, mover_settings, collision_settings, parenting_settings
     
+
     def _resolve_axis(self, axis, spec):
         if spec["type"] == "current":
             return self.pet.anchor.x if axis == "x" else self.pet.anchor.y
@@ -97,11 +97,13 @@ class BehaviourResolver:
 
         if not cfg: return surfaces
 
-        if cfg in ["all", "ALL"]:
+        cmd_cfg = str(cfg).lower() # converting to lowercase string for ease of comparing
+
+        if cmd_cfg in ["all"]:
             surfaces = surfaces.union(SurfaceType.__members__)
-        elif cfg in ["X", "x", "horizontal"]:
+        elif cmd_cfg in ["x", "horizontal"]:
             surfaces = surfaces.union([SurfaceType.LEFT, SurfaceType.RIGHT])
-        elif cfg in ["Y", "y", "vertical"]:
+        elif cmd_cfg in ["y", "vertical"]:
             surfaces = surfaces.union([SurfaceType.TOP, SurfaceType.BOTTOM])
         else:
             for surface in cfg:

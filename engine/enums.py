@@ -23,7 +23,7 @@ class Pulse(Enum):
 
 class MovementType(Enum):
     LINEAR = auto()
-    ACCELERATE = auto()
+    ACCELERATION = auto()
     LERP = auto()
     JUMP = auto()
     DRAG = auto() 

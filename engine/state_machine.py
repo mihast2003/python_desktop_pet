@@ -67,7 +67,7 @@ class StateMachine:
         if self.pending_transition_anim:
             # print("state_machine: animation queued")
             if type(self.pending_transition_cfg) != dict:
-                raise ValueError(f"Excuse me, you messed up the config for transition animation: {self.pending_transition_anim}")
+                raise RuntimeError(f"Excuse me, you messed up the config for transition animation: {self.pending_transition_anim}, should be a dict")
 
             self.pet.play_animation(
                 self.pending_transition_anim,

@@ -56,7 +56,6 @@ class ClickDetector:
 
         duration = time.monotonic() - self.press_time
 
-
         self.press_time = None
         self.press_pos = None
 
