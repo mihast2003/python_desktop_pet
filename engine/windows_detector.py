@@ -473,6 +473,7 @@ def get_window_dpi_scale(hwnd):
         pass
     return 1.0
 
+
 # -----------------------
 # Geometry helpers
 # -----------------------
