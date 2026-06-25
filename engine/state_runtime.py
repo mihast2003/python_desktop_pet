@@ -138,20 +138,7 @@ class StateRuntime:
 
         return Flag.__members__.get(cond) in self.flags or Pulse.__members__.get(cond) in self.pulses   # THIS makes it so instead of Flag.FLAG_NAME you can just FLAG_NAME
 
-
-    def handle_events(self):
-        # print(f"state_runtime: handling events: Flags: ", self.flags, " Pulses: ", self.pulses)
-
-        # handling conditional particle commands
-        particle_commands = self.config.get("conditional_particles", [])
-
-        for p in particle_commands:
-            conditions = p["when"]
-            chance = p.get("chance", 1)
-            if all(self._check_condition(c) for c in conditions) and random.random() <= chance:
-                self._emit_particles(p)
-
-
+    def handle_global_events(self):
         # --- Checking for forced transitions ---
         for state in self.all_forced_transitions:
             force_trans = self.all_forced_transitions[state]
@@ -165,15 +152,30 @@ class StateRuntime:
             chance = force_trans.get("chance", 1)
 
             if all(self._check_condition(c) for c in conditions) and random.random() <= chance:  # all() returns true if all iterable conditions inside are true
-                print("-- Forced transition --")
+                print("-- Forced transition --", conditions)
 
                 return (
                     state,  # return the destination state
                     force_trans.get("transition_animation", None),  # may be None
                     force_trans.get("transition_animation_cfg", {})
-                )        
+                )
+            
+        return None 
 
-        # --- Normal transitions now ---
+
+    def handle_events(self):
+        # print(f"state_runtime: handling events: Flags: ", self.flags, " Pulses: ", self.pulses)
+
+        # handling conditional particle commands
+        particle_commands = self.config.get("conditional_particles", [])
+
+        for p in particle_commands:
+            conditions = p["when"]
+            chance = p.get("chance", 1)
+            if all(self._check_condition(c) for c in conditions) and random.random() <= chance:
+                self._emit_particles(p)
+
+        # --- Checking for state transitions ---
         transitions = self.config.get("transitions", [])
 
         for t in transitions:  # handling all "transitions" in configs
