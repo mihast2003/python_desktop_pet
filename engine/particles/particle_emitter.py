@@ -302,7 +302,7 @@ class ParticleEmitter:
                     pos_x = xw
                     pos_y = yw
 
-        print(f"emiiting a particle:\n pos {pos_x} {pos_y}\n size {size}\n name {self.name}\n vel {vel_x} {vel_y}\n acc {acc_x} {acc_y}")
+        # print(f"emiiting a particle:\n pos {pos_x} {pos_y}\n size {size}\n name {self.name}\n vel {vel_x} {vel_y}\n acc {acc_x} {acc_y}")
 
         self.particleSystem.emit_particle(
             pos_x=pos_x,

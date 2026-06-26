@@ -1,17 +1,21 @@
-# animation data config, holds the animation folder path, default fps and loop(can be overriden in states.py)
-# "holds" specifies how long should certain frames last
+"""
+animation data config, holds the animation folder path, default fps and loop(can be overriden in states.py)
+"holds" specifies how long should certain frames last
 
-# When adding animations dont forget to add them to repository <----
+folder is has root in assets/animations
+
+When adding animations dont forget to add them to repository <----
+"""
 
 ANIMATIONS = {
     "idle": {
-        "folder": "assets/animations/idle",
+        "folder": "idle",
         "fps": 8,
         "loop": True,
     },
 
     "blink": {
-        "folder": "assets/animations/blink",
+        "folder": "blink",
         "fps": 8,
         "loop": False,
         "holds": {
@@ -20,13 +24,13 @@ ANIMATIONS = {
     },
 
     "roll": {
-        "folder": "assets/animations/roll",
+        "folder": "roll",
         "fps": 12,
         "loop": True,
     },
 
     "look_around": {
-        "folder": "assets/animations/look_around",
+        "folder": "look_around",
         "fps": 8,
         "loop": True,
         "holds": {
@@ -36,27 +40,27 @@ ANIMATIONS = {
     },
 
     "held_by_the_nose": {
-        "folder": "assets/animations/held_by_the_nose",
+        "folder": "held_by_the_nose",
         "fps": 12,
         "loop": True,
     },
 
     "grow": {
-        "folder": "assets/animations/grow",
+        "folder": "grow",
         "fps": 12,
         "loop": False,
         "times_to_loop": 3,
     },
 
     "standing_up": {
-        "folder": "assets/animations/standing_up",
+        "folder": "standing_up",
         "fps": 12,
         "loop": False,
         "times_to_loop": 1,
     },
 
     "trollface": {
-        "folder": "assets/animations/trollface",
+        "folder": "trollface",
         "fps": 60,
         "loop": False,
         "holds": {
@@ -65,7 +69,7 @@ ANIMATIONS = {
     },
 
     "dozing_off": {
-        "folder": "assets/animations/dozing_off",
+        "folder": "dozing_off",
         "fps": 3,
         "loop": False,
         "holds": {
@@ -75,19 +79,19 @@ ANIMATIONS = {
     },
 
     "dozed_off": {
-        "folder": "assets/animations/dozed_off",
+        "folder": "dozed_off",
         "fps": 6,
         "loop": True,
     },
 
     "waking_up": {
-        "folder": "assets/animations/TRANSITIONS/waking_up",
+        "folder": "TRANSITIONS/waking_up",
         "fps": 8,
         "loop": False,
     },
 
     "falling_asleep": {
-        "folder": "assets/animations/TRANSITIONS/falling_asleep",
+        "folder": "TRANSITIONS/falling_asleep",
         "fps": 16,
         "loop": False,
         "holds": {
@@ -97,20 +101,33 @@ ANIMATIONS = {
     },
 
     "sleeping": {
-        "folder": "assets/animations/sleeping",
+        "folder": "sleeping",
         "fps": 6,
         "loop": True,
     },
 
     "waking_up_after_sleep": {
-        "folder": "assets/animations/TRANSITIONS/waking_up_after_sleep",
+        "folder": "TRANSITIONS/waking_up_after_sleep",
         "fps": 6,
         "loop": False,
         "holds": {
-            1: 2,
+            1: 3,
+            2: 2,
+            3: 3,
             5: 2,
             6: 2,
-            7: 2,
         }
+    },
+
+    "looking_for_something": {
+        "folder": "TRANSITIONS/looking_for",
+        "fps": 6,
+        "times_to_loop": 3,
+    },
+
+    "magnifying_glass": {
+        "folder": "magnifying_glass",
+        "fps": 6,
+        "loop": False,
     },
 }

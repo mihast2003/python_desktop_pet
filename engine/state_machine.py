@@ -20,15 +20,15 @@ class StateMachine:
     def raise_flag(self, flag: Flag):
         self.state.raise_flag(flag)
 
+        if self.in_transition and flag == Flag.ANIMATION_FINISHED:  # logic for ending transition animation
+            # print("changing after animation finished")
+            self.apply_pending_changes()
+
     def remove_flag(self, flag: Flag):
         self.state.remove_flag(flag)
 
     def pulse(self, pulse: Pulse):
         self.state.pulse(pulse)
-
-        if self.in_transition and pulse == Pulse.ANIMATION_END:  # logic for ending transition animation
-            # print("changing after animation finished")
-            self.apply_pending_changes()
         
     def update_apps(self, active, visible, maximised, fullscreen):
         self.state.update_apps(active, visible, maximised, fullscreen)
@@ -87,6 +87,8 @@ class StateMachine:
         
         self.state.clear_pulses() #just in case any pulses arent cleared too fast
 
+        self.in_transition = False
+
         # Change state
         self.change(self.pending_state)
         # print("state_machine: pending changes applied")
@@ -95,7 +97,6 @@ class StateMachine:
         self.pending_state = None
         self.pending_transition_anim = None
         self.pending_transition_cfg = None
-        self.in_transition = False
   
     def change(self, next_state): #changes the state, updates state_runtime, calls on_state_enter in pet.py
         self.remove_flag(Flag.ANIMATION_FINISHED) # later will add some way to automatically clear these

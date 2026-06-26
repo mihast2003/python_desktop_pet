@@ -44,7 +44,7 @@ class Animator:  # contains different animation functions
             if self.ticks_left <= 0:
                 self.index += 1
 
-                # print(self.index)
+                print(self.index)
 
                 if self.index >= len(self.frames):
                     # print("Animator: Pulse.ANIMATION_END ")

@@ -71,8 +71,9 @@ class Pet(QWidget): # main logic
         max_bounds_h = 0
 
         for name in list(ANIMATIONS):
+            # print("loading", name, end="")
             cfg = ANIMATIONS[name]
-            folder = os.path.join(base, cfg["folder"])
+            folder = os.path.join(base, "assets", "animations", cfg["folder"])
 
             frames = []
 
@@ -87,8 +88,8 @@ class Pet(QWidget): # main logic
 
             self.animations[name] = {
                 "frames": frames,
-                "fps": cfg["fps"],
-                "loop": cfg["loop"],
+                "fps": cfg.get("fps", 12),
+                "loop": cfg.get("loop", False),
                 "holds": cfg.get("holds", {}),
                 "bounds": (bounds_w, bounds_h),
                 "times_to_loop": cfg.get("times_to_loop", 1)
@@ -170,7 +171,7 @@ class Pet(QWidget): # main logic
 
 
     def on_state_enter(self, state): # called in state_machine when entering a new state
-        # print("STATE:", state)
+        print("STATE:", state)
         self.current_state = state
         if self.parent_window_hwnd:
             print(f"Position: {self.anchor.x}, {self.anchor.y}\nState: {self.current_state}\nParent window: {self.parent_window_hwnd}\nParent window position: {self.parent_window_rect_last}")
@@ -276,7 +277,7 @@ class Pet(QWidget): # main logic
             loop = False  #if receiving a transition animation, looping is disabled
             # print("transition animation playing")
 
-        # print("starting animation", anim_name, " Frame count:", len(frames), " loop:", loop, " times to loop:", times_to_loop, " holds:", holds)
+        print("Starting animation:", anim_name, " Frame count:", len(frames), " Loop:", loop, " Times to loop:", times_to_loop, " Holds:", holds)
         self.animator.set(frames=frames, fps=fps, loop=loop, times_to_loop=times_to_loop, holds=holds) # sets animation in animator
 
     def _update_apps(self, active, visible, maximised, fullscreen):

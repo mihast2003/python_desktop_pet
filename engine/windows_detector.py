@@ -483,7 +483,7 @@ def update_active_apps():
 
         hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT)
 
-    print("Active apps:", apps)
+    # print("Active apps:", apps)
     return apps
     
 def get_window_dpi_scale(hwnd):
@@ -614,7 +614,7 @@ class WindowsOverlay(QWidget):
         excluded = self.excluded_hwnd
         self.windows, self.visible_apps, self.fullscreen_apps, self.maximised_apps = get_windows_in_zorder(excluded_hwnd=excluded)
 
-        # print(self.active_apps, self.visible_apps, self.fullscreen_app, self.maximised_app)
+        self.update_apps()
 
         # print("rects:", self.rects)
         # print("segmesnts:", self.segments)
