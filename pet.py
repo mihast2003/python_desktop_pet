@@ -257,7 +257,6 @@ class Pet(QWidget): # main logic
         self.particle_engine.start_emitting(name, False) 
 
     def play_animation(self, anim_name, cfg, isTransitionAnimation = False):
-        anim_name = anim_name
 
         if anim_name not in ANIMATIONS:
             raise Exception("ANIMATION", anim_name, "NOT FOUND")  #no idea what this does will add user notification that error occured
@@ -282,6 +281,7 @@ class Pet(QWidget): # main logic
 
     def _update_apps(self, active, visible, maximised, fullscreen):
         self.state_machine.update_apps(active, visible, maximised, fullscreen)
+
 
     def update_logic(self):  # UPDATE LOGIC
         dt = 1 / LOGIC_FPS
@@ -316,9 +316,6 @@ class Pet(QWidget): # main logic
         # Apply parent window movement
         followed_parent = self._follow_parent_window(self.parent_window_rect)
         t3 = time.perf_counter()
-
-        self.animator.update(dt)
-        t4 = time.perf_counter()
 
         # --- updating Mover and movement collisions ---
         arrived = self.mover.update(dt) # getting theoretical movement from mover.py
@@ -374,8 +371,13 @@ class Pet(QWidget): # main logic
             self.apply_window_position()
         t7 = time.perf_counter()
 
+
         # checking if next frame is not the same as current and updating then
+        self.animator.update(dt)
+        t4 = time.perf_counter()
+
         index = self.animator.index
+
         if not self.prev_index: self.prev_index = index + 1
 
         if index != self.prev_index or self.mover.movement_type == MovementType.DRAG: 
@@ -404,6 +406,7 @@ class Pet(QWidget): # main logic
         # print(f"update windows frames takes {t3-t1}")
         self.profiler.disable()  # stop profiling
         self.profiler.dump_stats("test.prof")
+
 
     def _clamp_position_to_screen(self):
         # clamped_x = self.anchor.x

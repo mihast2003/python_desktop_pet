@@ -29,6 +29,10 @@ class StateMachine:
 
     def pulse(self, pulse: Pulse):
         self.state.pulse(pulse)
+
+        # if self.in_transition and pulse == Pulse.ANIMATION_END:  # logic for ending transition animation
+        #     # print("changing after animation finished")
+        #     self.apply_pending_changes()
         
     def update_apps(self, active, visible, maximised, fullscreen):
         self.state.update_apps(active, visible, maximised, fullscreen)

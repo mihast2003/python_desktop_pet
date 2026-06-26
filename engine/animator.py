@@ -29,13 +29,19 @@ class Animator:  # contains different animation functions
         self.holds = holds or {}
         self.ticks_left = self.hold_for(0)
         self.done = False
+
+        print("animator set", end= " ")
+        print("self.done is", self.done)
         
     def update(self, dt): #iterates over the list of frames with the speed of fps, loops if loop==True
+        # print("update", self.done)
         if self.done or not self.frames:
-            return False
+            return
 
         self.timer += dt
         frame_time = 1 / self.fps
+
+        # print(self.index)
 
         if self.timer >= frame_time:
             self.timer -= frame_time
@@ -43,8 +49,6 @@ class Animator:  # contains different animation functions
 
             if self.ticks_left <= 0:
                 self.index += 1
-
-                print(self.index)
 
                 if self.index >= len(self.frames):
                     # print("Animator: Pulse.ANIMATION_END ")
@@ -56,8 +60,8 @@ class Animator:  # contains different animation functions
                     else:
                         self.index = len(self.frames) - 1
                         # print("Animator: Flag.ANIMATION_FINISHED ")
-                        self.pet.state_machine.raise_flag(Flag.ANIMATION_FINISHED)
                         self.done = True
+                        self.pet.state_machine.raise_flag(Flag.ANIMATION_FINISHED)
 
 
                 self.ticks_left = self.hold_for(self.index)
