@@ -12,9 +12,9 @@ class StateRuntime:
         self.all_configs = all_configs
         self.variables = variables
 
+        # getting all force transitions in a dictionary for ease of use
         self.all_forced_transitions = {}
 
-        # getting all force transitions in a dictionary for ease of use
         for state in self.all_configs:
             force_transition = self.all_configs[state].get("force_transition")
             if not force_transition: continue
@@ -37,6 +37,11 @@ class StateRuntime:
 
         self.flags = set()
         self.pulses = set()
+
+        self.visible_apps = set()
+        self.active_apps = set()
+        self.maximised_apps = set()
+        self.fullscreen_apps = set()
 
         #particle stuff
         self.constant_emitters = []
@@ -63,7 +68,12 @@ class StateRuntime:
 
     def clear_pulses(self):
         self.pulses.clear()
-        
+    
+    def update_apps(self, active, visible, maximised, fullscreen):
+        self.active_apps = active
+        self.visible_apps = visible
+        self.maximised_apps = maximised
+        self.fullscreen_apps = fullscreen
     
     def _apply_on_enter(self):  # called from state machine on enter
         for cmd in self.config.get("variables_on_enter", []):
@@ -135,6 +145,14 @@ class StateRuntime:
                 case "==": return val == cond["value"]
                 case "<=": return val <= cond["value"]
                 case ">=": return val >= cond["value"]
+
+        if "app" in cond:
+            match cond["in"]:
+                case "visible": return cond["app"] in self.visible_apps
+                case "maximised": return cond["app"] in self.maximised_apps
+                case "fullscreen": return cond["app"] in self.fullscreen_apps
+                case "active": return cond["app"] in self.active_apps
+
 
         return Flag.__members__.get(cond) in self.flags or Pulse.__members__.get(cond) in self.pulses   # THIS makes it so instead of Flag.FLAG_NAME you can just FLAG_NAME
 

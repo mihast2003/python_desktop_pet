@@ -251,19 +251,41 @@ def get_windows_in_zorder(excluded_hwnd):
 
     hwnd = start
 
+    visible_apps = set()
+    pid_cache = {}
+
+    fullscreen_apps = set()
+    maximised_apps = set()
+
     while hwnd:
         window = hwnd
         hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT) # immediately setting up the next iteration (window - current hwnd, and hwnd = next hwnd)
         try:
+            if is_real_app(window):
+                try:
+                    _, pid = win32process.GetWindowThreadProcessId(window)
+                    if pid not in pid_cache:
+                        pid_cache[pid] = psutil.Process(pid).name()
+                    visible_apps.add(pid_cache[pid])
+                except Exception:
+                    pass
             if window not in excluded_hwnd and is_window_real(window):
                 if is_fullscreen(window):
                     title = win32gui.GetWindowText(window)
                     # print("FULLSCREEN:", title)
+                    if is_real_app(window):
+                        _, pid = win32process.GetWindowThreadProcessId(window)
+                        fullscreen_apps.add(psutil.Process(pid).name())
+                        # print("fullscreen:", fullscreen_app)
                     windows.append(window)
                     break
                 elif is_maximized(window):
                     title = win32gui.GetWindowText(window)
                     # print("MAXIMISED: ", title)
+                    if is_real_app(window):
+                        _, pid = win32process.GetWindowThreadProcessId(window)
+                        maximised_apps.add(psutil.Process(pid).name())
+                        # print("maximised:", maximised_app)
                     windows.append(window)
                     break
 
@@ -278,7 +300,9 @@ def get_windows_in_zorder(excluded_hwnd):
         except Exception:
             pass
 
-    return windows
+    # print("visible_apps:", visible_apps)
+
+    return windows, visible_apps, fullscreen_apps, maximised_apps
 
 
 def is_real_app(hwnd):
@@ -324,7 +348,7 @@ def is_real_app(hwnd):
         # Check process name to filter shell / system processes
         _, pid = win32process.GetWindowThreadProcessId(hwnd)
         proc_name = psutil.Process(pid).name().lower()
-        if proc_name in {"explorer.exe", "taskhostw.exe", "ctfmon.exe"}:
+        if proc_name in {"taskhostw.exe", "ctfmon.exe", 'iusb3mon.exe'}:
             # print("name is dumb")
             return False
         
@@ -459,7 +483,8 @@ def update_active_apps():
 
         hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT)
 
-    # print("Active apps:", apps)
+    print("Active apps:", apps)
+    return apps
     
 def get_window_dpi_scale(hwnd):
     """Return DPI scale for HWND (physical -> logical)."""
@@ -563,7 +588,10 @@ class WindowsOverlay(QWidget):
 
         # cached data
         self.windows = []   # top-first
-        self.active_apps = {}   # top-first
+        self.active_apps = set()
+        self.visible_apps = set()
+        self.fullscreen_apps = ""
+        self.maximised_apps = ""
 
         self.segments = {}  # hwnd -> clipped segments computed in physical pixels
         self.surfaces = {
@@ -582,9 +610,11 @@ class WindowsOverlay(QWidget):
         self.hitbox_h = new_hitbox_h
 
     def update_window_list(self):
-        update_active_apps()
+        self.active_apps = update_active_apps()
         excluded = self.excluded_hwnd
-        self.windows = get_windows_in_zorder(excluded_hwnd=excluded)
+        self.windows, self.visible_apps, self.fullscreen_apps, self.maximised_apps = get_windows_in_zorder(excluded_hwnd=excluded)
+
+        # print(self.active_apps, self.visible_apps, self.fullscreen_app, self.maximised_app)
 
         # print("rects:", self.rects)
         # print("segmesnts:", self.segments)
@@ -592,6 +622,9 @@ class WindowsOverlay(QWidget):
 
         if DEBUG:
             print(f"[enum] found {len(self.windows)} windows")
+
+    def update_apps(self):
+        self.pet._update_apps(self.active_apps, self.visible_apps, self.maximised_apps, self.fullscreen_apps)
 
     def update_frame(self):
         # update rects for current cached windows

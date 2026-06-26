@@ -30,6 +30,8 @@ class StateMachine:
             # print("changing after animation finished")
             self.apply_pending_changes()
         
+    def update_apps(self, active, visible, maximised, fullscreen):
+        self.state.update_apps(active, visible, maximised, fullscreen)
 
     def update(self, dt):    # state logic runs here
         # HANDLING EVENTS

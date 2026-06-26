@@ -279,6 +279,8 @@ class Pet(QWidget): # main logic
         # print("starting animation", anim_name, " Frame count:", len(frames), " loop:", loop, " times to loop:", times_to_loop, " holds:", holds)
         self.animator.set(frames=frames, fps=fps, loop=loop, times_to_loop=times_to_loop, holds=holds) # sets animation in animator
 
+    def _update_apps(self, active, visible, maximised, fullscreen):
+        self.state_machine.update_apps(active, visible, maximised, fullscreen)
 
     def update_logic(self):  # UPDATE LOGIC
         dt = 1 / LOGIC_FPS
@@ -303,6 +305,7 @@ class Pet(QWidget): # main logic
         # print(surface)
 
         # self.windowsOverlay.update_frame() # experimenting with automatic windows hook updates instead of 60 fps
+
         self.parent_window_rect = None
         if self.parent_window_hwnd:
             self.parent_window_rect = self.windowsOverlay.update_parent_window(self.parent_window_hwnd)
