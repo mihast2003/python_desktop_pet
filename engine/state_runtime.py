@@ -147,8 +147,9 @@ class StateRuntime:
                 case ">=": return val >= cond["value"]
 
         if "app" in cond:
-            # print("checking condition:", cond, "its", cond["app"] in self.active_apps)
-            match cond["in"]:
+            print("checking condition:", cond, "its", cond["app"] in self.visible_apps)
+            print("visible", self.visible_apps)
+            match cond["is"]:
                 case "visible": return cond["app"] in self.visible_apps
                 case "maximised": return cond["app"] in self.maximised_apps
                 case "fullscreen": return cond["app"] in self.fullscreen_apps

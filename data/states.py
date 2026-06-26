@@ -69,7 +69,7 @@ STATES = {
 
         "transitions": [
             {
-                "when": [ "ANIMATION_END", {"app":"explorer.exe", "in":"active"}],
+                "when": [ "ANIMATION_END", {"app":"explorer.exe", "is":"visible"}],
                 "to": "MAGNIFYING_GLASS",
                 "chance": 1,
                 "transition_animation": "looking_for_something",
