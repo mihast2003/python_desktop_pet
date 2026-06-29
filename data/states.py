@@ -69,12 +69,12 @@ STATES = {
 
         "transitions": [
             {
-                "when": [ "ANIMATION_END", {"app":"explorer.exe", "is":"visible"}],
+                "when": ["ANIMATION_END", {"app":"explorer.exe", "is":"focused"}],
                 "to": "MAGNIFYING_GLASS",
-                "chance": 1,
+                "chance": 0.3,
                 "transition_animation": "looking_for_something",
                 "transition_animation_cfg": {
-                    "fps": 3, 
+                    "fps": 6, 
                 },
             },
             {
@@ -385,19 +385,23 @@ STATES = {
                 "transition_animation_cfg": {
                     "fps": 10,
                 }
-            }
+            },
         ],
     },
 
     "MAGNIFYING_GLASS": {
         "animation": "magnifying_glass",
-        "fps": 5,
+        "fps": 7,
         "loop": False,
         "behaviour": "STATIONARY",
 
         "transitions":[
             {
-                "when": ["CLICK", {"var": "times_clicked_this_state", "op": ">=", "value": 1}],
+                "when": ["CLICK"],
+                "to": "IDLE",
+            },
+            {
+                "when": [ {"var":"time_spent_in_this_state", "op":">", "value":3}],
                 "to": "IDLE",
             }
         ],

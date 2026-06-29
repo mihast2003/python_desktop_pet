@@ -29,4 +29,4 @@ class VariableManager:
 
     def add(self, name, delta):
         self.values[name] += delta
-        print(self.values[name], name)
+        # print(self.values[name], name)

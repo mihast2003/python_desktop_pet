@@ -174,8 +174,9 @@ class Pet(QWidget): # main logic
         print("STATE:", state)
         self.current_state = state
         if self.parent_window_hwnd:
-            print(f"Position: {self.anchor.x}, {self.anchor.y}\nState: {self.current_state}\nParent window: {self.parent_window_hwnd}\nParent window position: {self.parent_window_rect_last}")
-        
+            # print(f"Position: {self.anchor.x}, {self.anchor.y}\nState: {self.current_state}\nParent window: {self.parent_window_hwnd}\nParent window position: {self.parent_window_rect_last}")
+            pass
+
         self.variables.set("times_clicked_this_state", 0)
         self.variables.set("time_spent_in_this_state", 0)
 
@@ -257,7 +258,6 @@ class Pet(QWidget): # main logic
         self.particle_engine.start_emitting(name, False) 
 
     def play_animation(self, anim_name, cfg, isTransitionAnimation = False):
-
         if anim_name not in ANIMATIONS:
             raise Exception("ANIMATION", anim_name, "NOT FOUND")  #no idea what this does will add user notification that error occured
 
@@ -276,13 +276,11 @@ class Pet(QWidget): # main logic
             loop = False  #if receiving a transition animation, looping is disabled
             # print("transition animation playing")
 
-        print("Starting animation:", anim_name, " Frame count:", len(frames), " Loop:", loop, " Times to loop:", times_to_loop, " Holds:", holds)
+        # print("Starting animation:", anim_name, " Frame count:", len(frames), " Loop:", loop, " Times to loop:", times_to_loop, " Holds:", holds)
         self.animator.set(frames=frames, fps=fps, loop=loop, times_to_loop=times_to_loop, holds=holds) # sets animation in animator
 
     def _update_apps(self, app_state):
         self.state_machine.update_apps(app_state)
-        # self.update() # needed because we removed constant updates # nope, doesnt help
-        # self.particle_engine.draw() # needed because we removed constant updates # nope, doesnt help
 
 
     def update_logic(self):  # UPDATE LOGIC
@@ -347,7 +345,7 @@ class Pet(QWidget): # main logic
         if arrived or col_x or col_y:
             # print("col_x: ", col_x, "self.surfaces: ", self.surfaces_to_parent_to)
             # print("making mover set position cuz", arrived, col_x, col_y)
-            print("if arrived", end="")
+            # print("if arrived", end="")
             self.mover.set_position(self.anchor.x, self.anchor.y)
             self.click_detector.release()
             self.state_machine.raise_flag(Flag.MOVEMENT_FINISHED)

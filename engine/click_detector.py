@@ -43,7 +43,7 @@ class ClickDetector:
             self.hold_triggered = True
             self.sm.raise_flag(Flag.CLICK_HELD)
             self.sm.raise_flag(Flag.DRAGGING)
-            print("HOLDIIING")
+            # print("HOLDIIING")
 
         if self.moved:
             self.sm.raise_flag(Flag.DRAGGING)
@@ -62,7 +62,7 @@ class ClickDetector:
         if self.hold_triggered:
             self.sm.remove_flag(Flag.CLICK_HELD)
             self.sm.pulse(Pulse.LETGO)
-            print("stopped holding")
+            # print("stopped holding")
             return
 
         # if self.moved:
@@ -71,4 +71,4 @@ class ClickDetector:
         if duration <= self.click_time:
             self.sm.pulse(Pulse.CLICK)
             self.pet.variables.add("times_clicked_this_state", 1)
-            print("CLICK")
+            # print("CLICK")

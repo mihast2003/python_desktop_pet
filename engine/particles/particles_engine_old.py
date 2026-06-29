@@ -8,7 +8,6 @@ from engine.enums import EmitterShape
 from engine.vec2 import Vec2
 
 from engine.particles.particle_emitter import ParticleEmitter
-from engine.particles.particle import Particle
 
 from data.render_config import RENDER_CONFIG
 from data.particles import PARTICLES

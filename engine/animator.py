@@ -30,8 +30,8 @@ class Animator:  # contains different animation functions
         self.ticks_left = self.hold_for(0)
         self.done = False
 
-        print("animator set", end= " ")
-        print("self.done is", self.done)
+        # print("animator set", end= " ")
+        # print("self.done is", self.done)
         
     def update(self, dt): #iterates over the list of frames with the speed of fps, loops if loop==True
         # print("update", self.done)

@@ -616,14 +616,14 @@ class WindowsOverlay(QWidget):
         excluded = self.excluded_hwnd
         self.windows, self.visible_apps, self.maximised_apps, self.fullscreen_apps = get_windows_in_zorder(excluded_hwnd=excluded)
 
-        print("update_window_list VISIBLE", self.visible_apps)
+        # print("update_window_list VISIBLE", self.visible_apps)
 
         focused_hwnd = win32gui.GetForegroundWindow()
         self.focused_app_title = win32gui.GetWindowText(focused_hwnd)
 
         self.focused_app.clear()
         tid, pid = win32process.GetWindowThreadProcessId(focused_hwnd)
-        print(f"hwnd={focused_hwnd}, tid={tid}, pid={pid}")
+        # print(f"hwnd={focused_hwnd}, tid={tid}, pid={pid}")
         self.focused_app.add(psutil.Process(pid).name())
 
         self.update_apps()

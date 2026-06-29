@@ -72,10 +72,10 @@ class StateRuntime:
         self.pulses.clear()
     
     def update_apps(self, app_state):
-        print("apps")
+        # print("apps")
         active, visible, maximised, fullscreen, focused_title, focused = app_state
         # print(active)
-        print("runtime update apps visible:", visible)
+        # print("runtime update apps visible:", visible)
         # print(maximised)
         # print(fullscreen)
         # print(focused_title)
@@ -114,7 +114,7 @@ class StateRuntime:
 
     def _emit_particles(self, particle_cmd, constant = False):
         if "emit" in particle_cmd:
-            print("emitting")
+            # print("emitting")
             name = particle_cmd["emit"]
             self.pet.particle_engine.raise_()
             emitter = self.pet.particle_engine.start_emitting(name, constant)
@@ -159,15 +159,15 @@ class StateRuntime:
                 case ">=": return val >= cond["value"]
 
         if "app" in cond:
-            print("checking condition:", cond, "its", cond["app"] in self.visible_apps)
-            print("visible", self.visible_apps)
+            # print("checking condition:", cond, "its", cond["app"] in self.visible_apps)
+            # print("visible", self.visible_apps)
             match cond["is"]:
                 case "visible": return cond["app"] in self.visible_apps
                 case "maximised": return cond["app"] in self.maximised_apps
                 case "fullscreen": return cond["app"] in self.fullscreen_apps
                 case "active": return cond["app"] in self.active_apps
-                case "title": return cond["app"] in self.focused_app_title
                 case "focused": return cond["app"] in self.focused_app
+                case "title": return cond["app"] in self.focused_app_title
 
 
         return Flag.__members__.get(cond) in self.flags or Pulse.__members__.get(cond) in self.pulses   # THIS makes it so instead of Flag.FLAG_NAME you can just FLAG_NAME

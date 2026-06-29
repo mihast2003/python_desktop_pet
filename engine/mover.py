@@ -65,7 +65,7 @@ class Mover:
         else:
             self.pos = Vec2(x, y) #type: ignore
         self.vel = Vec2()
-        print("Mover set position at", self.pos.x, self.pos.y)
+        # print("Mover set position at", self.pos.x, self.pos.y)
         self.active = False 
 
     def move_global(self, dx, dy):
@@ -198,7 +198,8 @@ class Mover:
 
         # landing
         if self.pos.y >= self.grounded_y:
-            print("jumping reached")
+            # print("jumping reached")
+            pass
 
         return False
     

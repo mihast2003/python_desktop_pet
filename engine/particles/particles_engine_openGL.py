@@ -64,8 +64,9 @@ class ParticleOverlayWidget(QOpenGLWidget):
             Qt.Tool #type: ignore
         )
 
-        screen = QApplication.primaryScreen().geometry()
-        self.setGeometry(screen)
+        self.primary_screen = QApplication.primaryScreen()
+        avail_geom = self.primary_screen.geometry() # later if needed will use availableGeomtry, but that rquires rewriting rendering code so idk
+        self.setGeometry(avail_geom)
 
         # transparency debugging, delete later
         print("native:", self.testAttribute(Qt.WidgetAttribute.WA_NativeWindow))
@@ -88,7 +89,6 @@ class ParticleOverlayWidget(QOpenGLWidget):
         self.window_width = self.width()
         self.window_height = self.height()
 
-        self.primary_screen = QApplication.primaryScreen()
 
         self.pet = pet
         self.taskbar_top = self.pet.taskbar_top
@@ -129,6 +129,7 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
         self.anim_lifetimes_by_id = np.zeros(len(PARTICLES), dtype=np.float32)
 
+        self.offset_geometry()
         self.show()
 
         # get all particle animations in a dictionary
@@ -357,8 +358,10 @@ class ParticleOverlayWidget(QOpenGLWidget):
             self.particles_by_type[emitter.name] += emitter.emitted  # shows only total emitted particles
 
         # print("( particles \"dirt\"", self.particles_by_type["dirt"], ", time spent", time.perf_counter() - t0, ")") # for debugging
-        
-
+   
+    def offset_geometry(self):
+        r = self.geometry()
+        self.setGeometry(r.x(), r.y(), r.width()+1, r.height())
 
     # --- DRAWING ---
     def draw(self):
@@ -386,6 +389,8 @@ class ParticleOverlayWidget(QOpenGLWidget):
 
     def paintGL(self):
         t0 = time.perf_counter()
+        # self.makeCurrent()
+
         glClearColor(0, 0, 0, 0)
         glClear(GL_COLOR_BUFFER_BIT)
 
