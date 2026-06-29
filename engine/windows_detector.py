@@ -302,7 +302,7 @@ def get_windows_in_zorder(excluded_hwnd):
 
     # print("visible_apps:", visible_apps)
 
-    return windows, visible_apps, fullscreen_apps, maximised_apps
+    return windows, visible_apps, maximised_apps, fullscreen_apps
 
 
 def is_real_app(hwnd):
@@ -590,8 +590,10 @@ class WindowsOverlay(QWidget):
         self.windows = []   # top-first
         self.active_apps = set()
         self.visible_apps = set()
-        self.fullscreen_apps = ""
-        self.maximised_apps = ""
+        self.fullscreen_apps = set()
+        self.maximised_apps = set()
+        self.focused_app_title = ""
+        self.focused_app = set()
 
         self.segments = {}  # hwnd -> clipped segments computed in physical pixels
         self.surfaces = {
@@ -612,7 +614,17 @@ class WindowsOverlay(QWidget):
     def update_window_list(self):
         self.active_apps = update_active_apps()
         excluded = self.excluded_hwnd
-        self.windows, self.visible_apps, self.fullscreen_apps, self.maximised_apps = get_windows_in_zorder(excluded_hwnd=excluded)
+        self.windows, self.visible_apps, self.maximised_apps, self.fullscreen_apps = get_windows_in_zorder(excluded_hwnd=excluded)
+
+        print("update_window_list VISIBLE", self.visible_apps)
+
+        focused_hwnd = win32gui.GetForegroundWindow()
+        self.focused_app_title = win32gui.GetWindowText(focused_hwnd)
+
+        self.focused_app.clear()
+        _, pid = win32process.GetWindowThreadProcessId(focused_hwnd)
+        if pid:
+            self.focused_app.add(psutil.Process(pid).name())
 
         self.update_apps()
 
@@ -624,7 +636,8 @@ class WindowsOverlay(QWidget):
             print(f"[enum] found {len(self.windows)} windows")
 
     def update_apps(self):
-        self.pet._update_apps(self.active_apps, self.visible_apps, self.maximised_apps, self.fullscreen_apps)
+        app_state = (self.active_apps, self.visible_apps, self.maximised_apps, self.fullscreen_apps, self.focused_app_title, self.focused_app)
+        self.pet._update_apps(app_state)
 
     def update_frame(self):
         # update rects for current cached windows

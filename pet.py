@@ -279,8 +279,8 @@ class Pet(QWidget): # main logic
         print("Starting animation:", anim_name, " Frame count:", len(frames), " Loop:", loop, " Times to loop:", times_to_loop, " Holds:", holds)
         self.animator.set(frames=frames, fps=fps, loop=loop, times_to_loop=times_to_loop, holds=holds) # sets animation in animator
 
-    def _update_apps(self, active, visible, maximised, fullscreen):
-        self.state_machine.update_apps(active, visible, maximised, fullscreen)
+    def _update_apps(self, app_state):
+        self.state_machine.update_apps(app_state)
 
 
     def update_logic(self):  # UPDATE LOGIC

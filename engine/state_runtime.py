@@ -42,6 +42,8 @@ class StateRuntime:
         self.active_apps = set()
         self.maximised_apps = set()
         self.fullscreen_apps = set()
+        self.focused_app_title = ""
+        self.focused_app = set()
 
         #particle stuff
         self.constant_emitters = []
@@ -69,11 +71,21 @@ class StateRuntime:
     def clear_pulses(self):
         self.pulses.clear()
     
-    def update_apps(self, active, visible, maximised, fullscreen):
+    def update_apps(self, app_state):
+        print("apps")
+        active, visible, maximised, fullscreen, focused_title, focused = app_state
+        # print(active)
+        print("runtime update apps visible:", visible)
+        # print(maximised)
+        # print(fullscreen)
+        # print(focused_title)
+        # print(focused)
         self.active_apps = active
         self.visible_apps = visible
         self.maximised_apps = maximised
         self.fullscreen_apps = fullscreen
+        self.focused_app_title = focused_title
+        self.focused_app = focused
     
     def _apply_on_enter(self):  # called from state machine on enter
         for cmd in self.config.get("variables_on_enter", []):
@@ -154,6 +166,8 @@ class StateRuntime:
                 case "maximised": return cond["app"] in self.maximised_apps
                 case "fullscreen": return cond["app"] in self.fullscreen_apps
                 case "active": return cond["app"] in self.active_apps
+                case "title": return cond["app"] in self.focused_app_title
+                case "focused": return cond["app"] in self.focused_app
 
 
         return Flag.__members__.get(cond) in self.flags or Pulse.__members__.get(cond) in self.pulses   # THIS makes it so instead of Flag.FLAG_NAME you can just FLAG_NAME
