@@ -281,6 +281,8 @@ class Pet(QWidget): # main logic
 
     def _update_apps(self, app_state):
         self.state_machine.update_apps(app_state)
+        # self.update() # needed because we removed constant updates # nope, doesnt help
+        # self.particle_engine.draw() # needed because we removed constant updates # nope, doesnt help
 
 
     def update_logic(self):  # UPDATE LOGIC

@@ -261,15 +261,15 @@ def get_windows_in_zorder(excluded_hwnd):
         window = hwnd
         hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT) # immediately setting up the next iteration (window - current hwnd, and hwnd = next hwnd)
         try:
-            if is_real_app(window):
-                try:
-                    _, pid = win32process.GetWindowThreadProcessId(window)
-                    if pid not in pid_cache:
-                        pid_cache[pid] = psutil.Process(pid).name()
-                    visible_apps.add(pid_cache[pid])
-                except Exception:
-                    pass
             if window not in excluded_hwnd and is_window_real(window):
+                if is_real_app(window):
+                    try:
+                        _, pid = win32process.GetWindowThreadProcessId(window)
+                        if pid not in pid_cache:
+                            pid_cache[pid] = psutil.Process(pid).name()
+                        visible_apps.add(pid_cache[pid])
+                    except Exception:
+                        pass
                 if is_fullscreen(window):
                     title = win32gui.GetWindowText(window)
                     # print("FULLSCREEN:", title)
@@ -622,9 +622,9 @@ class WindowsOverlay(QWidget):
         self.focused_app_title = win32gui.GetWindowText(focused_hwnd)
 
         self.focused_app.clear()
-        _, pid = win32process.GetWindowThreadProcessId(focused_hwnd)
-        if pid:
-            self.focused_app.add(psutil.Process(pid).name())
+        tid, pid = win32process.GetWindowThreadProcessId(focused_hwnd)
+        print(f"hwnd={focused_hwnd}, tid={tid}, pid={pid}")
+        self.focused_app.add(psutil.Process(pid).name())
 
         self.update_apps()
 
