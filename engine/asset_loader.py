@@ -16,11 +16,14 @@ class AssetLoader:
 
         files = sorted(                # get the png files
         f for f in os.listdir(folder)
-        if f.lower().endswith(".png")
+        if f.lower().endswith((".png", ".webp"))
         )
 
         for i, filename in enumerate(files):
             pix = QPixmap(os.path.join(folder, filename))
+
+            if pix.isNull():
+                raise ValueError("Could not load Pixmap, for file", filename)
 
             frames.append(pix)
 
