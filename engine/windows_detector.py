@@ -624,7 +624,9 @@ class WindowsOverlay(QWidget):
         self.focused_app.clear()
         tid, pid = win32process.GetWindowThreadProcessId(focused_hwnd)
         # print(f"hwnd={focused_hwnd}, tid={tid}, pid={pid}")
-        self.focused_app.add(psutil.Process(pid).name())
+        if pid >= 0:
+            self.focused_app.add(psutil.Process(pid).name())
+        else: print("Meh error: pid is a negative number dunno why sometimes")
 
         self.update_apps()
 
