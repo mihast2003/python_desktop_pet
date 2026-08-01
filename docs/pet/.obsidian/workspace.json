@@ -13,15 +13,15 @@
             "state": {
               "type": "canvas",
               "state": {
-                "file": "Планы.canvas",
+                "file": "Roadmap.canvas",
                 "viewState": {
-                  "x": -775.8127961454165,
-                  "y": -155.61183659184763,
-                  "zoom": -1.333333333333333
+                  "x": 116.61648084299983,
+                  "y": 412.62811288749833,
+                  "zoom": -0.47098865005969687
                 }
               },
               "icon": "lucide-layout-dashboard",
-              "title": "Планы"
+              "title": "Roadmap"
             }
           }
         ]
@@ -44,7 +44,9 @@
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical",
-                "autoReveal": true
+                "autoReveal": true,
+                "showSearch": false,
+                "searchQuery": ""
               },
               "icon": "lucide-folder-closed",
               "title": "Файловый менеджер"
@@ -189,9 +191,10 @@
   "active": "7410b7542bdcd6e2",
   "lastOpenFiles": [
     "Взаимодействие с виндоус.md",
-    "Код ежа.md",
+    "Roadmap.canvas",
     "Планы.canvas",
     "sit1.png",
+    "Код ежа.md",
     "Партиклы.md",
     "Добро пожаловать.md"
   ]
